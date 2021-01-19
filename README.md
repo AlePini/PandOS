@@ -1,2 +1,2 @@
-# PANDOS
+# PandOS
 OS project
