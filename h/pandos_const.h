@@ -6,7 +6,6 @@
  * This header file contains utility constants & macro definitions.
  *
  ****************************************************************************/
-
 #include <umps3/umps/const.h>
 
 /* Mikeyg Added constants */

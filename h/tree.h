@@ -1,11 +1,11 @@
-#ifndef PANDOS_PCBT_H_INCLUDED
-#define PANDOS_PCBT_H_INCLUDED
+#ifndef TREE_H_INCLUDED
+#define TREE_H_INCLUDED
 
 /****************************************************************************
  *
  * This header file contains definition of Process Tree.
  *
- ****************************************************************************/
+ ***************************************************************************/
 
 #include "pandos_types.h"
 
