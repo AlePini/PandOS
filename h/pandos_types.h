@@ -31,11 +31,5 @@ typedef struct pcb_t {
 
 }  pcb_t, *pcb_PTR;
 
-typedef struct pcbFree{
-	struct pcb_t   *p;
-	struct pcbFree *pcb_next;
-
-} pcbFree, *pcbFree_PTR;
-
 
 #endif
