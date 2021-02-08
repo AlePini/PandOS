@@ -1,26 +1,4 @@
-#include "queue.h";
-
-void head_insert(pcb_t* list, pcb_t* elem)
-{
-    if(elem == NULL) return;
-    if(list == NULL) list = elem;
-
-    //DA RIGUARDARE QUESTO CASO
-    if(list->p_next == NULL)
-    {
-        list->p_next == elem;
-        list->p_prev == elem;
-        elem->p_next = list;
-        elem->p_prev = list;
-    }
-    else
-    {
-        elem->p_prev = list;
-        elem->p_next = list->p_next;
-        list->p_next = elem;
-        elem->p_next->p_prev = elem;
-    }
-}
+#include "h/queue.h";
 
 pcb_t *mkEmptyProcQ(){
     return NULL;
@@ -49,10 +27,10 @@ void insertProcQ(pcb_t **tp, pcb_t *p){
 
 }
 
-
-pcb_t *headProcQ(pcb_t **tp){
-    if(*tp == NULL) return NULL;
-    return (**tp).p_next;
+//TODO: ricontrolla
+pcb_t *headProcQ(pcb_t *tp){
+    if(tp == NULL) return NULL;
+    return (*tp).p_next;
 }
 
 //PCBFREE -> primo
@@ -65,13 +43,11 @@ void freePcb(pcb_t* p){
 
 pcb_t* resetPcb(pcb_t* p){
     p->p_next = NULL;
-    p->p_prev = NULL;+
+    p->p_prev = NULL;
     p->p_prnt = NULL;
     p->p_child = NULL;
     p->p_next_sib = NULL;
     p->p_prev_sib = NULL;
-    //TODO: da mettere a posto
-    //p->p_s = 0;
     return p;
 }
 
