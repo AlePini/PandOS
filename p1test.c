@@ -21,7 +21,7 @@
 #include "h/pandos_const.h"
 #include "h/pandos_types.h"
 
-#include "h/umps3/umps/libumps.h"
+#include "umps3/umps/libumps.h"
 #include "h/queue.h"
 #include "h/tree.h"
 #include "h/asl.h"

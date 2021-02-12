@@ -1,4 +1,4 @@
-#include "h/queue.h";
+#include "h/queue.h"
 
 pcb_t *mkEmptyProcQ(){
     return NULL;
@@ -56,4 +56,30 @@ pcb_t* allocPcb(){
     pcb_t* toAlloc = pcbFree_h;
     pcbFree_h = pcbFree_h->p_next;
     return resetPcb(toAlloc);
+}
+
+//Berto----------------------------------
+pcb_t* removeProcQ(pcb_t **tp){
+    if(tp==NULL) return NULL; //se la coda è vuota ritorna NULL
+    else{   //altrimenti elimina il primo elemento e ritorna il puntatore ad esso
+        
+        //prendo il primo elemento della coda
+        pcb_t *head = (*tp)->p_next;
+        if(head->p_next==head){
+            (*tp)->p_next=NULL;
+            head->p_next=NULL;
+            head->p_prev=NULL;
+            return head;
+        }else{
+            //rendo il secondo elemento della lista il nuovo primo
+            (*tp)->p_next = head->p_next;
+            head->p_next->p_prev = (*tp);
+
+            //rendo prev e next null e ritorno l'elemento rimosso
+            head->p_next=NULL;
+            head->p_prev=NULL;
+            return head;
+        }
+    }
+
 }
