@@ -1,4 +1,4 @@
-#include "h/queue.h"
+#include <queue.h>
 
 void initPcbs(){
 
@@ -14,6 +14,7 @@ void initPcbs(){
 
 //    tmp -> p_next = NULL;
 }
+
 
 pcb_t *mkEmptyProcQ(){
     return NULL;
@@ -71,7 +72,6 @@ pcb_t* allocPcb(){
     return resetPcb(toAlloc);
 }
 
-//Berto----------------------------------
 pcb_t* removeProcQ(pcb_t **tp){
     if(tp==NULL) return NULL; //se la coda è vuota ritorna NULL
     //altrimenti elimina il primo elemento e ritorna il puntatore ad esso
@@ -91,5 +91,34 @@ pcb_t* removeProcQ(pcb_t **tp){
         head->p_next=NULL;
         head->p_prev=NULL;
         return head;
+
+
+pcb_t *outProcQ(pcb_t **tp, pcb_t *p){
+    if(*tp == NULL || p == NULL) return NULL;
+    //Se p è l'elemento in coda
+    if(*tp == p){
+        //Se la coda ha un solo elemento
+        if((*tp)->p_next == *tp){
+            *tp = NULL;
+            return p;
+        }
+        (*tp)->p_prev->p_next = (*tp)->p_next;
+        (*tp)->p_next->p_prev = (*tp)->p_prev;
+        (*tp)=(*tp)->p_prev;
+        return p;
+    }
+    //Se l'elemento si trova all'interno della lista
+    else{
+        pcb_t* head = (*tp)->p_next;
+        while(head != (*tp)){
+            //Se lo trovo
+            if(head == p){
+                head->p_prev->p_next = head->p_next;
+                head->p_next->p_prev = head->p_prev;
+                return p;
+            }
+            head = head->p_next;
+        }
+        return NULL;
     }
 }
