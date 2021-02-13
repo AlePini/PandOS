@@ -61,25 +61,22 @@ pcb_t* allocPcb(){
 //Berto----------------------------------
 pcb_t* removeProcQ(pcb_t **tp){
     if(tp==NULL) return NULL; //se la coda è vuota ritorna NULL
-    else{   //altrimenti elimina il primo elemento e ritorna il puntatore ad esso
-        
+    //altrimenti elimina il primo elemento e ritorna il puntatore ad esso
+    else{
         //prendo il primo elemento della coda
         pcb_t *head = (*tp)->p_next;
+        //Se la lista è composta da un solo elemento
         if(head->p_next==head){
-            (*tp)->p_next=NULL;
-            head->p_next=NULL;
-            head->p_prev=NULL;
-            return head;
+            (*tp)=NULL;
         }else{
             //rendo il secondo elemento della lista il nuovo primo
             (*tp)->p_next = head->p_next;
             head->p_next->p_prev = (*tp);
 
-            //rendo prev e next null e ritorno l'elemento rimosso
-            head->p_next=NULL;
-            head->p_prev=NULL;
-            return head;
         }
+        //rendo prev e next null e ritorno l'elemento rimosso
+        head->p_next=NULL;
+        head->p_prev=NULL;
+        return head;
     }
-
 }
