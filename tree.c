@@ -1,4 +1,7 @@
 #include "h/tree.h"
+
+//IMPORTANTE SPECIFICARE CHE LA LISTA DEI FIGLI SIA DOPPIA MA NON CIRCOLARE
+
 //Berto--------------------------------------
 void insertChild(pcb_t *prnt, pcb_t *p){
 
@@ -16,6 +19,15 @@ void insertChild(pcb_t *prnt, pcb_t *p){
     }
 }
 
+//Questa funzione rimuove il nodo dall'albero
+pcb_t* trim(pcb_t *p){
+    p->p_child = NULL;
+    p->p_next_sib=NULL;
+    p->p_prev_sib=NULL;
+    p->p_prnt=NULL;
+    return p;
+}
+
 pcb_t* removeChild(pcb_t *p){
     if(p==NULL || p->p_child==NULL) return NULL;
 
@@ -27,9 +39,22 @@ pcb_t* removeChild(pcb_t *p){
         p->p_child=son->p_next_sib;
         p->p_child->p_prev_sib=NULL;
     }
-    //ritorno il figlio eliminato
-    son->p_next_sib=NULL;
-    son->p_prev_sib=NULL;
-    son->p_prnt=NULL;
-    return son;
+
+    return trim(son);
+}
+
+pcb_t *outChild(pcb_t *p){
+    if (p->p_prnt==NULL)
+        return NULL;
+
+    //Se p non ha un fratello sinistro allora è il primo figlio del suo parent, sfrutto removeChild.
+    if (p->p_prev_sib == NULL)
+        return removeChild(p->p_prnt);
+
+    //Elimino p dalla lista dai fratelli
+    p->p_prev_sib->p_next_sib=p->p_next_sib;
+    //Solo se p non è l'ultimo fratello della lista devo far si che il fratello sinistro di p diventi il fratello sinistro del fratello destro di p.
+    if(p->p_next_sib != NULL )  p->p_next_sib->p_prev_sib=p->p_prev_sib;
+
+    return trim(p);
 }
