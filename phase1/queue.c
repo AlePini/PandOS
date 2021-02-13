@@ -91,7 +91,8 @@ pcb_t* removeProcQ(pcb_t **tp){
         head->p_next=NULL;
         head->p_prev=NULL;
         return head;
-
+    }
+}
 
 pcb_t *outProcQ(pcb_t **tp, pcb_t *p){
     if(*tp == NULL || p == NULL) return NULL;

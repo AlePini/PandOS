@@ -15,24 +15,12 @@
 #include <pandos_const.h>
 #include <pandos_types.h>
 #include <umps3/umps/libumps.h>
-
-<<<<<<< HEAD
-#include "h/pandos_const.h"
-#include "h/pandos_types.h"
-
-#include "umps3/umps/libumps.h"
-#include "h/queue.h"
-#include "h/tree.h"
-#include "h/asl.h"
-=======
 #include <asl.h>
 #include <queue.h>
 #include <tree.h>
->>>>>>> featurefunzioniPino
 
 #define MAXPROC	20
 #define	MAXSEM	MAXPROC
-
 char okbuf[2048];			/* sequence of progress messages */
 char errbuf[128];			/* contains reason for failing */
 char msgbuf[128];			/* nonrecoverable error message before shut down */
