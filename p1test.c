@@ -12,19 +12,13 @@
  *      Modified by Michael Goldweber on May 15, 2004
  */
 
-// #include <pandos_const.h>
-// #include <pandos_types.h>
-//#include <umps3/umps/libumps.h>
-//#include <pcb.h>
-//#include <asl.h>
+#include <pandos_const.h>
+#include <pandos_types.h>
+#include <umps3/umps/libumps.h>
 
-#include "h/pandos_const.h"
-#include "h/pandos_types.h"
-
-#include "h/umps3/umps/libumps.h"
-#include "h/queue.h"
-#include "h/tree.h"
-#include "h/asl.h"
+#include <asl.h>
+#include <queue.h>
+#include <tree.h>
 
 #define MAXPROC	20
 #define	MAXSEM	MAXPROC
@@ -124,7 +118,7 @@ void adderrbuf(char *strp) {
 
 	termprint(tstrp, 0);
 
-	PANIC();
+	//PANIC();
 }
 
 

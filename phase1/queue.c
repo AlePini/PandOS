@@ -1,4 +1,4 @@
-#include "h/queue.h";
+#include <queue.h>
 
 pcb_t *mkEmptyProcQ(){
     return NULL;
@@ -56,4 +56,16 @@ pcb_t* allocPcb(){
     pcb_t* toAlloc = pcbFree_h;
     pcbFree_h = pcbFree_h->p_next;
     return resetPcb(toAlloc);
+}
+
+void initPcbs(){
+    
+}
+
+pcb_t *outProcQ(pcb_t **tp, pcb_t *p){
+    return NULL;
+}
+
+pcb_t *removeProcQ(pcb_t **tp){
+    return NULL;
 }
