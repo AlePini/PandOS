@@ -2,7 +2,11 @@
 
 //IMPORTANTE SPECIFICARE CHE LA LISTA DEI FIGLI SIA DOPPIA MA NON CIRCOLARE
 
-//Berto--------------------------------------
+int emptyChild(pcb_t *p){
+    if (p->p_child == NULL) return TRUE;
+    return FALSE;
+}
+
 void insertChild(pcb_t *prnt, pcb_t *p){
 
     //inserisco p come figlio di prnt se non è vuoto

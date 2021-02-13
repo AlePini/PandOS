@@ -1,5 +1,20 @@
 #include "h/queue.h"
 
+void initPcbs(){
+
+    pcbFree_h = &pcbFree_table[0];
+
+    pcb_t* tmp = pcbFree_h;
+
+    for(int i = 1; i < MAXPROC; i++){
+
+        tmp -> p_next = &pcbFree_table[i];
+        tmp = tmp-> p_next;
+    }
+
+//    tmp -> p_next = NULL;
+}
+
 pcb_t *mkEmptyProcQ(){
     return NULL;
 }
