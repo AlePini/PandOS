@@ -12,7 +12,8 @@
 /* Mikeyg Added constants */
 
 #define MAXPROC 20
-#define MAXINT 0xFFFFFFFF
+#define MAXINT ((void*)0xFFFFFFFF)
+#define MAXSEM  MAXPROC+2
 
 #define CREATEPROCESS 1
 #define TERMPROCESS   2

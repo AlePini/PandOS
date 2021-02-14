@@ -6,10 +6,10 @@
  * This header file contains definition of Active Semaphore List.
  *
  ***************************************************************************/
-
+#include "pandos_const.h"
 #include "pandos_types.h"
 
-HIDDEN semd_t semd_table[MAXPROC];
+HIDDEN semd_t semd_table[MAXSEM];
 HIDDEN semd_t* semdFree_h;
 HIDDEN semd_t* semd_h;
 

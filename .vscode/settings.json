@@ -5,7 +5,8 @@
         "libumps.h": "c",
         "pandos_types.h": "c",
         "const.h": "c",
-        "tree.h": "c"
+        "tree.h": "c",
+        "asl.h": "c"
     },
     "cmake.configureOnOpen": true
 }

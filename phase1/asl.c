@@ -1,4 +1,4 @@
-#include <asl.h>
+#include "h/asl.h"
 
 int insertBlocked(int *semAdd,pcb_t *p){
     return 0;
@@ -18,19 +18,16 @@ pcb_t* headBlocked(int *semAdd){
 
 void initASL(){
 
-    semdFree_h = &semd_table[0];
+    semdFree_h = &semd_table[1];
     semd_t* tmp = semdFree_h;
-    for(int i=1; i<MAXPROC; i++){
+    for(int i=2; i<MAXSEM-1; i++){
         tmp->s_next = &semd_table[i];
         tmp = tmp->s_next;
     }
-    semd_t* end;
-    end -> s_semAdd = 0;
-    end -> s_procQ = MAXINT;
-    tmp->s_next = end;
-    semd_t* init;
-    init -> s_semAdd = 0;
-    init -> s_procQ = NULL;
-    init -> s_next = semdFree_h;
-    semdFree_h = init;
+
+    semd_h = &semd_table[0];
+    semd_h -> s_semAdd = 0;
+
+    semd_h ->s_next = &semd_table[MAXSEM-1];
+    semd_h ->s_semAdd = MAXINT;
 }
