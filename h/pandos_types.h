@@ -27,10 +27,12 @@ typedef struct pcb_t {
 					*p_prev_sib;					/* ptr to prev. sibling			*/
 
 	/* process status information */
-	state_t     	p_s;              				/* processor state        */
-	/* add more fields here */
+	state_t p_s; /* processor state */
+	cpu_t p_time; /* cpu time used by proc */
+	int *p_semAdd; /* ptr to semaphore on which proc is blocked */
 
-}  pcb_t, *pcb_PTR;
+	//support_t *p_supportStruct; /* support layer information */
+} pcb_t, *pcb_PTR;
 
 typedef struct semd_t {
     /* ptr to next element on queue */

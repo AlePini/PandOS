@@ -9,9 +9,9 @@
 
 #include "pandos_types.h"
 
-// HIDDEN semd_t semd_table[MAXPROC];
-// HIDDEN semd_t* semdFree_h;
-// HIDDEN semd_t* semd_h;
+HIDDEN semd_t semd_table[MAXPROC];
+HIDDEN semd_t* semdFree_h;
+HIDDEN semd_t* semd_h;
 
 int insertBlocked(int *semAdd,pcb_t *p);
 

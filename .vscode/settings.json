@@ -6,5 +6,6 @@
         "pandos_types.h": "c",
         "const.h": "c",
         "tree.h": "c"
-    }
+    },
+    "cmake.configureOnOpen": true
 }
