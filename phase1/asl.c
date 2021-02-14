@@ -1,6 +1,6 @@
 #include "h/asl.h"
 
-int insertBlocked(int *semAdd,pcb_t *p){
+int insertBlocked(int *semAdd, pcb_t *p){
     return 0;
 }
 
@@ -26,7 +26,7 @@ void initASL(){
     }
 
     semd_h = &semd_table[0];
-    semd_h -> s_semAdd = 0;
+    semd_h -> s_semAdd = MINSEM;
 
     semd_h ->s_next = &semd_table[MAXSEM-1];
     semd_h ->s_semAdd = MAXINT;
