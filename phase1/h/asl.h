@@ -8,6 +8,7 @@
  ***************************************************************************/
 #include "pandos_const.h"
 #include "pandos_types.h"
+#include "pcb.h"
 
 HIDDEN semd_t semd_table[MAXSEM];
 HIDDEN semd_t* semdFree_h;
