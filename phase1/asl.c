@@ -1,11 +1,5 @@
 #include "h/asl.h"
 
-semd_t* allocSem(){
-    semd_t* toAlloc = semdFree_h;
-    semdFree_h = semdFree_h -> s_next;
-    return toAlloc;
-}
-
 int insertBlocked(int *semAdd, pcb_t *p){
 
     semd_t* head = semd_h;
@@ -22,7 +16,8 @@ int insertBlocked(int *semAdd, pcb_t *p){
         //Se la lista dei semafori liberi è vuota ritorno true
         if (semdFree_h == NULL) return TRUE;
         //Altrimenti ne alloco uno e lo inizializzo
-        semd_t* toInsert = allocSem();
+        semd_t* toInsert = semdFree_h;
+        semdFree_h = semdFree_h -> s_next;
         toInsert -> s_semAdd = semAdd;
         toInsert -> s_procQ = makeEmptyProcQ();
         insertProcQ(&head->s_procQ, p);
