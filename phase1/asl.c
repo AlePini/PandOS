@@ -33,7 +33,24 @@ pcb_t* removeBlocked(int *semAdd){
 }
 
 pcb_t* outBlocked(pcb_t *p){
+    semd_t* head = semd_h;
+    int semAdd = p -> p_semAdd;
+
+    while ( head -> s_semAdd != semAdd){
+        head = head -> s_next;
+    }
+
+    pcb_t* tmp = head -> s_procQ;
+
+    while (tmp -> p_next != head -> s_procQ){
+
+        if(tmp == p) return outProcQ(&head -> s_procQ, p);
+
+        tmp = tmp->p_next;
+    }
+
     return NULL;
+
 }
 
 pcb_t* headBlocked(int *semAdd){
@@ -57,3 +74,5 @@ void initASL(){
     semd_h ->s_next = &semd_table[MAXSEM-1];
     semd_h ->s_semAdd = MAXINT;
 }
+
+
