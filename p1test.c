@@ -116,7 +116,7 @@ void adderrbuf(char *strp) {
 
 	termprint(tstrp, 0);
 
-	//PANIC();
+	PANIC();
 }
 
 

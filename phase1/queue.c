@@ -12,7 +12,7 @@ void initPcbs(){
         tmp = tmp-> p_next;
     }
 
-//    tmp -> p_next = NULL;
+    tmp -> p_next = NULL;
 }
 
 
@@ -59,6 +59,9 @@ pcb_t* resetPcb(pcb_t* p){
     p->p_next = NULL;
     p->p_prev = NULL;
     p->p_prnt = NULL;
+    p->p_child = NULL;
+    p->p_next_sib = NULL;
+    p->p_prev_sib = NULL;
     return p;
 }
 
@@ -70,7 +73,7 @@ pcb_t* allocPcb(){
 }
 
 pcb_t* removeProcQ(pcb_t **tp){
-    if(tp==NULL) return NULL; //se la coda è vuota ritorna NULL
+    if(*tp==NULL) return NULL; //se la coda è vuota ritorna NULL
     //altrimenti elimina il primo elemento e ritorna il puntatore ad esso
     else{
         //prendo il primo elemento della coda
