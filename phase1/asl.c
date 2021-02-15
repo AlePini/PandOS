@@ -43,9 +43,7 @@ pcb_t* outBlocked(pcb_t *p){
     pcb_t* tmp = head -> s_procQ;
 
     while (tmp -> p_next != head -> s_procQ){
-
         if(tmp == p) return outProcQ(&head -> s_procQ, p);
-
         tmp = tmp->p_next;
     }
 

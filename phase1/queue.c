@@ -28,7 +28,7 @@ int emptyProcQ(pcb_t *tp){
 void insertProcQ(pcb_t **tp, pcb_t *p){
 
     //Se tp ==  NULL vuol dire che non esiste la lista di conseguenza dopo ci sarà solo p
-    if(tp == NULL){
+    if(*tp == NULL){
         *tp = p;
         p->p_prev = p;
         p->p_next = p;
@@ -59,9 +59,6 @@ pcb_t* resetPcb(pcb_t* p){
     p->p_next = NULL;
     p->p_prev = NULL;
     p->p_prnt = NULL;
-    p->p_child = NULL;
-    p->p_next_sib = NULL;
-    p->p_prev_sib = NULL;
     return p;
 }
 
