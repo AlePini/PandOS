@@ -14,9 +14,9 @@
 
 /* Constants added by us*/
 
+#define MININT 0
 #define MAXINT ((int*)0xFFFFFFFF)
 #define MAXSEM MAXPROC+2
-#define MINSEM 0
 
 #define CREATEPROCESS 1
 #define TERMPROCESS   2

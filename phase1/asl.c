@@ -102,10 +102,22 @@ pcb_t* headBlocked(int *semAdd){
     Initializes the semdFree list.
 */
 void initASL(){
+
+    //Parto aggiungendo i due semafori extra nella lista di quelli attivi
+    //Quello con identificativo pari a MINSEM che è il primo della table
+    semd_h = &semd_table[0];
+    semd_h -> s_semAdd = MININT;
+    semd_h -> s_proc = NULL;
+    //E quello con identificativo pari a MAXINT che è il secondo della table
+    semd_h ->s_next = &semd_table[1];
+    semd_h ->s_next->s_semAdd = MAXINT;
+    semd_h ->s_next->s_proc = NULL;
+    //La faccio terminare con NULL
+    semd_h->s_next->s_next = NULL;
+
     //Associo alla lista dei semafori liberi al primo disponibile nella table
     semdFree_h = &semd_table[2];
     semd_t* tmp = semdFree_h;
-    semd_t* tmp2 = semd_h;
     //Aggiungo alla lista semdFree tutti gli altri fino ad averne un numero pari a MAXPROC
     for(int i=3; i<MAXSEM; i++){
         tmp->s_next = &semd_table[i];
@@ -113,16 +125,6 @@ void initASL(){
     }
     //La faccio terminare con NULL
     tmp->s_next = NULL;
-    //Vado poi ad aggiungere due semafori nella lista di quelli attivi
-    //Quello con identificativo pari a 0 che è il primo della table
-    tmp2 = &semd_table[0];
-    tmp2 -> s_semAdd = MINSEM;
-    //E quello con identificativo pari a MAXINT che è il secondo della table
-    tmp2 ->s_next = &semd_table[1];
-    tmp2 ->s_semAdd = MAXINT;
-    //La faccio terminare con NULL
-    tmp2 = tmp2 -> s_next;
-    tmp2-> s_next = NULL;
 }
 
 
