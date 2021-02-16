@@ -21,8 +21,7 @@ pcb_t *mkEmptyProcQ(){
 }
 
 int emptyProcQ(pcb_t *tp){
-    if(tp == NULL) return TRUE;
-    return FALSE;
+    return tp == NULL;
 }
 
 void insertProcQ(pcb_t **tp, pcb_t *p){
@@ -80,7 +79,7 @@ pcb_t* removeProcQ(pcb_t **tp){
         pcb_t *head = (*tp)->p_next;
         //Se la lista è composta da un solo elemento
         if(head->p_next==head){
-            (*tp)=NULL;
+            *tp=NULL;
         }else{
             //rendo il secondo elemento della lista il nuovo primo
             (*tp)->p_next = head->p_next;
