@@ -27,7 +27,7 @@ int insertBlocked(int *semAdd, pcb_t *p){
         semd_t* toInsert = semdFree_h;
         semdFree_h = semdFree_h -> s_next;
         toInsert -> s_semAdd = semAdd;
-        toInsert -> s_procQ = makeEmptyProcQ();
+        toInsert -> s_procQ = mkEmptyProcQ();
         insertProcQ(&head->s_procQ, p);
         //Poi lo inserisco nella lista dei semafori attivi
         toInsert -> s_next = head-> s_next;
