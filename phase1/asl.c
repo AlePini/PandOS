@@ -1,5 +1,13 @@
-#include "h/asl.h"
+#include <asl.h>
 
+/*
+    Inserts PCB p at the tail of the process queue associated
+    with the semaphore whose physical address is given.
+    If the semaphore is currently not active, allocate a new descriptor from
+    the semdFree list, initialize all of its fields and insert it in the ASL.
+    If a new semaphore descriptor needs to be allocated and the
+    semdFree list is empty, return TRUE. Otherwise FALSE.
+*/
 int insertBlocked(int *semAdd, pcb_t *p){
 
     semd_t* head = semd_h;
@@ -28,6 +36,12 @@ int insertBlocked(int *semAdd, pcb_t *p){
     return FALSE;
 }
 
+/**
+    Removes the head of the procQ associated with the semaphore given
+    by the given identifier.
+    If none is found, return NULL; otherwise, remove the first (i.e. head) pcb from
+    the process queue and return a pointer to it.
+*/
 pcb_t* removeBlocked(int *semAdd){
     //se non trovo il sem ritorno NULL
     //rimuovo il primo processo dalla queue del semaforo e ritorno un puntatore ad esso
@@ -50,6 +64,13 @@ pcb_t* removeBlocked(int *semAdd){
     return NULL;
 }
 
+
+/**
+    Removes the PCBb pointed by p from the process queue associated
+    with p’s semaphore.
+    If pcb pointed by p does not appear in the process queue associated with p’s
+    semaphore return NULL; otherwise, return p.
+*/
 pcb_t* outBlocked(pcb_t *p){
     semd_t* head = semd_h;
     int semAdd = *(p -> p_semAdd);
@@ -60,7 +81,11 @@ pcb_t* outBlocked(pcb_t *p){
 
     return outProcQ(&head -> s_procQ, p);
 }
-
+/**
+    Returns a pointer to the pcb  head of the process queue
+    associated with the given semaphore. Returns NULL if semAdd is
+    not found or if its process is empty.
+ */
 pcb_t* headBlocked(int *semAdd){
     //NULL se semAdd is not found o se la process queue di semAdd è vuota
     //ritorna il puntatore al primo processo delle queue di semAdd
@@ -73,13 +98,16 @@ pcb_t* headBlocked(int *semAdd){
     return NULL;
 }
 
+/**
+    Initializes the semdFree list.
+*/
 void initASL(){
     //Associo alla lista dei semafori liberi al primo disponibile nella table
-    semdFree_h = &semd_table[1];
+    semdFree_h = &semd_table[2];
     semd_t* tmp = semdFree_h;
     semd_t* tmp2 = semd_h;
     //Aggiungo alla lista semdFree tutti gli altri fino ad averne un numero pari a MAXPROC
-    for(int i=2; i<MAXSEM-1; i++){
+    for(int i=3; i<MAXSEM; i++){
         tmp->s_next = &semd_table[i];
         tmp = tmp->s_next;
     }
@@ -89,8 +117,8 @@ void initASL(){
     //Quello con identificativo pari a 0 che è il primo della table
     tmp2 = &semd_table[0];
     tmp2 -> s_semAdd = MINSEM;
-    //E quello con identificativo pari a MAXINT che è l'ultimo della table
-    tmp2 ->s_next = &semd_table[MAXSEM-1];
+    //E quello con identificativo pari a MAXINT che è il secondo della table
+    tmp2 ->s_next = &semd_table[1];
     tmp2 ->s_semAdd = MAXINT;
     //La faccio terminare con NULL
     tmp2 = tmp2 -> s_next;
