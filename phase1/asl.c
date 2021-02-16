@@ -40,9 +40,9 @@ pcb_t* removeBlocked(int *semAdd){
             if(emptyProcQ(head->s_next->s_procQ)){
                 //inserisci head in semdFree
                 semd_t* toRemove=head->s_next;
+                head->s_next=head->s_next->s_next;
                 toRemove->s_next=semdFree_h;
                 semdFree_h=toRemove;
-                head->s_next=head->s_next->s_next;
             }
             return tmp;
         }
@@ -52,21 +52,13 @@ pcb_t* removeBlocked(int *semAdd){
 
 pcb_t* outBlocked(pcb_t *p){
     semd_t* head = semd_h;
-    int semAdd = p -> p_semAdd;
+    int semAdd = *(p -> p_semAdd);
 
-    while ( head -> s_semAdd != semAdd){
+    while ( *(head -> s_semAdd) != semAdd){
         head = head -> s_next;
     }
 
-    pcb_t* tmp = head -> s_procQ;
-
-    while (tmp -> p_next != head -> s_procQ){
-        if(tmp == p) return outProcQ(&head -> s_procQ, p);
-        tmp = tmp->p_next;
-    }
-
-    return NULL;
-
+    return outProcQ(&head -> s_procQ, p);
 }
 
 pcb_t* headBlocked(int *semAdd){
@@ -85,18 +77,24 @@ void initASL(){
     //Associo alla lista dei semafori liberi al primo disponibile nella table
     semdFree_h = &semd_table[1];
     semd_t* tmp = semdFree_h;
+    semd_t* tmp2 = semd_h;
     //Aggiungo alla lista semdFree tutti gli altri fino ad averne un numero pari a MAXPROC
     for(int i=2; i<MAXSEM-1; i++){
         tmp->s_next = &semd_table[i];
         tmp = tmp->s_next;
     }
+    //La faccio terminare con NULL
+    tmp->s_next = NULL;
     //Vado poi ad aggiungere due semafori nella lista di quelli attivi
     //Quello con identificativo pari a 0 che è il primo della table
-    semd_h = &semd_table[0];
-    semd_h -> s_semAdd = MINSEM;
+    tmp2 = &semd_table[0];
+    tmp2 -> s_semAdd = MINSEM;
     //E quello con identificativo pari a MAXINT che è l'ultimo della table
-    semd_h ->s_next = &semd_table[MAXSEM-1];
-    semd_h ->s_semAdd = MAXINT;
+    tmp2 ->s_next = &semd_table[MAXSEM-1];
+    tmp2 ->s_semAdd = MAXINT;
+    //La faccio terminare con NULL
+    tmp2 = tmp2 -> s_next;
+    tmp2-> s_next = NULL;
 }
 
 

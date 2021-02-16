@@ -14,7 +14,7 @@
 
 /* Constants added by us*/
 
-#define MAXINT ((void*)0xFFFFFFFF)
+#define MAXINT ((int*)0xFFFFFFFF)
 #define MAXSEM MAXPROC+2
 #define MINSEM 0
 
