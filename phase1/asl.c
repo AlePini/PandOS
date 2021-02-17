@@ -54,6 +54,7 @@ pcb_t* removeBlocked(int *semAdd){
                 //inserisci head in semdFree
                 semd_t* toRemove=head->s_next;
                 head->s_next=toRemove->s_next;
+                toRemove->s_semAdd = NULL;
                 toRemove->s_next=semdFree_h;
                 semdFree_h=toRemove;
             }
@@ -62,7 +63,6 @@ pcb_t* removeBlocked(int *semAdd){
     }
     return NULL;
 }
-
 
 /**
     Removes the PCBb pointed by p from the process queue associated

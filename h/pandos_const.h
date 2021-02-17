@@ -17,7 +17,6 @@
 #define MININT 0
 #define MAXINT ((int*)0xFFFFFFFF)
 #define MAXSEM MAXPROC+2
-
 #define CREATEPROCESS 1
 #define TERMPROCESS   2
 #define PASSEREN      3
