@@ -102,6 +102,7 @@ pcb_t *outProcQ(pcb_t **tp, pcb_t *p){
             *tp = NULL;
             return p;
         }
+        //Se l'elemento è quello che si trova in coda
         (*tp)->p_prev->p_next = (*tp)->p_next;
         (*tp)->p_next->p_prev = (*tp)->p_prev;
         (*tp)=(*tp)->p_prev;
@@ -109,6 +110,7 @@ pcb_t *outProcQ(pcb_t **tp, pcb_t *p){
     }
     //Se l'elemento si trova all'interno della lista
     else{
+        //Prendo la testa e scorro finchè non torno in coda
         pcb_t* head = (*tp)->p_next;
         while(head != (*tp)){
             //Se lo trovo
