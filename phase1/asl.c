@@ -12,14 +12,14 @@ int insertBlocked(int *semAdd, pcb_t *p){
 
     semd_t* head = semd_h;
     //Assegno a p il suo semAdd, lo faccio ora per non doverlo scrivere due volte poi nell'if-else
-    p->p_semAdd  = semAdd;
     //Arrivo alla posizione corretta della lista dei semafori
     while(head->s_next->s_semAdd < semAdd){
         head = head->s_next;
     }
     //Se c'è il semaforo con l'identificativo corretto inserisco il processo p
     if(head->s_next->s_semAdd == semAdd){
-            insertProcQ(&head->s_next->s_procQ, p);
+        p->p_semAdd  = semAdd;
+        insertProcQ(&head->s_next->s_procQ, p);
     }else{//Altrimenti devo allocare un nuovo semaforo con l'identificativo giusto
         //Se la lista dei semafori liberi è vuota ritorno true
         if (semdFree_h == NULL) return TRUE;
@@ -28,6 +28,8 @@ int insertBlocked(int *semAdd, pcb_t *p){
         semdFree_h = semdFree_h -> s_next;
         toInsert -> s_semAdd = semAdd;
         toInsert -> s_procQ = mkEmptyProcQ();
+
+        p->p_semAdd  = semAdd;
         insertProcQ(&toInsert->s_procQ, p);
         //Poi lo inserisco nella lista dei semafori attivi
         toInsert -> s_next = head-> s_next;
@@ -70,16 +72,29 @@ pcb_t* removeBlocked(int *semAdd){
     If pcb pointed by p does not appear in the process queue associated with p’s
     semaphore return NULL; otherwise, return p.
 */
-pcb_t* outBlocked(pcb_t *p){
-    semd_t* head = semd_h;
-    int *semAdd = p -> p_semAdd;
+pcb_t* outBlocked(pcb_t *p) {
+    if (p == NULL) return NULL;
 
-    while (head->s_semAdd != semAdd){
+    semd_t* head = semd_h;
+
+    while (head->s_next->s_semAdd < p -> p_semAdd){
         head = head -> s_next;
     }
 
-    return outProcQ(&head -> s_procQ, p);
+    if(head->s_next->s_semAdd != p->p_semAdd) return NULL;
+    
+    pcb_t *toRemove = outProcQ(&(head->s_next->s_procQ), p);
+
+    if(emptyProcQ(head->s_next->s_procQ)){
+        //inserisci head in semdFree
+        semd_t* toRemove=head->s_next;
+        head->s_next=toRemove->s_next;
+        toRemove->s_next=semdFree_h;
+        semdFree_h=toRemove;
+    }
+    return toRemove;
 }
+
 
 /**
     Returns a pointer to the pcb  head of the process queue
@@ -90,13 +105,15 @@ pcb_t* headBlocked(int *semAdd){
     //NULL se semAdd is not found o se la process queue di semAdd è vuota
     //ritorna il puntatore al primo processo delle queue di semAdd
     semd_t* head=semd_h;
-    while (head->s_semAdd!=MAXINT){
-        if(head->s_semAdd==semAdd){
-            return headProcQ(head->s_procQ);
-        }
-        head=head->s_next;
+
+    while (head->s_next->s_semAdd < semAdd){
+        head = head -> s_next;
     }
-    return NULL;
+
+    if(head->s_next->s_semAdd != semAdd)
+        return NULL;
+
+    return headProcQ(head->s_next->s_procQ);
 }
 
 /**

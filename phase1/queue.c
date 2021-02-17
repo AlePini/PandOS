@@ -61,6 +61,7 @@ pcb_t* resetPcb(pcb_t* p){
     p->p_child = NULL;
     p->p_next_sib = NULL;
     p->p_prev_sib = NULL;
+    p->p_semAdd = NULL;
     return p;
 }
 
