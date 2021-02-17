@@ -1,7 +1,6 @@
 add_library(phase1 
             asl.c
-            queue.c
-            tree.c)
+            pcb.c)
 
 target_include_directories(phase1
                             PUBLIC

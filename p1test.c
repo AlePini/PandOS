@@ -15,9 +15,9 @@
 #include <pandos_const.h>
 #include <pandos_types.h>
 #include <umps3/umps/libumps.h>
+
 #include <asl.h>
-#include <queue.h>
-#include <tree.h>
+#include <pcb.h>
 
 #define MAXPROC	20
 #define	MAXSEM	MAXPROC

@@ -11,7 +11,6 @@
 int insertBlocked(int *semAdd, pcb_t *p){
 
     semd_t* head = semd_h;
-    //Assegno a p il suo semAdd, lo faccio ora per non doverlo scrivere due volte poi nell'if-else
     //Arrivo alla posizione corretta della lista dei semafori
     while(head->s_next->s_semAdd < semAdd){
         head = head->s_next;
@@ -21,6 +20,7 @@ int insertBlocked(int *semAdd, pcb_t *p){
         p->p_semAdd  = semAdd;
         insertProcQ(&head->s_next->s_procQ, p);
     }else{//Altrimenti devo allocare un nuovo semaforo con l'identificativo giusto
+        
         //Se la lista dei semafori liberi è vuota ritorno true
         if (semdFree_h == NULL) return TRUE;
         //Altrimenti ne alloco uno e lo inizializzo
@@ -28,7 +28,7 @@ int insertBlocked(int *semAdd, pcb_t *p){
         semdFree_h = semdFree_h -> s_next;
         toInsert -> s_semAdd = semAdd;
         toInsert -> s_procQ = mkEmptyProcQ();
-
+        
         p->p_semAdd  = semAdd;
         insertProcQ(&toInsert->s_procQ, p);
         //Poi lo inserisco nella lista dei semafori attivi
@@ -72,6 +72,21 @@ pcb_t* removeBlocked(int *semAdd){
     If pcb pointed by p does not appear in the process queue associated with p’s
     semaphore return NULL; otherwise, return p.
 */
+/*pcb_t* outBlocked(pcb_t *p){
+    if(p == NULL) return NULL;
+    semd_t* head = semd_h;
+
+    while (head->s_next->s_semAdd != p -> p_semAdd){
+        addokbuf("^");
+        head = head -> s_next;
+    }
+
+    addokbuf("done\n");
+
+    if(head->s_procQ == NULL) addokbuf("procQ is NULL\n");
+
+    return outProcQ(&head -> s_procQ, p);
+}*/
 pcb_t* outBlocked(pcb_t *p) {
     if (p == NULL) return NULL;
 
