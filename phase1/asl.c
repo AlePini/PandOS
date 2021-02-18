@@ -1,5 +1,13 @@
 #include <asl.h>
 
+HIDDEN pcb_t* findPrevSem(int* semAdd){
+    semd_t* head = semd_h;
+    while(head->s_next->s_semAdd < semAdd){
+        head = head->s_next;
+    }
+    return head;
+}
+
 /*
     Inserts PCB p at the tail of the process queue associated
     with the semaphore whose physical address is given.
@@ -9,18 +17,14 @@
     semdFree list is empty, return TRUE. Otherwise FALSE.
 */
 int insertBlocked(int *semAdd, pcb_t *p){
-
-    semd_t* head = semd_h;
-    //Arrivo alla posizione corretta della lista dei semafori
-    while(head->s_next->s_semAdd < semAdd){
-        head = head->s_next;
-    }
+    if (p == NULL) return FALSE;        //TODO: serve davvero?
+    semd_t* prev = findPrevSem(semAdd);
+    semd_t* next = prev->s_next;
     //Se c'è il semaforo con l'identificativo corretto inserisco il processo p
-    if(head->s_next->s_semAdd == semAdd){
+    if(next->s_semAdd == semAdd){
         p->p_semAdd  = semAdd;
-        insertProcQ(&head->s_next->s_procQ, p);
+        insertProcQ(&next->s_procQ, p);
     }else{//Altrimenti devo allocare un nuovo semaforo con l'identificativo giusto
-        
         //Se la lista dei semafori liberi è vuota ritorno true
         if (semdFree_h == NULL) return TRUE;
         //Altrimenti ne alloco uno e lo inizializzo
@@ -28,7 +32,6 @@ int insertBlocked(int *semAdd, pcb_t *p){
         semdFree_h = semdFree_h -> s_next;
         toInsert -> s_semAdd = semAdd;
         toInsert -> s_procQ = mkEmptyProcQ();
-        
         p->p_semAdd  = semAdd;
         insertProcQ(&toInsert->s_procQ, p);
         //Poi lo inserisco nella lista dei semafori attivi
@@ -47,21 +50,18 @@ pcb_t* removeBlocked(int *semAdd){
     //se non trovo il sem ritorno NULL
     //rimuovo il primo processo dalla queue del semaforo e ritorno un puntatore ad esso
     //se rimuovendo il processo la coda diventa vuota rimuovo il semaforo e lo rimetto in semdFree
-    semd_t* head=semd_h;
-    while(head->s_next->s_semAdd != MAXINT){
-        head=head->s_next;
-        if(head->s_next->s_semAdd == semAdd){
-            pcb_t* tmp = removeProcQ(&head->s_next->s_procQ);
-            if(emptyProcQ(head->s_next->s_procQ)){
-                //inserisci head in semdFree
-                semd_t* toRemove=head->s_next;
-                head->s_next=toRemove->s_next;
-                toRemove->s_semAdd = NULL;
-                toRemove->s_next=semdFree_h;
-                semdFree_h=toRemove;
-            }
-            return tmp;
+    semd_t* prev = findPrevSem(semAdd);
+    semd_t* next = prev->s_next;
+    if(head->s_next->s_semAdd == semAdd){
+        pcb_t* removed = removeProcQ(&head->s_next->s_procQ);
+        if(emptyProcQ(head->s_next->s_procQ)){
+            //inserisci head in semdFree
+            prev->s_next=next->s_next;
+            next->s_semAdd = NULL;
+            next->s_next=semdFree_h;
+            semdFree_h=next;
         }
+        return removed;
     }
     return NULL;
 }
@@ -72,40 +72,20 @@ pcb_t* removeBlocked(int *semAdd){
     If pcb pointed by p does not appear in the process queue associated with p’s
     semaphore return NULL; otherwise, return p.
 */
-/*pcb_t* outBlocked(pcb_t *p){
-    if(p == NULL) return NULL;
-    semd_t* head = semd_h;
-
-    while (head->s_next->s_semAdd != p -> p_semAdd){
-        addokbuf("^");
-        head = head -> s_next;
-    }
-
-    addokbuf("done\n");
-
-    if(head->s_procQ == NULL) addokbuf("procQ is NULL\n");
-
-    return outProcQ(&head -> s_procQ, p);
-}*/
 pcb_t* outBlocked(pcb_t *p) {
-    if (p == NULL) return NULL;
+    if (p == NULL) return NULL;//TODO: serve davvero?
 
-    semd_t* head = semd_h;
+    semd_t* prev = findPrevSem(semAdd);
+    semd_t* next = prev->s_next;
 
-    while (head->s_next->s_semAdd < p -> p_semAdd){
-        head = head -> s_next;
-    }
+    if(next->s_semAdd != p->p_semAdd) return NULL;
+    pcb_t *toRemove = outProcQ(&(next->s_procQ), p);
 
-    if(head->s_next->s_semAdd != p->p_semAdd) return NULL;
-    
-    pcb_t *toRemove = outProcQ(&(head->s_next->s_procQ), p);
-
-    if(emptyProcQ(head->s_next->s_procQ)){
+    if(emptyProcQ(next->s_procQ)){
         //inserisci head in semdFree
-        semd_t* toRemove=head->s_next;
-        head->s_next=toRemove->s_next;
-        toRemove->s_next=semdFree_h;
-        semdFree_h=toRemove;
+        prev->s_next=next->s_next;
+        next->s_next=semdFree_h;
+        semdFree_h=next;
     }
     return toRemove;
 }
@@ -119,16 +99,13 @@ pcb_t* outBlocked(pcb_t *p) {
 pcb_t* headBlocked(int *semAdd){
     //NULL se semAdd is not found o se la process queue di semAdd è vuota
     //ritorna il puntatore al primo processo delle queue di semAdd
-    semd_t* head=semd_h;
+    semd_t* prev = findPrevSem(semAdd);
+    semd_t* next = prev->s_next;
 
-    while (head->s_next->s_semAdd < semAdd){
-        head = head -> s_next;
-    }
-
-    if(head->s_next->s_semAdd != semAdd)
+    if(next->s_semAdd != semAdd)
         return NULL;
 
-    return headProcQ(head->s_next->s_procQ);
+    return headProcQ(next->s_procQ);
 }
 
 /**
