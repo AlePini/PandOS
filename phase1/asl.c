@@ -10,14 +10,6 @@ HIDDEN semd_t* findPrevSem(int* semAdd){
     return head;
 }
 
-/*
-    Inserts PCB p at the tail of the process queue associated
-    with the semaphore whose physical address is given.
-    If the semaphore is currently not active, allocate a new descriptor from
-    the semdFree list, initialize all of its fields and insert it in the ASL.
-    If a new semaphore descriptor needs to be allocated and the
-    semdFree list is empty, return TRUE. Otherwise FALSE.
-*/
 int insertBlocked(int *semAdd, pcb_t *p){
     if (p == NULL) return FALSE;        //TODO: serve davvero?
     semd_t* prev = findPrevSem(semAdd);
@@ -45,11 +37,6 @@ int insertBlocked(int *semAdd, pcb_t *p){
     return FALSE;
 }
 
-/**
-    Removes the head of the procQ associated with the semaphore of the given identifier.
-    If none is found, return NULL; otherwise, remove the first (i.e. head) pcb from
-    the process queue and return a pointer to it.
-*/
 pcb_t* removeBlocked(int *semAdd){
 
     semd_t* prev = findPrevSem(semAdd);
@@ -71,12 +58,6 @@ pcb_t* removeBlocked(int *semAdd){
     return removed;
 }
 
-/**
-    Removes the PCBb pointed by p from the process queue associated
-    with p’s semaphore.
-    If pcb pointed by p does not appear in the process queue associated with p’s
-    semaphore return NULL; otherwise, return p.
-*/
 pcb_t* outBlocked(pcb_t *p) {
 
     if (p == NULL) return NULL;//TODO: serve davvero?
@@ -99,12 +80,6 @@ pcb_t* outBlocked(pcb_t *p) {
     return toRemove;
 }
 
-
-/**
-    Returns a pointer to the pcb  head of the process queue
-    associated with the given semaphore. Returns NULL if semAdd is
-    not found or if its process is empty.
- */
 pcb_t* headBlocked(int *semAdd){
     semd_t* prev = findPrevSem(semAdd);
     semd_t* next = prev->s_next;
@@ -115,9 +90,7 @@ pcb_t* headBlocked(int *semAdd){
     return headProcQ(next->s_procQ);
 }
 
-/**
-    Initializes the semdFree list.
-*/
+
 void initASL(){
 
     //Parto aggiungendo i due semafori extra nella lista di quelli attivi
