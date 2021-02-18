@@ -2,7 +2,7 @@
 
 //---------- QUEUE ----------
 
-//dato che i pcb nella lista libera son tutti uguali a me basta trattarla come una pila
+//Since the pcb in the free list are all the same, considers the list as a stack.
 /**
  * @brief 
  * 
@@ -46,7 +46,7 @@ int emptyProcQ(pcb_t *tp){
 
 void insertProcQ(pcb_t **tp, pcb_t *p){
 
-    //Se tp ==  NULL vuol dire che non esiste la lista di conseguenza dopo ci sarà solo p
+    //If tp == NULL, the list does not exist therefore there will be only p.
     if(*tp == NULL){
         *tp = p;
         p->p_prev = p;
@@ -54,29 +54,29 @@ void insertProcQ(pcb_t **tp, pcb_t *p){
         return;
     }
 
-    p->p_prev=*tp;                  //Il precedente di p diventa tp
-    p->p_next = (*tp)->p_next;      //il prossimo di p sarà quello che era il next di tp
-    p->p_prev->p_next = p;          //p->p_prev è tp. il next di tp diventa p.
-    p->p_next->p_prev = p;          //il next di p è il primo. Il prev del primo è p
-    *tp = p;                        //sposto tp su p
+    p->p_prev=*tp;                  //The prev of p becomes tp.
+    p->p_next = (*tp)->p_next;      //The next of p will be the one which was the next of tp.
+    p->p_prev->p_next = p;          //p->p_prev is tp. The next of tp becomes p.
+    p->p_next->p_prev = p;          //The next of p is the first. The prev of the first is p.
+    *tp = p;                        //Moves tp in p.
 }
 
 pcb_t* removeProcQ(pcb_t **tp){
-    if(*tp==NULL) return NULL; //se la coda è vuota ritorna NULL
-    //altrimenti elimina il primo elemento e ritorna il puntatore ad esso
+    if(*tp==NULL) return NULL; //If the queue is empty returns NULL.
+    //Otherwise deletes the first element and returns the pointer at him.
     else{
-        //prendo il primo elemento della coda
+        //Takes the first element of the queue.
         pcb_t *head = (*tp)->p_next;
-        //Se la lista è composta da un solo elemento
+        //If the list has a single element.
         if(head->p_next==head){
             *tp=NULL;
         }else{
-            //rendo il secondo elemento della lista il nuovo primo
+            //Makes the second element of the list the new first.
             (*tp)->p_next = head->p_next;
             head->p_next->p_prev = (*tp);
 
         }
-        //rendo prev e next null e ritorno l'elemento rimosso
+        //Makes prev and next NULL and returns the deleted element.
         head->p_next=NULL;
         head->p_prev=NULL;
         return head;
@@ -85,25 +85,25 @@ pcb_t* removeProcQ(pcb_t **tp){
 
 pcb_t *outProcQ(pcb_t **tp, pcb_t *p){
     if(*tp == NULL || p == NULL) return NULL;
-    //Se p è l'elemento in coda
+    //If p is the element in queue.
     if(*tp == p){
-        //Se la coda ha un solo elemento
+        //If the queue has a single element.
         if((*tp)->p_next == *tp){
             *tp = NULL;
             return p;
         }
-        //Se l'elemento è quello che si trova in coda
+        //If the element is the one at the end of the queue.
         (*tp)->p_prev->p_next = (*tp)->p_next;
         (*tp)->p_next->p_prev = (*tp)->p_prev;
         (*tp)=(*tp)->p_prev;
         return p;
     }
-    //Se l'elemento si trova all'interno della lista
+    //If the element is inside the list.
     else{
-        //Prendo la testa e scorro finchè non torno in coda
+        //Takes the head and slide until i reach the end of the list.
         pcb_t* head = (*tp)->p_next;
         while(head != (*tp)){
-            //Se lo trovo
+            //If it is found.
             if(head == p){
                 head->p_prev->p_next = head->p_next;
                 head->p_next->p_prev = head->p_prev;
@@ -142,9 +142,9 @@ int emptyChild(pcb_t *p){
 
 void insertChild(pcb_t *prnt, pcb_t *p){
 
-    //inserisco p come figlio di prnt se non è vuoto
+    //Inserts p as a child of prnt if is not empty.
     if(p!=NULL){
-        if(prnt->p_child==NULL){//se prnt non ha figli inserisco p come figlio
+        if(prnt->p_child==NULL){//If prnt has no child inserts p as one.
             prnt->p_child=p;
             p->p_prnt=prnt;
         }else{
@@ -159,11 +159,11 @@ void insertChild(pcb_t *prnt, pcb_t *p){
 pcb_t* removeChild(pcb_t *p){
     if(p==NULL || p->p_child==NULL) return NULL;
 
-    //individuo il primo filgio di p
-    pcb_t* son=p->p_child;
-    if(son->p_next_sib==NULL){  // è figlio unico
+    //Identify the first child of p.
+        pcb_t* son=p->p_child;
+    if(son->p_next_sib==NULL){  //It's a only child.
         p->p_child=NULL;
-    }else{                      //ha almeno 1 fratello
+    }else{                      //Has at least one brother.
         p->p_child=son->p_next_sib;
         p->p_child->p_prev_sib=NULL;
     }
@@ -175,19 +175,20 @@ pcb_t *outChild(pcb_t *p){
     if (p->p_prnt==NULL)
         return NULL;
 
-    //Se p non ha un fratello sinistro allora è il primo figlio del suo parent, sfrutto removeChild.
+    //If p has no left brother than it's the first of his parent, uses removechild.
     if (p->p_prev_sib == NULL)
         return removeChild(p->p_prnt);
 
-    //Elimino p dalla lista dai fratelli
+    //Delete p from the brothers' list.
     p->p_prev_sib->p_next_sib=p->p_next_sib;
-    //Solo se p non è l'ultimo fratello della lista devo far si che il fratello sinistro di p diventi il fratello sinistro del fratello destro di p.
+    //If p is not the last brother of the list,
+    //the left brother of p becomes the left brother of the right brother of p.
     if(p->p_next_sib != NULL )  p->p_next_sib->p_prev_sib=p->p_prev_sib;
 
     return trim(p);
 }
 
-//Questa funzione rimuove il nodo dall'albero
+//This funcion removes the node from the tree.
 pcb_t* trim(pcb_t *p){
     p->p_child = NULL;
     p->p_next_sib=NULL;

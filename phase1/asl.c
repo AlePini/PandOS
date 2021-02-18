@@ -1,7 +1,7 @@
 #include <asl.h>
 
-//Questa funzione prende in input un semAdd e ritorna il semaforo con
-//l'identificativo di valore massimo ma minore di quello passato come argomento
+//This function takes in input a semAdd and return the semaphore with
+//the identifier of maximum value but lower than the one given as argument.
 HIDDEN semd_t* findPrevSem(int* semAdd){
     semd_t* head = semd_h;
     while(head->s_next->s_semAdd < semAdd){
@@ -14,23 +14,23 @@ int insertBlocked(int *semAdd, pcb_t *p){
     if (p == NULL) return FALSE;        //TODO: serve davvero?
     semd_t* prev = findPrevSem(semAdd);
     semd_t* next = prev->s_next;
-    //Se c'è il semaforo con l'identificativo corretto inserisco il processo p
+    //If there's the semaphore with the correct identifier inserts the process p.
     if(next->s_semAdd == semAdd){
         p->p_semAdd  = semAdd;
         insertProcQ(&next->s_procQ, p);
     }
-    //Altrimenti devo allocare un nuovo semaforo con l'identificativo giusto
+    //Otherwise it has to allocate a new semaphore with the right identifier.
     else{
-        //Se la lista dei semafori liberi è vuota ritorno true
+        //If the list of the free semaphores is empty returns true.
         if (semdFree_h == NULL) return TRUE;
-        //Altrimenti ne alloco uno e lo inizializzo
+        //Otherwise allocates and initializes one.
         semd_t* toInsert = semdFree_h;
         semdFree_h = semdFree_h -> s_next;
         toInsert -> s_semAdd = semAdd;
         toInsert -> s_procQ = mkEmptyProcQ();
         p->p_semAdd  = semAdd;
         insertProcQ(&toInsert->s_procQ, p);
-        //Poi lo inserisco nella lista dei semafori attivi
+        //Then inserts it in the list of the actives semaphores.
         toInsert -> s_next = prev-> s_next;
         prev -> s_next = toInsert;
     }
@@ -42,14 +42,14 @@ pcb_t* removeBlocked(int *semAdd){
     semd_t* prev = findPrevSem(semAdd);
     semd_t* next = prev->s_next;
 
-    //Se il semaforo che cerco non è presente ritorno NULL
+    //If the semaphore the function is looking for is not there returns NULL.
     if(next->s_semAdd != semAdd) return NULL;
 
-    //Altrimenti rimuovo la testa della coda dei processi
+    //Otherwise removes the head of the queue of the processes.
     pcb_t* removed = removeProcQ(&next->s_procQ);
-    //Se facendolo la coda dei processi diventa vuota vado a deallocare il semaforo
+    //If by doing so the processes' queue becomes empty, deallocates the semaphore.
     if(emptyProcQ(next->s_procQ)){
-        //ritorno il semaforo vuoto alla semdFree
+        //Returns the empty semaphore to the semdFree.
         prev->s_next=next->s_next;
         next->s_semAdd = NULL;
         next->s_next=semdFree_h;
@@ -58,20 +58,29 @@ pcb_t* removeBlocked(int *semAdd){
     return removed;
 }
 
+<<<<<<< HEAD
+=======
+/**
+    Removes the PCBb pointed by p from the process queue associated
+    with p’s semaphore.
+    If pcb pointed by p does not appear in the processes' queue associated with p’s
+    semaphore return NULL; otherwise, returns p.
+*/
+>>>>>>> 8c5d8613e0abccdf2d4169666a80ee1b26e1452a
 pcb_t* outBlocked(pcb_t *p) {
 
     if (p == NULL) return NULL;//TODO: serve davvero?
     semd_t* prev = findPrevSem(p->p_semAdd);
     semd_t* next = prev->s_next;
 
-    //Se il semaforo che cerco non è presente ritorno NULL
-    if(next->s_semAdd != p->p_semAdd) return NULL;
+    //If the semaphore is not there returns NULL.
+        if(next->s_semAdd != p->p_semAdd) return NULL;
 
-    //Altrimenti ne estraggo p dalla coda dei processi
+    //Otherwise removes p from the processes' queue.
     pcb_t *toRemove = outProcQ(&(next->s_procQ), p);
-    //Se facendolo la coda dei processi diventa vuota vado a deallocare il semaforo
+    //If by doing so the processes' queue becomes empty, deallocates the semaphores.
     if(emptyProcQ(next->s_procQ)){
-        //ritorno il semaforo vuoto alla semdFree
+        //Returns the empty semaphores to the semdFree.
         prev->s_next=next->s_next;
         next->s_semAdd = NULL;
         next->s_next=semdFree_h;
@@ -80,38 +89,47 @@ pcb_t* outBlocked(pcb_t *p) {
     return toRemove;
 }
 
+<<<<<<< HEAD
+=======
+
+/**
+    Returns a pointer to the pcb  head of the processes' queue
+    associated with the given semaphore. Returns NULL if semAdd is
+    not found or if its process is empty.
+ */
+>>>>>>> 8c5d8613e0abccdf2d4169666a80ee1b26e1452a
 pcb_t* headBlocked(int *semAdd){
     semd_t* prev = findPrevSem(semAdd);
     semd_t* next = prev->s_next;
-    //Se il semaforo che cerco non è presente ritorno NULL
+    //If the semaphores is not there returns NULL.
     if(next->s_semAdd != semAdd)
         return NULL;
-    //Altrimenti ne ritorno la testa della coda dei processi
+    //Otherwise returns the head of the processes' queue.
     return headProcQ(next->s_procQ);
 }
 
 
 void initASL(){
 
-    //Parto aggiungendo i due semafori extra nella lista di quelli attivi
-    //Quello con identificativo pari a MINSEM che è il primo della table
+    //Adds the two extra sempaphores of the actives ones' list.
+    //The one with the identifier = MININT which is the first of the table.
     semd_h = &semd_table[0];
     semd_h -> s_semAdd = MININT;
-    //E quello con identificativo pari a MAXINT che è il secondo della table
+    //The one with the identifier = MAXINT which is the second of the table.
     semd_h ->s_next = &semd_table[1];
     semd_h ->s_next->s_semAdd = MAXINT;
-    //La faccio terminare con NULL
+    //Ends with NULL.
     semd_h->s_next->s_next = NULL;
 
     //Associo alla lista dei semafori liberi al primo disponibile nella table
     semdFree_h = &semd_table[2];
     semd_t* tmp = semdFree_h;
-    //Aggiungo alla lista semdFree tutti gli altri fino ad averne un numero pari a MAXPROC
+    //Adds to the semdFree list all the other semaphores until their number is equal to MAXPROC.
     for(int i=3; i<MAXSEM; i++){
         tmp->s_next = &semd_table[i];
         tmp = tmp->s_next;
     }
-    //La faccio terminare con NULL
+    //Ends with NULL.
     tmp->s_next = NULL;
 }
 

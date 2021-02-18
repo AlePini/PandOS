@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include <umps3/umps/types.h>
-#include "pandos_const.h"
+#include <pandos_const.h>
 
 typedef signed int cpu_t;
 typedef unsigned int memaddr;
