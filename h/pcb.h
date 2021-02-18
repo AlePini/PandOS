@@ -1,8 +1,8 @@
 #ifndef PCB_H_INCLUDED
 #define PCB_H_INCLUDED
 
-#include "pandos_types.h"
-#include "pandos_const.h"
+#include <pandos_types.h>
+#include <pandos_const.h>
 
 /***************************************
 *

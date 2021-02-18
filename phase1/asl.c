@@ -1,8 +1,8 @@
 #include <asl.h>
 
-//This function takes in input a semAdd and return the semaphore with
-//the identifier of maximum value but lower than the one given as argument.
+
 HIDDEN semd_t* findPrevSem(int* semAdd){
+    //Scan the ASL until the next semaphore identifier is bigger than semAdd
     semd_t* head = semd_h;
     while(head->s_next->s_semAdd < semAdd){
         head = head->s_next;
@@ -58,24 +58,6 @@ pcb_t* removeBlocked(int *semAdd){
     return removed;
 }
 
-<<<<<<< HEAD
-=======
-/**
-    Removes the PCBb pointed by p from the process queue associated
-    with p’s semaphore.
-    If pcb pointed by p does not appear in the processes' queue associated with p’s
-    semaphore return NULL; otherwise, returns p.
-*/
->>>>>>> 8c5d8613e0abccdf2d4169666a80ee1b26e1452a
-pcb_t* outBlocked(pcb_t *p) {
-
-    if (p == NULL) return NULL;//TODO: serve davvero?
-    semd_t* prev = findPrevSem(p->p_semAdd);
-    semd_t* next = prev->s_next;
-
-    //If the semaphore is not there returns NULL.
-        if(next->s_semAdd != p->p_semAdd) return NULL;
-
     //Otherwise removes p from the processes' queue.
     pcb_t *toRemove = outProcQ(&(next->s_procQ), p);
     //If by doing so the processes' queue becomes empty, deallocates the semaphores.
@@ -89,15 +71,6 @@ pcb_t* outBlocked(pcb_t *p) {
     return toRemove;
 }
 
-<<<<<<< HEAD
-=======
-
-/**
-    Returns a pointer to the pcb  head of the processes' queue
-    associated with the given semaphore. Returns NULL if semAdd is
-    not found or if its process is empty.
- */
->>>>>>> 8c5d8613e0abccdf2d4169666a80ee1b26e1452a
 pcb_t* headBlocked(int *semAdd){
     semd_t* prev = findPrevSem(semAdd);
     semd_t* next = prev->s_next;
