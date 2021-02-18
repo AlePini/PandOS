@@ -1,6 +1,15 @@
 #ifndef PCB_H_INCLUDED
 #define PCB_H_INCLUDED
 
+/**
+ * @file    PCB
+ * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
+ * @brief   Process Control Block methods.
+ * @version 0.1
+ * @date 2021-02-18
+ *
+ */
+
 #include <pandos_types.h>
 #include <pandos_const.h>
 
@@ -33,11 +42,11 @@ pcb_t *headProcQ(pcb_t *tp);
 
 HIDDEN pcb_t* resetPcb(pcb_t* p);
 
-/*****************************
+/****************************************
 *
-* Definitions of Process Tree
+* Definitions of Process Tree functions
 *
-******************************/
+****************************************/
 
 int emptyChild(pcb_t *p);
 

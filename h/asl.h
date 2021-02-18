@@ -1,6 +1,16 @@
 #ifndef SEMAPHORE_H_INCLUDED
 #define SEMAPHORE_H_INCLUDED
 
+/**
+ * @file    ASL
+ * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
+ * @brief   Active Semaphore List methods.
+ * @version 0.1
+ * @date 2021-02-18
+ *
+ */
+
+
 /****************************************************************************
  *
  * This header file contains definition of Active Semaphore List.

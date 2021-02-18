@@ -1,6 +1,10 @@
 #include <pcb.h>
 
-//---------- QUEUE ----------
+/********************************************
+*
+* Implementation of Queue Manager functions
+*
+*********************************************/
 
 //Since the pcb in the free list are all the same, considers the list as a stack.
 /**
@@ -131,7 +135,11 @@ HIDDEN pcb_t* resetPcb(pcb_t* p){
     return p;
 }
 
-//---------- TREE ----------
+/********************************************
+*
+* Implementation of Process Tree functions
+*
+*********************************************/
 
 //IMPORTANTE SPECIFICARE CHE LA LISTA DEI FIGLI SIA DOPPIA MA NON CIRCOLARE
 
