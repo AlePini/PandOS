@@ -2,7 +2,7 @@
 
 //Questa funzione prende in input un semAdd e ritorna il semaforo con
 //l'identificativo di valore massimo ma minore di quello passato come argomento
-HIDDEN pcb_t* findPrevSem(int* semAdd){
+HIDDEN semd_t* findPrevSem(int* semAdd){
     semd_t* head = semd_h;
     while(head->s_next->s_semAdd < semAdd){
         head = head->s_next;
@@ -59,7 +59,7 @@ pcb_t* removeBlocked(int *semAdd){
     if(next->s_semAdd != semAdd) return NULL;
 
     //Altrimenti rimuovo la testa della coda dei processi
-    pcb_t* removed = removeProcQ(&head->s_next->s_procQ);
+    pcb_t* removed = removeProcQ(&next->s_procQ);
     //Se facendolo la coda dei processi diventa vuota vado a deallocare il semaforo
     if(emptyProcQ(next->s_procQ)){
         //ritorno il semaforo vuoto alla semdFree
@@ -80,7 +80,7 @@ pcb_t* removeBlocked(int *semAdd){
 pcb_t* outBlocked(pcb_t *p) {
 
     if (p == NULL) return NULL;//TODO: serve davvero?
-    semd_t* prev = findPrevSem(semAdd);
+    semd_t* prev = findPrevSem(p->p_semAdd);
     semd_t* next = prev->s_next;
 
     //Se il semaforo che cerco non è presente ritorno NULL
@@ -127,10 +127,8 @@ void initASL(){
     //E quello con identificativo pari a MAXINT che è il secondo della table
     semd_h ->s_next = &semd_table[1];
     semd_h ->s_next->s_semAdd = MAXINT;
-
-    //TODO: se non vanno i testi prima di tutto scommenta queste due e riprova
     //La faccio terminare con NULL
-    //semd_h->s_next->s_next = NULL;
+    semd_h->s_next->s_next = NULL;
 
     //Associo alla lista dei semafori liberi al primo disponibile nella table
     semdFree_h = &semd_table[2];
@@ -140,9 +138,8 @@ void initASL(){
         tmp->s_next = &semd_table[i];
         tmp = tmp->s_next;
     }
-    //TODO: se non vanno i testi prima di tutto scommenta queste due e riprova
     //La faccio terminare con NULL
-    //tmp->s_next = NULL;
+    tmp->s_next = NULL;
 }
 
 

@@ -6,14 +6,12 @@
 
 /***************************************
 *
-* Definitions of Queue Manager actions
+* Definitions of Queue Manager functions
 *
 ****************************************/
 
 HIDDEN pcb_t pcbFree_table[MAXPROC];
 HIDDEN pcb_t *pcbFree_h;
-
-// FUNZIONI DA IMPLEMENTARE PER PANDOS
 
 void freePcb(pcb_t *p);
 
@@ -33,17 +31,7 @@ pcb_t *outProcQ(pcb_t **tp, pcb_t *p);
 
 pcb_t *headProcQ(pcb_t *tp);
 
-// FUNZIONI AUSILIARIE PER IMPLEMENTARE LE ALTRE
-
-pcb_t* resetPcb(pcb_t* p);
-
-void head_insert(pcb_t* blist,pcb_t* elem);
-
-void tail_insert(pcb_t* blist, pcb_t* elem);
-
-void printList(pcb_t* lhead, int limit);
-
-void reversePrintList(pcb_t* lhead, int limit);
+HIDDEN pcb_t* resetPcb(pcb_t* p);
 
 /*****************************
 *

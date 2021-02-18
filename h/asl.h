@@ -14,6 +14,8 @@ HIDDEN semd_t semd_table[MAXSEM];
 HIDDEN semd_t* semdFree_h;
 HIDDEN semd_t* semd_h;
 
+HIDDEN semd_t* findPrevSem(int* semAdd);
+
 int insertBlocked(int *semAdd,pcb_t *p);
 
 pcb_t* removeBlocked(int *semAdd);

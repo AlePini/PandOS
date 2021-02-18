@@ -3,6 +3,11 @@
 //---------- QUEUE ----------
 
 //dato che i pcb nella lista libera son tutti uguali a me basta trattarla come una pila
+/**
+ * @brief 
+ * 
+ * @param p 
+ */
 void freePcb(pcb_t* p){
     p->p_next=pcbFree_h;
     pcbFree_h=p;
@@ -110,13 +115,12 @@ pcb_t *outProcQ(pcb_t **tp, pcb_t *p){
     }
 }
 
-//TODO: ricontrolla
 pcb_t *headProcQ(pcb_t *tp){
     if(tp == NULL) return NULL;
     return tp->p_next;
 }
 
-pcb_t* resetPcb(pcb_t* p){
+HIDDEN pcb_t* resetPcb(pcb_t* p){
     p->p_next = NULL;
     p->p_prev = NULL;
     p->p_prnt = NULL;
