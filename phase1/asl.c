@@ -1,5 +1,7 @@
 #include <asl.h>
 
+//Questa funzione prende in input un semAdd e ritorna il semaforo con
+//l'identificativo di valore massimo ma minore di quello passato come argomento
 HIDDEN pcb_t* findPrevSem(int* semAdd){
     semd_t* head = semd_h;
     while(head->s_next->s_semAdd < semAdd){
@@ -24,7 +26,9 @@ int insertBlocked(int *semAdd, pcb_t *p){
     if(next->s_semAdd == semAdd){
         p->p_semAdd  = semAdd;
         insertProcQ(&next->s_procQ, p);
-    }else{//Altrimenti devo allocare un nuovo semaforo con l'identificativo giusto
+    }
+    //Altrimenti devo allocare un nuovo semaforo con l'identificativo giusto
+    else{
         //Se la lista dei semafori liberi è vuota ritorno true
         if (semdFree_h == NULL) return TRUE;
         //Altrimenti ne alloco uno e lo inizializzo
@@ -35,8 +39,8 @@ int insertBlocked(int *semAdd, pcb_t *p){
         p->p_semAdd  = semAdd;
         insertProcQ(&toInsert->s_procQ, p);
         //Poi lo inserisco nella lista dei semafori attivi
-        toInsert -> s_next = head-> s_next;
-        head -> s_next = toInsert;
+        toInsert -> s_next = prev-> s_next;
+        prev -> s_next = toInsert;
     }
     return FALSE;
 }
@@ -47,23 +51,24 @@ int insertBlocked(int *semAdd, pcb_t *p){
     the process queue and return a pointer to it.
 */
 pcb_t* removeBlocked(int *semAdd){
-    //se non trovo il sem ritorno NULL
-    //rimuovo il primo processo dalla queue del semaforo e ritorno un puntatore ad esso
-    //se rimuovendo il processo la coda diventa vuota rimuovo il semaforo e lo rimetto in semdFree
+
     semd_t* prev = findPrevSem(semAdd);
     semd_t* next = prev->s_next;
-    if(head->s_next->s_semAdd == semAdd){
-        pcb_t* removed = removeProcQ(&head->s_next->s_procQ);
-        if(emptyProcQ(head->s_next->s_procQ)){
-            //inserisci head in semdFree
-            prev->s_next=next->s_next;
-            next->s_semAdd = NULL;
-            next->s_next=semdFree_h;
-            semdFree_h=next;
-        }
-        return removed;
+
+    //Se il semaforo che cerco non è presente ritorno NULL
+    if(next->s_semAdd != semAdd) return NULL;
+
+    //Altrimenti rimuovo la testa della coda dei processi
+    pcb_t* removed = removeProcQ(&head->s_next->s_procQ);
+    //Se facendolo la coda dei processi diventa vuota vado a deallocare il semaforo
+    if(emptyProcQ(next->s_procQ)){
+        //ritorno il semaforo vuoto alla semdFree
+        prev->s_next=next->s_next;
+        next->s_semAdd = NULL;
+        next->s_next=semdFree_h;
+        semdFree_h=next;
     }
-    return NULL;
+    return removed;
 }
 
 /**
@@ -73,17 +78,21 @@ pcb_t* removeBlocked(int *semAdd){
     semaphore return NULL; otherwise, return p.
 */
 pcb_t* outBlocked(pcb_t *p) {
-    if (p == NULL) return NULL;//TODO: serve davvero?
 
+    if (p == NULL) return NULL;//TODO: serve davvero?
     semd_t* prev = findPrevSem(semAdd);
     semd_t* next = prev->s_next;
 
+    //Se il semaforo che cerco non è presente ritorno NULL
     if(next->s_semAdd != p->p_semAdd) return NULL;
-    pcb_t *toRemove = outProcQ(&(next->s_procQ), p);
 
+    //Altrimenti ne estraggo p dalla coda dei processi
+    pcb_t *toRemove = outProcQ(&(next->s_procQ), p);
+    //Se facendolo la coda dei processi diventa vuota vado a deallocare il semaforo
     if(emptyProcQ(next->s_procQ)){
-        //inserisci head in semdFree
+        //ritorno il semaforo vuoto alla semdFree
         prev->s_next=next->s_next;
+        next->s_semAdd = NULL;
         next->s_next=semdFree_h;
         semdFree_h=next;
     }
@@ -97,14 +106,12 @@ pcb_t* outBlocked(pcb_t *p) {
     not found or if its process is empty.
  */
 pcb_t* headBlocked(int *semAdd){
-    //NULL se semAdd is not found o se la process queue di semAdd è vuota
-    //ritorna il puntatore al primo processo delle queue di semAdd
     semd_t* prev = findPrevSem(semAdd);
     semd_t* next = prev->s_next;
-
+    //Se il semaforo che cerco non è presente ritorno NULL
     if(next->s_semAdd != semAdd)
         return NULL;
-
+    //Altrimenti ne ritorno la testa della coda dei processi
     return headProcQ(next->s_procQ);
 }
 
@@ -117,13 +124,13 @@ void initASL(){
     //Quello con identificativo pari a MINSEM che è il primo della table
     semd_h = &semd_table[0];
     semd_h -> s_semAdd = MININT;
-    semd_h -> s_procQ = NULL;
     //E quello con identificativo pari a MAXINT che è il secondo della table
     semd_h ->s_next = &semd_table[1];
     semd_h ->s_next->s_semAdd = MAXINT;
-    semd_h ->s_next->s_procQ = NULL;
+
+    //TODO: se non vanno i testi prima di tutto scommenta queste due e riprova
     //La faccio terminare con NULL
-    semd_h->s_next->s_next = NULL;
+    //semd_h->s_next->s_next = NULL;
 
     //Associo alla lista dei semafori liberi al primo disponibile nella table
     semdFree_h = &semd_table[2];
@@ -133,8 +140,9 @@ void initASL(){
         tmp->s_next = &semd_table[i];
         tmp = tmp->s_next;
     }
+    //TODO: se non vanno i testi prima di tutto scommenta queste due e riprova
     //La faccio terminare con NULL
-    tmp->s_next = NULL;
+    //tmp->s_next = NULL;
 }
 
 
