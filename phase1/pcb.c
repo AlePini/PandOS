@@ -5,8 +5,6 @@
 * Implementation of Queue Manager functions
 *
 *********************************************/
-//TODO: per la doc
-//Since the pcb in the free list are all the same, considers the list as a stack.
 
 HIDDEN pcb_t* resetPcb(pcb_t* p){
     p->p_next = NULL;
