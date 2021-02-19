@@ -7,14 +7,14 @@ include(GNUInstallDirs)
 # Set UMPS3 Dirs
 find_program(UMPS3 umps3)
 
-# If you have umps3 installed on some weird location, set UMPS3_DIR_PREFIX by hand.
-if(UMPS3)
-    set(UMPS3_DIR_PREFIX /usr)
+if(NOT UMPS3)
+    message(FATAL_ERROR "UMPS3 not found.")
 endif()
 
-set(UMPS3_INCLUDE_DIR ${UMPS3_DIR_PREFIX}/include)
-set(UMPS3_DATA_DIR ${UMPS3_DIR_PREFIX}/share/umps3)
-set(UMPS3_LIB_DIR ${UMPS3_DIR_PREFIX}/lib/umps3)
+# If you have umps3 installed on some weird location, set CMAKE_INSTALL_PREFIX by hand.
+set(UMPS3_INCLUDE_DIR ${CMAKE_INSTALL_FULL_INCLUDEDIR})
+set(UMPS3_DATA_DIR ${CMAKE_INSTALL_FULL_DATADIR}/umps3)
+set(UMPS3_LIB_DIR ${CMAKE_INSTALL_FULL_LIBDIR}/umps3)
 
 # Compiler and linker setup
 set(CMAKE_C_COMPILER mipsel-linux-gnu-gcc)
