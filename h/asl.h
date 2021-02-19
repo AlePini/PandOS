@@ -11,11 +11,11 @@
  */
 
 
-/****************************************************************************
+/*************************************************
  *
- * This header file contains definition of Active Semaphore List.
+ * Definition of Active Semaphore List functions.
  *
- ***************************************************************************/
+ *************************************************/
 #include <pandos_const.h>
 #include <pandos_types.h>
 #include <pcb.h>
