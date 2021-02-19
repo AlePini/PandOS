@@ -26,22 +26,18 @@ typedef struct pcb_t {
 					*p_prev_sib;					/* ptr to prev. sibling			*/
 
 	/* process status information */
-	state_t p_s; /* processor state */
-	cpu_t p_time; /* cpu time used by proc */
-	int *p_semAdd; /* ptr to semaphore on which proc is blocked */
-
-	//support_t *p_supportStruct; /* support layer information */
+	state_t p_s; 									/* processor state */
+	cpu_t p_time; 									/* cpu time used by proc */
+	int *p_semAdd; 									/* ptr to semaphore on which proc is blocked */
 } pcb_t, *pcb_PTR;
 
 typedef struct semd_t {
-    /* ptr to next element on queue */
-    struct semd_t *s_next;
 
-    /* ptr to the semaphore */
-    int *s_semAdd;  //(semaphore key)
+    struct semd_t *s_next;							/* ptr to next element on queue */
 
-    /* ptr to tail of the queue of procs. blocked on this sem. */
-    pcb_PTR s_procQ;
+    int *s_semAdd;  								/* ptr to the semaphore */
+
+    pcb_PTR s_procQ;								/* ptr to tail of the queue of procs. blocked on this sem. */
 
 } semd_t, *semd_PTR;
 

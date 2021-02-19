@@ -5,13 +5,20 @@
 * Implementation of Queue Manager functions
 *
 *********************************************/
-
+//TODO: per la doc
 //Since the pcb in the free list are all the same, considers the list as a stack.
-/**
- * @brief 
- * 
- * @param p 
- */
+
+HIDDEN pcb_t* resetPcb(pcb_t* p){
+    p->p_next = NULL;
+    p->p_prev = NULL;
+    p->p_prnt = NULL;
+    p->p_child = NULL;
+    p->p_next_sib = NULL;
+    p->p_prev_sib = NULL;
+    p->p_semAdd = NULL;
+    return p;
+}
+
 void freePcb(pcb_t* p){
     p->p_next=pcbFree_h;
     pcbFree_h=p;
@@ -19,23 +26,24 @@ void freePcb(pcb_t* p){
 
 pcb_t* allocPcb(){
     if(pcbFree_h == NULL) return NULL;
+    //Takes and returns a pcb_t from the pcbFree
     pcb_t* toAlloc = pcbFree_h;
     pcbFree_h = pcbFree_h->p_next;
     return resetPcb(toAlloc);
 }
 
 void initPcbs(){
-
+    //pcbFree points to the first element of the table
     pcbFree_h = &pcbFree_table[0];
-
+    //Use tmp to cycle to don't lose the head
     pcb_t* tmp = pcbFree_h;
-
+    //Adds all the other elements
     for(int i = 1; i < MAXPROC; i++){
 
         tmp -> p_next = &pcbFree_table[i];
         tmp = tmp-> p_next;
     }
-
+    //Ending with NULL
     tmp -> p_next = NULL;
 }
 
@@ -89,7 +97,7 @@ pcb_t* removeProcQ(pcb_t **tp){
 
 pcb_t *outProcQ(pcb_t **tp, pcb_t *p){
     if(*tp == NULL || p == NULL) return NULL;
-    //If p is the element in queue.
+    //If p is the tail element of the queue.
     if(*tp == p){
         //If the queue has a single element.
         if((*tp)->p_next == *tp){
@@ -121,41 +129,42 @@ pcb_t *outProcQ(pcb_t **tp, pcb_t *p){
 
 pcb_t *headProcQ(pcb_t *tp){
     if(tp == NULL) return NULL;
+    //Returns the head of the queue
     return tp->p_next;
 }
 
-HIDDEN pcb_t* resetPcb(pcb_t* p){
-    p->p_next = NULL;
-    p->p_prev = NULL;
-    p->p_prnt = NULL;
-    p->p_child = NULL;
-    p->p_next_sib = NULL;
-    p->p_prev_sib = NULL;
-    p->p_semAdd = NULL;
-    return p;
-}
+
 
 /********************************************
 *
 * Implementation of Process Tree functions
 *
 *********************************************/
-
+//TODO: per la doc
 //IMPORTANTE SPECIFICARE CHE LA LISTA DEI FIGLI SIA DOPPIA MA NON CIRCOLARE
 
+HIDDEN pcb_t* trim(pcb_t *p){
+    p->p_child = NULL;
+    p->p_next_sib=NULL;
+    p->p_prev_sib=NULL;
+    p->p_prnt=NULL;
+    return p;
+}
+
 int emptyChild(pcb_t *p){
-    if (p->p_child == NULL) return TRUE;
-    return FALSE;
+    return p->p_child == NULL;
 }
 
 void insertChild(pcb_t *prnt, pcb_t *p){
-
-    //Inserts p as a child of prnt if is not empty.
+    //Inserts p as a child of prnt if is not NULL.
     if(p!=NULL){
-        if(prnt->p_child==NULL){//If prnt has no child inserts p as one.
+        //If prnt has no child just inserts.
+        if(prnt->p_child==NULL){
             prnt->p_child=p;
             p->p_prnt=prnt;
-        }else{
+        }
+        //Otherwise handles also the sibilings
+        else{
             p->p_next_sib = prnt->p_child;
             prnt->p_child->p_prev_sib=p;
             prnt->p_child = p;
@@ -168,14 +177,13 @@ pcb_t* removeChild(pcb_t *p){
     if(p==NULL || p->p_child==NULL) return NULL;
 
     //Identify the first child of p.
-        pcb_t* son=p->p_child;
+    pcb_t* son=p->p_child;
     if(son->p_next_sib==NULL){  //It's a only child.
         p->p_child=NULL;
     }else{                      //Has at least one brother.
         p->p_child=son->p_next_sib;
         p->p_child->p_prev_sib=NULL;
     }
-
     return trim(son);
 }
 
@@ -196,11 +204,3 @@ pcb_t *outChild(pcb_t *p){
     return trim(p);
 }
 
-//This funcion removes the node from the tree.
-pcb_t* trim(pcb_t *p){
-    p->p_child = NULL;
-    p->p_next_sib=NULL;
-    p->p_prev_sib=NULL;
-    p->p_prnt=NULL;
-    return p;
-}

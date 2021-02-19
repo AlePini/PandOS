@@ -22,6 +22,8 @@
 HIDDEN pcb_t pcbFree_table[MAXPROC];
 HIDDEN pcb_t *pcbFree_h;
 
+HIDDEN pcb_t* resetPcb(pcb_t* p);
+
 void freePcb(pcb_t *p);
 
 pcb_t *allocPcb();
@@ -40,13 +42,21 @@ pcb_t *outProcQ(pcb_t **tp, pcb_t *p);
 
 pcb_t *headProcQ(pcb_t *tp);
 
-HIDDEN pcb_t* resetPcb(pcb_t* p);
+
 
 /****************************************
 *
 * Definitions of Process Tree functions
 *
 ****************************************/
+
+/**
+ * @brief This funcion takes as input a pointer to a PCB who has
+ * to be removed from his tree.
+ * @param p The pcb pointer that has to be removed from his tree
+ * @return the pointer to the PCB whose fields have been set to NULL
+ */
+HIDDEN pcb_t* trim(pcb_t *p)
 
 int emptyChild(pcb_t *p);
 
