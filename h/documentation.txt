@@ -1,0 +1,27 @@
+pandOS
+
+The PandOS operating system is an educational project consisting in the implementation of a kernel/OS designed to run on µMPS.
+This documentation describes the implementation for the first phase of the project.
+
+Design choices
+
+Platform
+The pandOS repository has been developed on GitHub to help the authors to cooperate on the project, combined with GitFlow to manage branches.
+
+Building
+To automate the building process CMake was adopted for the generation of the makefile.
+
+Documentation
+The guideline to write the documentation is the Doxygen standard, used to have a consistent way to comment the functions. For the next phases the automated
+Doxygen documentation generator will be used so the same style is preserved through the next phases.
+
+Modules
+
+PANDOS_CONST
+
+PANDOS_TYPES
+
+PCB
+
+ASL
+
