@@ -133,15 +133,11 @@ pcb_t *headProcQ(pcb_t *tp){
     return tp->p_next;
 }
 
-
-
 /********************************************
 *
 * Implementation of Process Tree functions
 *
 *********************************************/
-//TODO: per la doc
-//IMPORTANTE SPECIFICARE CHE LA LISTA DEI FIGLI SIA DOPPIA MA NON CIRCOLARE
 
 HIDDEN pcb_t* trim(pcb_t *p){
     p->p_child = NULL;
