@@ -22,18 +22,55 @@
 HIDDEN pcb_t pcbFree_table[MAXPROC];
 HIDDEN pcb_t *pcbFree_h;
 
+/**
+ * @brief Resets all the values of a pcb pointer to NULL.
+ * 
+ * @param p The pointer to the PCB that has to be resetted.
+ * @return The pointer to the pcb.  
+ */
 HIDDEN pcb_t* resetPcb(pcb_t* p);
 
+/**
+ * @brief Inserts the element pointed by p onto the pcbFree list.
+ * 
+ * @param p Pointer to the pcb that has to be put in the pcbFree list.
+ */
 void freePcb(pcb_t *p);
 
+/**
+ * @brief Removes an element from the pcbFree list and Initializes his values.
+ * 
+ * @return NULL if the pcbFree list is empty otherwise a pointer to the removed pcb.
+ */
 pcb_t *allocPcb();
 
+/**
+ * @brief Initializes the pcbFree list. This function should be called only once during initialization.
+ * 
+ */
 void initPcbs();
 
+/**
+ * @brief Initializes a variable to be a tail pointer to a proces queue.
+ * 
+ * @return A tail pointer to an empty process queue. 
+ */
 pcb_t *mkEmptyProcQ();
 
+/**
+ * @brief Checks if the queue pointed by tp is empty.
+ * 
+ * @param tp Tail pointer of the queue.
+ * @return TRUE if the queue is empty, FALSE otherwise. 
+ */
 int emptyProcQ(pcb_t *tp);
 
+/**
+ * @brief Inserts the pcb pointed by to by p into the queue pointed by tp.
+ * 
+ * @param tp Tail pointer of the queue.
+ * @param p Pointer to the pcb.
+ */
 void insertProcQ(pcb_t **tp, pcb_t *p);
 
 /**
