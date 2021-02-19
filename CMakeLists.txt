@@ -11,10 +11,23 @@ if(NOT UMPS3)
     message(FATAL_ERROR "UMPS3 not found.")
 endif()
 
-# If you have umps3 installed on some weird location, set CMAKE_INSTALL_PREFIX by hand.
-set(UMPS3_INCLUDE_DIR ${CMAKE_INSTALL_FULL_INCLUDEDIR})
-set(UMPS3_DATA_DIR ${CMAKE_INSTALL_FULL_DATADIR}/umps3)
-set(UMPS3_LIB_DIR ${CMAKE_INSTALL_FULL_LIBDIR}/umps3)
+# If you have umps3 installed on some weird location,
+# set UMPS3_DIR_PREFIX by hand. or set them individually.
+if(NOT UMPS3_DIR_PREFIX)
+    set(UMPS3_DIR_PREFIX /usr)
+endif()
+
+if(NOT UMPS3_INCLUDE_DIR)
+    set(UMPS3_INCLUDE_DIR ${UMPS3_DIR_PREFIX}/include)
+endif()
+
+if(NOT UMPS3_DATA_DIR)
+    set(UMPS3_DATA_DIR ${UMPS3_DIR_PREFIX}/share/umps3)
+endif()
+
+if(NOT UMPS3_LIB_DIR)
+    set(UMPS3_LIB_DIR ${UMPS3_DIR_PREFIX}/lib/umps3)
+endif()
 
 # Compiler and linker setup
 set(CMAKE_C_COMPILER mipsel-linux-gnu-gcc)
