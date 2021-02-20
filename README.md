@@ -1,15 +1,11 @@
 # PandOS
-The PandOS operating system is an educational project consisting in the
-implementation of a kernel/OS designed to run on µMPS.
-
+The PandOS operating system is an educational project consisting in the implementation of a kernel/OS designed to run on µMPS.
 ## How to Run this Project
-Currently there is no pakcage, you need to install it from source
-
+Currently there is no package, you need to install it from source.
 ### Dependency
 - umps3
 - cmake
 - make
-
 ### Compile
 ```
 $ mkdir build
@@ -28,7 +24,7 @@ Also you can set *UMPS3_INCLUDE_DIR*, *UMPS3_DATA_DIR* and *UMPS3_LIB_DIR* indiv
 * Follow the instructions above to compile the project.
 * Then open umps3 and create a new Machine.
 * Replace "Core File" with build/PandOS.core.umps and "Symbol Table" PandOS.stab.umps
-* Fianlly, click on "PowerON" and "Continue" to launch
+* Finally, click on "PowerON" and "Continue" to launch
 
 ## Credits
 Mattia Biondi and Renzo Davoli for [µMPS3](https://github.com/virtualsquare/umps3)
