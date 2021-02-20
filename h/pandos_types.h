@@ -29,9 +29,7 @@ typedef struct pcb_t {
 	state_t p_s; 									/* processor state */
 	cpu_t p_time; 									/* cpu time used by proc */
 	int *p_semAdd; 									/* ptr to semaphore on which proc is blocked */
-
-	/* support layer information */
-	support_t *p supportStruct;						/* ptr to support struct */
+	
 } pcb_t, *pcb_PTR;
 
 typedef struct semd_t {
