@@ -98,10 +98,6 @@ pcb_t *removeProcQ(pcb_t **tp);
  */
 pcb_t *outProcQ(pcb_t **tp, pcb_t *p);
 
-
-
-
-
 /****************************************
 *
 * Definitions of Process Tree functions
