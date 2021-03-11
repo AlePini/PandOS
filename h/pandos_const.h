@@ -9,8 +9,28 @@
 #include <umps3/umps/const.h>
 
 /* Mikeyg Added constants */
-
+/**
+ * @brief Max number of concurrent processes
+ * Pandos can support.
+ */
 #define MAXPROC 20
+
+/**
+ * @brief Identifier with the lowest value, used for the first
+ * dummy semaphore at the start of the ASL
+ */
+#define MININT 0
+/**
+ * @brief Identifier with the highest value, used for the second
+ * dummy semaphore at the end of the ASL
+ */
+#define MAXINT ((int*)0xFFFFFFFF)
+/**
+ * @brief Total number of semaphores to be inserted in
+ * the ASL, counting also the 2 dummies ones.
+ */
+#define MAXSEM MAXPROC+2
+
 
 #define CREATEPROCESS 1
 #define TERMPROCESS   2

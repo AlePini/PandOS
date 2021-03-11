@@ -14,10 +14,11 @@
 
 #include <pandos_const.h>
 #include <pandos_types.h>
-
 #include <umps3/umps/libumps.h>
-#include <pcb.h>
+
 #include <asl.h>
+#include <queue.h>
+#include <tree.h>
 
 #define MAXPROC	20
 #define	MAXSEM	MAXPROC
@@ -117,7 +118,7 @@ void adderrbuf(char *strp) {
 
 	termprint(tstrp, 0);
 
-	PANIC();
+	//PANIC();
 }
 
 
@@ -272,6 +273,7 @@ void main() {
 
 	if (insertBlocked(&onesem, procp[9]) == FALSE)
 		adderrbuf("insertBlocked: inserted more than MAXPROC   ");
+
 	addokbuf("removeBlocked test started   \n");
 	for (i = 10; i< MAXPROC; i++) {
 		q = removeBlocked(&sem[i]);
