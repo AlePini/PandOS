@@ -9,6 +9,7 @@
 
 #include <umps3/umps/const.h>
 
+//Phase 1 defined constants
 /**
  * @brief Identifier with the lowest value, used for the first
  * dummy semaphore at the start of the ASL
@@ -24,6 +25,13 @@
  * the ASL, counting also the 2 dummies ones.
  */
 #define MAXSEM MAXPROC+2
+
+
+//Phase 2 defined constants
+#define INTERVALTIMER 100
+
+
+
 
 /* Hardware & software constants */
 #define PAGESIZE 4096 /* page size in bytes	*/

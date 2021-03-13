@@ -1,5 +1,9 @@
 #include <asl.h>
 
+HIDDEN semd_t semd_table[MAXSEM];
+HIDDEN semd_t* semdFree_h;
+HIDDEN semd_t* semd_h;
+
 /**This function works also when the semaphore we're searching for is not present in the ASL.
 *The function will return the last semaphore before the one whose identifier is MAXINT and
 *the checks in the other functions will handle error situations.

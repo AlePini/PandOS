@@ -19,9 +19,6 @@
 *
 *****************************************/
 
-HIDDEN pcb_t pcbFree_table[MAXPROC];
-HIDDEN pcb_t *pcbFree_h;
-
 /**
  * @brief Resets all the values of a pcb pointer to NULL.
  *

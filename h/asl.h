@@ -20,10 +20,6 @@
 #include <pandos_types.h>
 #include <pcb.h>
 
-HIDDEN semd_t semd_table[MAXSEM];
-HIDDEN semd_t* semdFree_h;
-HIDDEN semd_t* semd_h;
-
 /**
  * @brief   This function takes as input a semAdd and returns the last semaphore in semd_h whose
  * identifier is lower than the one passed as argument.

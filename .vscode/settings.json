@@ -6,7 +6,8 @@
         "pandos_types.h": "c",
         "const.h": "c",
         "tree.h": "c",
-        "asl.h": "c"
+        "asl.h": "c",
+        "utils.h": "c"
     },
     "cmake.configureOnOpen": true
 }

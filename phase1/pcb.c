@@ -5,6 +5,8 @@
 * Implementation of Queue Manager functions
 *
 *********************************************/
+HIDDEN pcb_t pcbFree_table[MAXPROC];
+HIDDEN pcb_t *pcbFree_h;
 
 HIDDEN pcb_t* resetPcb(pcb_t* p){
     p->p_next = NULL;
