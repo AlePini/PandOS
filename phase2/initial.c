@@ -16,6 +16,12 @@ int main(){
     initSemd();
 
     //Parte sul passup Vector
+    passupvector_t* passup;
+    passup->tlb refll handler = (memaddr) uTLB RefillHandler;
+    passup->tlb_refill_stackPtr = (memaddr) 0x20001000;
+    passup->exception handler = (memaddr) //TODO: gestore delle eccezioni
+    passup->exception_stackPtr = (memaddr) 0x20001000;
+    PASSUPVECTOR = &passup;
 
     //Inizializzazione variabili
     processCount = 0;
@@ -27,7 +33,7 @@ int main(){
     }
 
     //Setup del system-wide timer
-    LDIT(INTERVALTIMER);
+    LDIT(SYSTEMWIDETIMER);
 
     //Parte sul primo processo
     pcb_t* process = createFirstProcess();

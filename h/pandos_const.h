@@ -28,7 +28,7 @@
 
 
 //Phase 2 defined constants
-#define INTERVALTIMER 100
+#define SYSTEMWIDETIMER 100000
 
 
 
