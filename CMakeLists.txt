@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION "3.19.4")
 
-project(PandOS)
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+project(PandOS VERSION 0.1)
 
 include(GNUInstallDirs)
 
@@ -39,21 +36,9 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mips1 -mabi=32 -mno-gpopt -G 0 -mno-abicall
 set(CMAKE_LINKER mipsel-linux-gnu-ld)
 set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -G 0 -nostdlib -T ${UMPS3_DATA_DIR}/umpscore.ldscript")
 
-add_executable(${PROJECT_NAME} p1test.c)
-
-target_include_directories(${PROJECT_NAME}
-                            PUBLIC
-                            ${UMPS3_INCLUDE_DIR}
-                            ${PROJECT_SOURCE_DIR}/h
-                            ${PROJECT_SOURCE_DIR}/phase1)
+set(PROJECT_INCLUDE_DIRS ${UMPS3_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/h)
 
 add_subdirectory(phase1)
+add_subdirectory(phase2)
 
-target_link_libraries(${PROJECT_NAME}
-                        phase1
-                        ${UMPS3_LIB_DIR}/crtso.o
-                        ${UMPS3_LIB_DIR}/libumps.o)
-
-target_link_directories(${PROJECT_NAME} PRIVATE phase1)
-
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND umps3-elf2umps -k ${PROJECT_NAME})
+add_subdirectory(testers)
