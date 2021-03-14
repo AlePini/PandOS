@@ -1,4 +1,5 @@
-#include <pandos_types.h>;
+#include <pandos_types.h>
+#include <initial.h>
 
 extern void test();
 
@@ -13,7 +14,7 @@ HIDDEN int dev_sem[DEVICECNT];
 int main(){
     //Inizializzare strutture dati
     initPcbs();
-    initSemd();
+    initASL();
 
     //Parte sul passup Vector
     passupvector_t* passup;
