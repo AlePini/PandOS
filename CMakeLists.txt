@@ -36,6 +36,9 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mips1 -mabi=32 -mno-gpopt -G 0 -mno-abicall
 set(CMAKE_LINKER mipsel-linux-gnu-ld)
 set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -G 0 -nostdlib -T ${UMPS3_DATA_DIR}/umpscore.ldscript")
 
+set(PROJECT_INCLUDE_DIRS ${UMPS3_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/h)
+
 add_subdirectory(phase1)
+add_subdirectory(phase2)
 
 add_subdirectory(testers)
