@@ -34,12 +34,16 @@ int main(){
     }
 
     //Setup del system-wide timer
-    LDIT(SYSTEMWIDETIMER);
+    unsigned int T = TIMERLENGTH/TIMESCALEADDR;
+    LDIT(T);
 
     //Parte sul primo processo
-    pcb_t* process = createFirstProcess();
+    pcb_t* process = createFirstProcess((memaddr)test); //TODO: da fare nel utils.c
     processCount++;
     insertProcQ(&readyQueue, process);
+
+    //Scheduler
+    scheduler();
 
     //Non so se ci vuole il return 0
     return 0;

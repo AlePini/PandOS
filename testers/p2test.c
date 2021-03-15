@@ -3,7 +3,7 @@
  *	Test program for the Kaya Kernel: phase 2.
  *
  *	Produces progress messages on Terminal0.
- *	
+ *
  *	This is pretty convoluted code, so good luck!
  *
  *		Aborts as soon as an error is detected.
@@ -49,7 +49,7 @@ typedef unsigned int devregtr;
 #define LOOPNUM 		10000
 
 #define CLOCKLOOP		10
-#define MINCLOCKLOOP	3000	
+#define MINCLOCKLOOP	3000
 
 #define BADADDR			0xFFFFFFFF
 #define	TERM0ADDR		0x10000254
@@ -87,7 +87,7 @@ SEMAPHORE term_mut=1,	/* for mutual exclusion on terminal */
 		endcreate=0,	/* for a p8 leaf to signal its creation */
 		blkp8=0;		/* to block p8 */
 
-state_t p2state, p3state, p4state, p5state,	p6state, p7state,p8rootstate, 
+state_t p2state, p3state, p4state, p5state,	p6state, p7state,p8rootstate,
         child1state, child2state, gchild1state, gchild2state, gchild3state, gchild4state;
 
 /* support structure for p5 */
@@ -95,7 +95,7 @@ support_t pFiveSupport;
 
 int		p1p2synch=0;			/* to check on p1/p2 synchronization */
 
-int 	p8inc;					/* p8's incarnation number */ 
+int 	p8inc;					/* p8's incarnation number */
 int		p4inc=1;				/* p4 incarnation number */
 
 unsigned int p5Stack;			/* so we can allocate new stack for 2nd p5 */
@@ -116,14 +116,14 @@ void print(char *msg) {
 	char *s = msg;
 	devregtr * base = (devregtr *) (TERM0ADDR);
 	devregtr status;
-	
+
 	SYSCALL(PASSERN, (int)&term_mut, 0, 0);				/* P(term_mut) */
 	while (*s != EOS) {
 		*(base + 3) = PRINTCHR | (((devregtr) *s) << BYTELEN);
-		status = SYSCALL(WAITIO, TERMINT, 0, 0);	
+		status = SYSCALL(WAITIO, TERMINT, 0, 0);
 		if ((status & TERMSTATMASK) != RECVD)
 			PANIC();
-		s++;	
+		s++;
 	}
 	SYSCALL(VERHOGEN, (int)&term_mut, 0, 0);				/* V(term_mut) */
 }
@@ -132,11 +132,11 @@ void print(char *msg) {
 /* TLB-Refill Handler */
 /* One can place debug calls here, but not calls to print */
 void uTLB_RefillHandler () {
-		
+
 	setENTRYHI(0x80000000);
 	setENTRYLO(0x00000000);
-	TLBWR();	
-	
+	TLBWR();
+
 	LDST ((state_t *) 0x0FFFF000);
 }
 
@@ -145,8 +145,8 @@ void uTLB_RefillHandler () {
 /*                                                                   */
 /*                 p1 -- the root process                            */
 /*                                                                   */
-void test() {	
-	
+void test() {
+
 	SYSCALL(VERHOGEN, (int)&testsem, 0, 0);					/* V(testsem)   */
 
 	print("p1 v(testsem)\n");
@@ -154,42 +154,42 @@ void test() {
 	/* set up states of the other processes */
 
 	/* set up p2's state */
-	STST(&p2state);			/* create a state area             */	
-	
+	STST(&p2state);			/* create a state area             */
+
 	p2state.reg_sp = p2state.reg_sp - QPAGE;			/* stack of p2 should sit above    */
 	p2state.pc_epc = p2state.reg_t9 = (memaddr)p2;		/* p2 starts executing function p2 */
 	p2state.status = p2state.status | IEPBITON | CAUSEINTMASK | TEBITON;
-		
+
 
 	STST(&p3state);
 
 	p3state.reg_sp = p2state.reg_sp - QPAGE;
 	p3state.pc_epc = p3state.reg_t9 = (memaddr)p3;
 	p3state.status = p3state.status | IEPBITON | CAUSEINTMASK | TEBITON;
-	
-	
+
+
 	STST(&p4state);
 
 	p4state.reg_sp = p3state.reg_sp - QPAGE;
 	p4state.pc_epc = p4state.reg_t9 = (memaddr)p4;
 	p4state.status = p4state.status | IEPBITON | CAUSEINTMASK | TEBITON;
-	
-	
+
+
 	STST(&p5state);
-	
+
 	p5Stack = p5state.reg_sp = p4state.reg_sp - (2 * QPAGE);	/* because there will 2 p4 running*/
 	p5state.pc_epc = p5state.reg_t9 = (memaddr)p5;
 	p5state.status = p5state.status | IEPBITON | CAUSEINTMASK | TEBITON;
 
 	STST(&p6state);
-	
+
 	p6state.reg_sp = p5state.reg_sp - (2 * QPAGE);
 	p6state.pc_epc = p6state.reg_t9 = (memaddr)p6;
 	p6state.status = p6state.status | IEPBITON | CAUSEINTMASK | TEBITON;
-	
-	
+
+
 	STST(&p7state);
-	
+
 	p7state.reg_sp = p6state.reg_sp - QPAGE;
 	p7state.pc_epc = p7state.reg_t9 = (memaddr)p7;
 	p7state.status = p7state.status | IEPBITON | CAUSEINTMASK | TEBITON;
@@ -198,17 +198,17 @@ void test() {
 	p8rootstate.reg_sp = p7state.reg_sp - QPAGE;
 	p8rootstate.pc_epc = p8rootstate.reg_t9 = (memaddr)p8root;
 	p8rootstate.status = p8rootstate.status | IEPBITON | CAUSEINTMASK | TEBITON;
-    
+
 	STST(&child1state);
 	child1state.reg_sp = p8rootstate.reg_sp - QPAGE;
 	child1state.pc_epc = child1state.reg_t9 = (memaddr)child1;
 	child1state.status = child1state.status | IEPBITON | CAUSEINTMASK | TEBITON;
-	
+
 	STST(&child2state);
 	child2state.reg_sp = child1state.reg_sp - QPAGE;
 	child2state.pc_epc = child2state.reg_t9 = (memaddr)child2;
 	child2state.status = child2state.status | IEPBITON | CAUSEINTMASK | TEBITON;
-	
+
 	STST(&gchild1state);
 	gchild1state.reg_sp = child2state.reg_sp - QPAGE;
 	gchild1state.pc_epc = gchild1state.reg_t9 = (memaddr)p8leaf;
@@ -218,17 +218,17 @@ void test() {
 	gchild2state.reg_sp = gchild1state.reg_sp - QPAGE;
 	gchild2state.pc_epc = gchild2state.reg_t9 = (memaddr)p8leaf;
 	gchild2state.status = gchild2state.status | IEPBITON | CAUSEINTMASK | TEBITON;
-	
+
 	STST(&gchild3state);
 	gchild3state.reg_sp = gchild2state.reg_sp - QPAGE;
 	gchild3state.pc_epc = gchild3state.reg_t9 = (memaddr)p8leaf;
 	gchild3state.status = gchild3state.status | IEPBITON | CAUSEINTMASK | TEBITON;
-	
+
 	STST(&gchild4state);
 	gchild4state.reg_sp = gchild3state.reg_sp - QPAGE;
 	gchild4state.pc_epc = gchild4state.reg_t9 = (memaddr)p8leaf;
 	gchild4state.status = gchild4state.status | IEPBITON | CAUSEINTMASK | TEBITON;
-	
+
 	/* create process p2 */
 	SYSCALL(CREATETHREAD, (int)&p2state, (int) NULL , 0);				/* start p2     */
 
@@ -256,14 +256,14 @@ void test() {
 	pFiveSupport.sup_exceptContext[PGFAULTEXCEPT].c_stackPtr = p5Stack;
 	pFiveSupport.sup_exceptContext[PGFAULTEXCEPT].c_status = ALLOFF | IEPBITON | CAUSEINTMASK | TEBITON;
 	pFiveSupport.sup_exceptContext[PGFAULTEXCEPT].c_pc =  (memaddr) p5mm;
-	
+
 	SYSCALL(CREATETHREAD, (int)&p5state, (int) &(pFiveSupport), 0); 	/* start p5     */
 
 	SYSCALL(CREATETHREAD, (int)&p6state, (int) NULL, 0);				/* start p6		*/
 
 	SYSCALL(CREATETHREAD, (int)&p7state, (int) NULL, 0);				/* start p7		*/
 
-	SYSCALL(PASSERN, (int)&endp5, 0, 0);								/* P(endp5)		*/ 
+	SYSCALL(PASSERN, (int)&endp5, 0, 0);								/* P(endp5)		*/
 
 	print("p1 knows p5 ended\n");
 
@@ -373,7 +373,7 @@ void p3() {
 
 	for (i=0; i<CLOCKLOOP; i++)
 		SYSCALL(WAITCLOCK, 0, 0, 0);
-	
+
 	cpu_t2 = SYSCALL(GETCPUTIME, 0, 0, 0);
 
 	if (cpu_t2 - cpu_t1 < (MINCLOCKLOOP / (* ((cpu_t *) TIMESCALEADDR))))
@@ -444,7 +444,7 @@ void p5gen() {
 		pFiveSupport.sup_exceptState[GENERALEXCEPT].pc_epc = (memaddr)p5a;   /* Continue with p5a() */
 		pFiveSupport.sup_exceptState[GENERALEXCEPT].reg_t9 = (memaddr)p5a;   /* Continue with p5a() */
 		break;
-		
+
 	case RESVINSTR:
 		print("privileged instruction\n");
 		/* return in kernel mode */
@@ -452,7 +452,7 @@ void p5gen() {
 		pFiveSupport.sup_exceptState[GENERALEXCEPT].reg_t9 = (memaddr)p5b;   /* Continue with p5b() */
 		pFiveSupport.sup_exceptState[GENERALEXCEPT].status = pFiveSupport.sup_exceptState[GENERALEXCEPT].status & KUPBITOFF;
 		break;
-		
+
 	case ADDRERROR:
 		print("Address Error: non-kuseg access w/KU=1\n");
 		/* return in kernel mode */
@@ -460,29 +460,29 @@ void p5gen() {
 		pFiveSupport.sup_exceptState[GENERALEXCEPT].reg_t9 = (memaddr)p5b;   /* Continue with p5b() */
 		pFiveSupport.sup_exceptState[GENERALEXCEPT].status = pFiveSupport.sup_exceptState[GENERALEXCEPT].status & KUPBITOFF;
 		break;
-		
+
 	case SYSCALLEXCPT:
 		p5sys();
 		break;
-		
+
 	default:
 		print("other program trap\n");
 	}
-	
+
 	LDST(&(pFiveSupport.sup_exceptState[GENERALEXCEPT]));
 }
 
 /* p5's memory management trap handler */
 void p5mm() {
 	print("memory management trap\n");
-	
+
 	support_t* pFiveSupAddr = (support_t *)SYSCALL(GETSPTPTR, 0, 0, 0);
 	if ((pFiveSupAddr) != &(pFiveSupport)) {
 		print("Support Structure Address Error\n");
 	} else{
 		print("Correct Support Structure Address\n");
 	}
-	
+
 	pFiveSupport.sup_exceptState[PGFAULTEXCEPT].status = pFiveSupport.sup_exceptState[PGFAULTEXCEPT].status | KUPBITON;	/* user mode on 	*/
 	pFiveSupport.sup_exceptState[PGFAULTEXCEPT].pc_epc = (memaddr)p5b;   						/* return to p5b()	*/
 	pFiveSupport.sup_exceptState[PGFAULTEXCEPT].reg_t9 = (memaddr)p5b;						/* return to p5b()	*/
@@ -493,12 +493,12 @@ void p5mm() {
 /* p5's SYS trap handler */
 void p5sys() {
 	unsigned int p5status = pFiveSupport.sup_exceptState[GENERALEXCEPT].status;
-	p5status = (p5status << 28) >> 31; 
+	p5status = (p5status << 28) >> 31;
 	switch(p5status) {
 	case ON:
 		print("High level SYS call from user mode process\n");
 		break;
-	
+
 	case OFF:
 		print("High level SYS call from kernel mode process\n");
 		break;
@@ -510,8 +510,8 @@ void p5sys() {
 /* p5 -- SYS5 test process */
 void p5() {
 	print("p5 starts\n");
-		
-	/* cause a pgm trap access some non-existent memory */	
+
+	/* cause a pgm trap access some non-existent memory */
 	*p5MemLocation = *p5MemLocation + 1;		 /* Should cause a program trap */
 }
 
@@ -548,13 +548,13 @@ void p5b() {
 	/* should cause a termination       */
 	/* since this has already been      */
 	/* done for PROGTRAPs               */
-	
+
 	/*
 	SYSCALL(SPECTRAPVEC, PROGTRAP, (int)&pstat_o, (int)&pstat_n);
 	*/
-	
+
 	SYSCALL(TERMINATETHREAD, 0, 0, 0);
-	
+
 	/* should have terminated, so should not get to this point */
 	print("error: p5 didn't terminate\n");
 	PANIC();				/* PANIC            */
@@ -565,7 +565,7 @@ void p5b() {
 void p6() {
 	print("p6 starts\n");
 
-	SYSCALL(9, 0, 0, 0);		/* should cause termination because p6 has no 
+	SYSCALL(9, 0, 0, 0);		/* should cause termination because p6 has no
 			  trap vector */
 
 	print("error: p6 alive after SYS9() with no trap vector\n");
@@ -578,7 +578,7 @@ void p7() {
 	print("p7 starts\n");
 
 	* ((memaddr *) BADADDR) = 0;
-		
+
 	print("error: p7 alive after program trap with no trap vector\n");
 	PANIC();
 }
@@ -599,7 +599,7 @@ void p8root() {
 	for (grandchild=0; grandchild < NOLEAVES; grandchild++) {
 		SYSCALL(PASSERN, (int)&endcreate, 0, 0);
 	}
-	
+
 	SYSCALL(VERHOGEN, (int)&endp8, 0, 0);
 
 	SYSCALL(TERMINATETHREAD, 0, 0, 0);
@@ -609,9 +609,9 @@ void p8root() {
 
 void child1() {
 	print("child1 starts\n");
-	
+
 	SYSCALL(CREATETHREAD, (int)&gchild1state, (int) NULL, 0);
-	
+
 	SYSCALL(CREATETHREAD, (int)&gchild2state, (int) NULL, 0);
 
 	SYSCALL(PASSERN, (int)&blkp8, 0, 0);
@@ -619,9 +619,9 @@ void child1() {
 
 void child2() {
 	print("child2 starts\n");
-	
+
 	SYSCALL(CREATETHREAD, (int)&gchild3state, (int) NULL, 0);
-	
+
 	SYSCALL(CREATETHREAD, (int)&gchild4state, (int) NULL, 0);
 
 	SYSCALL(PASSERN, (int)&blkp8, 0, 0);
@@ -631,7 +631,7 @@ void child2() {
 
 void p8leaf() {
 	print("leaf process starts\n");
-	
+
 	SYSCALL(VERHOGEN, (int)&endcreate, 0, 0);
 
 	SYSCALL(PASSERN, (int)&blkp8, 0, 0);

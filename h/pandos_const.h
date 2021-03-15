@@ -28,8 +28,8 @@
 
 
 //Phase 2 defined constants
-#define SYSTEMWIDETIMER 100000
-
+#define TIMERLENGTH 100000
+#define RAMTOP     RAMBASEADDR + RAMBASESIZE
 
 
 

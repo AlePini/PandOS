@@ -1,8 +1,8 @@
 #include <utils.h>;
 
-HIDDEN pcb_t* createFirstProcess(){
+HIDDEN pcb_t* createFirstProcess(memaddr func){
     pcb_t p = initializeProcess(allocPcb());
-    return initializeState(p);
+    return initializeState(p, func);
 }
 
 HIDDEN pcb_t* initializeProcess(pcb_t p){
@@ -18,17 +18,14 @@ HIDDEN pcb_t* initializeProcess(pcb_t p){
 }
 
 //IGNORARE STA ROBA è da RIFARE
-HIDDEN pcb_t* initializeState(pcb_t* p){
-    state_t state;
-    STST(&state);
-    // Imposta lo status del processo
-    p_s->status = p_s->s_status & ~(STATUS_VMc | STATUS_VMp | STATUS_VMo); /* Virtual memory OFF */
-    p_s->status = p_s->s_status & ~(STATUS_KUc | STATUS_KUp | STATUS_KUo); /* Kernel mode ON */
-    p_s->status = p_s->s_status | STATUS_TE; /* Timer ON */
-    p_s->status = p_s->s_status | STATUS_IEc | STATUS_IEp | STATUS_IEo; /* Interrupt abilitati */
-    p_s->status = p_s->s_status | STATUS_IM_MASK; /* Attiva tutti gli interrupt */
-    p_s->reg_sp = RAMTOP;    //Credo
-    p_s->pc_epc = entry_point; /* Imposta pc all'entry point */
-    p->p_s = p_s;
+HIDDEN pcb_t* initializeState(pcb_t* p, memaddr func){
+    state_t p_s;
+    STST(&p_s);
+
+    p_s->s_sp = RAMTOP; //Assegna lo stack pointer a RAMTOP
+    p_s->s_pc = func;   // Imposta pc alla funzione test
+    LDST(&p->p_s);
     return p;
 }
+
+
