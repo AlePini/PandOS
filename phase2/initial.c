@@ -18,10 +18,10 @@ int main(){
 
     //Parte sul passup Vector
     passupvector_t* passup;
-    passup->tlb refll handler = (memaddr) uTLB RefillHandler;
-    passup->tlb_refill_stackPtr = (memaddr) 0x20001000;
+    passup->tlb_refll_handler = (memaddr) uTLB RefillHandler;
+    passup->tlb_refill_stackPtr = (memaddr) KERNELSTACK;
     passup->exception handler = (memaddr) //TODO: gestore delle eccezioni
-    passup->exception_stackPtr = (memaddr) 0x20001000;
+    passup->exception_stackPtr = (memaddr) KERNELSTACK;
     PASSUPVECTOR = &passup;
 
     //Inizializzazione variabili
@@ -38,9 +38,23 @@ int main(){
     LDIT(T);
 
     //Parte sul primo processo
-    pcb_t* process = createFirstProcess((memaddr)test); //TODO: da fare nel utils.c
+    pcb_t* firstProcess = allocPcb();
+    //Status
+    state_t p_s;
+    STST(&p_s);
+    p_s.status |= ~USERPON; /* Kernel mode ON */
+    p_s.status |= TEBITON; /* Timer ON */
+    p_s.status |= IEPON; /* Interrupt abilitati */
+    p_s.status |= IMON; /* Attiva tutti gli interrupt */
+
+    RAMTOP(firstProcess->p_s.reg_sp);   //SP is set to RAMTOP
+    //Program Counter set to test address
+    p_s.pc_epc = (memaddr) &test;
+    p_s.reg_t9 = (memaddr) &test;
+    process->p_s = p_s;
+    //Incremented program counter and inserted the process in the readyqueue
     processCount++;
-    insertProcQ(&readyQueue, process);
+    insertProcQ(&readyQueue, firstProcess);
 
     //Scheduler
     scheduler();

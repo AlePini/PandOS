@@ -16,6 +16,8 @@ HIDDEN pcb_t* resetPcb(pcb_t* p){
     p->p_next_sib = NULL;
     p->p_prev_sib = NULL;
     p->p_semAdd = NULL;
+    p->p_supportStruct = NULL;
+    p->p_time = 0;
     return p;
 }
 
