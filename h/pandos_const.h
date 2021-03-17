@@ -28,9 +28,9 @@
 
 
 //Phase 2 defined constants
-#define TIMERLENGTH 100000
-#define RAMTOP     RAMBASEADDR + RAMBASESIZE
-
+#define SWTIMERVALUE  PSECOND / * ((cpu_t *) TIMESCALEADDR);
+#define PLTTIMER  TIMESLICE / * ((cpu_t *) TIMESCALEADDR)
+#define DEVICENUMBER  49
 
 
 /* Hardware & software constants */

@@ -1,16 +1,6 @@
 #include <pandos_types.h>
 #include <initial.h>
 
-extern void test();
-
-HIDDEN int processCount;
-HIDDEN int softblockCount;
-HIDDEN pcb_t* readyQueue;
-HIDDEN pcb_t* currentProcess;
-HIDDEN int dev_sem[DEVICECNT];
-
-
-
 int main(){
     //Inizializzare strutture dati
     initPcbs();
@@ -18,9 +8,9 @@ int main(){
 
     //Parte sul passup Vector
     passupvector_t* passup;
-    passup->tlb_refll_handler = (memaddr) uTLB RefillHandler;
+    passup->tlb_refll_handler = (memaddr) uTLB_RefillHandler;
     passup->tlb_refill_stackPtr = (memaddr) KERNELSTACK;
-    passup->exception handler = (memaddr) //TODO: gestore delle eccezioni
+    passup->exception_handler = (memaddr) //TODO: gestore delle eccezioni
     passup->exception_stackPtr = (memaddr) KERNELSTACK;
     PASSUPVECTOR = &passup;
 
@@ -29,13 +19,12 @@ int main(){
     softblockCount = 0;
     readyQueue = mkEmptyProcQ();
     currentProcess = NULL;
-    for(int i=0; i<DEVICECNT; i++){
+    for(int i=0; i<DEVICENUMBER; i++){
         dev_sem[i] = 0;
     }
 
     //Setup del system-wide timer
-    unsigned int T = TIMERLENGTH/TIMESCALEADDR;
-    LDIT(T);
+    LDIT(TIMERVALUE);
 
     //Parte sul primo processo
     pcb_t* firstProcess = allocPcb();
