@@ -7,7 +7,8 @@
  *
  ****************************************************************************/
 
-#include <umps3/umps/const.h>
+//#include <umps3/src/umps/const.h>
+#include <umps/const.h>
 
 //Phase 1 defined constants
 /**
