@@ -4,8 +4,7 @@
 #include <pandos_const.h>
 #include <pandos_types.h>
 
-pcb_t* getReadyQueue(){
-    return &ready_queue;
-}
+extern pcb_t* readyQueue;
+pcb_t* getReadyQueue();
 
 #endif

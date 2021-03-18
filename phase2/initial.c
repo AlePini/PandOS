@@ -25,11 +25,10 @@ int main(){
 
     //Popolare il passup vector
     passupvector_t* passup;
-    passup->tlb_refll_handler = (memaddr) uTLB_RefillHandler;
+    passup->tlb_refill_handler = (memaddr) uTLB_RefillHandler;
     passup->tlb_refill_stackPtr = (memaddr) KERNELSTACK;
-    passup->exception_handler = (memaddr) //TODO: gestore delle eccezioni
+    //passup->exception_handler = (memaddr) //TODO: gestore delle eccezioni
     passup->exception_stackPtr = (memaddr) KERNELSTACK;
-    PASSUPVECTOR = &passup;
 
     //Setup del system-wide timer
     LDIT(SWTIMERVALUE);
@@ -53,7 +52,7 @@ int main(){
     //Program Counter set to test address
     p_s.pc_epc = (memaddr) &test;
     p_s.reg_t9 = (memaddr) &test;
-    process->p_s = p_s;
+    firstProcess->p_s = p_s;
     //Incremented program counter and inserted the process in the readyqueue
     processCount++;
     insertProcQ(&readyQueue, firstProcess);

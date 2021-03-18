@@ -29,7 +29,7 @@
 
 
 //Phase 2 defined constants
-#define SWTIMERVALUE  PSECOND / * ((cpu_t *) TIMESCALEADDR);
+#define SWTIMERVALUE  PSECOND / * ((cpu_t *) TIMESCALEADDR)
 #define PLTTIMER  TIMESLICE / * ((cpu_t *) TIMESCALEADDR)
 #define DEVICENUMBER  49
 
