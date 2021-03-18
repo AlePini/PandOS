@@ -1,6 +1,9 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#include <initial.h>
+extern int processCount;
+extern int softblockCount;
+extern pcb_t* readyQueue;
+extern pcb_t* currentProcess;
 
 #endif

@@ -11,10 +11,4 @@
 extern void test();
 extern void uTLB_RefillHandler();
 
-HIDDEN int processCount;
-HIDDEN int softblockCount;
-HIDDEN pcb_t* readyQueue;
-HIDDEN pcb_t* currentProcess;
-HIDDEN int dev_sem[DEVICENUMBER];
-
 #endif
