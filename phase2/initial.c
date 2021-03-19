@@ -35,9 +35,8 @@ int main(){
 
     //Parte sul primo processo
     pcb_t* firstProcess = allocPcb();
-    //Status
-    state_t p_s;
-    STST(&p_s);
+    // TODO : in teoria non serve
+    STST(&firstProcess->p_s);
 
     //Setup dello status
     //In teoria USERPON non serve in quanto  facendo stst lui copia lo stato del processore che è gia kernel mode va testato
@@ -46,14 +45,13 @@ int main(){
     /*IEPON Interrupt abilitati */
     /*IMON Attiva tutti gli interrupt */
     
-    p_s.status |= ~USERPON | TEBITON | IEPON | IMON;
+    firstProcess->p_s.status |= ~USERPON | TEBITON | IEPON | IMON;
 
     //SP is set to RAMTOP
-    RAMTOP(p_s.reg_sp);
+    RAMTOP(firstProcess->p_s.reg_sp);
     //Program Counter set to test address
-    p_s.pc_epc = (memaddr) &test;
-    p_s.reg_t9 = (memaddr) &test;
-    firstProcess->p_s = p_s; // error memcpy
+    firstProcess->p_s.pc_epc = (memaddr) &test;
+    firstProcess->p_s.reg_t9 = (memaddr) &test;
     //Incremented program counter and inserted the process in the readyqueue
     processCount++;
     insertProcQ(&readyQueue, firstProcess);
