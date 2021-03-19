@@ -15,7 +15,7 @@ void scheduler(){
     if(currentProcess != NULL){
         insertProcQ(getReadyQueue(), currentProcess);
     }
-    currentProcess = removeProcQ(getQueue());
+    currentProcess = removeProcQ(getReadyQueue());
     setTIMER(PLTTIMER);
     LDST(&(currentProcess->p_s));
 }

@@ -3,10 +3,8 @@
 
 #include <pandos_const.h>
 #include <pandos_types.h>
+#include <umps3/umps/libumps.h>
 
-extern int processCount;
-extern int softblockCount;
-extern pcb_t* readyQueue;
-extern pcb_t* currentProcess;
+void scheduler();
 
 #endif

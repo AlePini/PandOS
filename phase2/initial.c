@@ -1,5 +1,5 @@
-#include <pandos_types.h>
 #include <initial.h>
+#include <scheduler.h>
 
 //Dichiarazione variabili
 int processCount;
@@ -45,6 +45,7 @@ int main(){
     /*TEBITON Timer ON */
     /*IEPON Interrupt abilitati */
     /*IMON Attiva tutti gli interrupt */
+    
     p_s.status |= ~USERPON | TEBITON | IEPON | IMON;
 
     //SP is set to RAMTOP
@@ -52,7 +53,7 @@ int main(){
     //Program Counter set to test address
     p_s.pc_epc = (memaddr) &test;
     p_s.reg_t9 = (memaddr) &test;
-    firstProcess->p_s = p_s;
+    firstProcess->p_s = p_s; // error memcpy
     //Incremented program counter and inserted the process in the readyqueue
     processCount++;
     insertProcQ(&readyQueue, firstProcess);
