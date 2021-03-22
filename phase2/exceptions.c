@@ -11,6 +11,7 @@ void passUpOrDie(unsigned index) {
     }
     else {
         // TODO: Gestire come Syscall 2 (kill), non so se basta usare la syscall
+        terminateProcess();
         //Toglierlo come figlio del suo padre nell albero
         //Se è bloccato nel semaforo bisogna fargli +1
         //Non va fatto nulla se è bloccato in un device semaphore
@@ -30,7 +31,7 @@ unsigned  exceptionType(){
 void exceptionHandler(unsigned type){
     switch (type){
         case IOINTERRUPTS:
-            interruptHandler()
+            interruptHandler();
             break;
         case SYSEXCEPTION:
             sysHandler();
