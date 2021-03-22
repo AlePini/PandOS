@@ -9,5 +9,6 @@
 
 extern void test();
 extern void uTLB_RefillHandler();
+extern void exceptionHandler();
 
 #endif
