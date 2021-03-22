@@ -31,7 +31,7 @@ unsigned  exceptionType(){
 void exceptionHandler(unsigned type){
     switch (type){
         case IOINTERRUPTS:
-            interruptHandler()
+            interruptHandler();
             break;
         case SYSEXCEPTION:
             sysHandler();
