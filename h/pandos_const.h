@@ -29,9 +29,13 @@
 
 
 //Phase 2 defined constants
+#define CHECK_USERMODE(var) ((var) & (1<<3))
 #define SWTIMERVALUE  PSECOND / * ((cpu_t *) TIMESCALEADDR)
 #define PLTTIMER  TIMESLICE / * ((cpu_t *) TIMESCALEADDR)
-#define DEVICENUMBER  49
+#define INSTANCES_NUMBER  8
+#define EXCTYPE ((state_t *) BIOSDATAPAGE)
+#define TLBTRAP 2
+#define GENERAL 4
 
 
 /* Hardware & software constants */
