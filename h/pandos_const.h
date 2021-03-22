@@ -34,6 +34,8 @@
 #define PLTTIMER  TIMESLICE / * ((cpu_t *) TIMESCALEADDR)
 #define INSTANCES_NUMBER  8
 #define EXCTYPE ((state_t *) BIOSDATAPAGE)
+#define TLBTRAP 2
+#define GENERAL 4
 
 
 /* Hardware & software constants */
