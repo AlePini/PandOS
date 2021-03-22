@@ -55,8 +55,7 @@ void sysHandler(){
         exceptionHandler(GENERAL);
     }
 }
-#include <initial.h>
-#include <utils.h>
+
 void passeren(int* semaddr){
     (*semaddr)--;
     if(*semaddr <= 0){

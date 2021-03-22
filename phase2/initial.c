@@ -1,6 +1,8 @@
 #include <initial.h>
 #include <scheduler.h>
 
+//TODO: mettere HIDDEN tutto quello che viene usato solo nel suo file
+
 //Dichiarazione variabili
 int processCount;
 int softblockCount;
@@ -57,7 +59,6 @@ int main(){
     /*TEBITON Timer ON */
     /*IEPON Interrupt abilitati */
     /*IMON Attiva tutti gli interrupt */
-    
     firstProcess->p_s.status |= ~USERPON | TEBITON | IEPON | IMON;
 
     //SP is set to RAMTOP
