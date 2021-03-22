@@ -6,7 +6,7 @@ void passUpOrDie(unsigned index) {
 
     if (support != NULL) {
         support->sup_exceptState[index] = *EXCTYPE;
-        context_t* context = &(supportStructure->sup_exceptContext[index]);
+        context_t* context = &(support->sup_exceptContext[index]);
         LDCXT(context->c_stackPtr, context->c_status, context->c_pc);
     }
     else {
