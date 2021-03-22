@@ -13,4 +13,6 @@ extern pcb_t* currentProcess;
 //Funzioni
 extern pcb_t* getReadyQueue();
 
+void scheduler();
+
 #endif
