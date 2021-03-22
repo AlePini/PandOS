@@ -102,7 +102,34 @@ void verhogen(int* semaddr){
     return;
 }
 
-void waitIO(){
+void waitIO(int intlNo, int  dnum, int waitForTermRead){
+    int device=intlNo;
+    int number=dnum;
+    int read=waitForTermRead;
+    switch (device)
+    {
+    case 3:
+        passeren(semDisk[number]);
+        break;
+    case 4:
+        passeren(semFlash[number]);
+        break;
+    case 5:
+        passeren(semNetwork[number]);
+        break;
+    case 6:
+        passeren(semPrinter[number]);
+        break;
+    case 7:
+        if(read)
+            passeren(semTerminalRecv[number]);
+        else
+            passeren(semTerminalTrans[number]);
+        break;    
+    default:
+        PANIC();
+        break;
+    }
     
 }
 
