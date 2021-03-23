@@ -1,6 +1,11 @@
 #ifndef SYSCALL_H
 #define SYSCALL_H
 
+#include <initial.h>
+#include <scheduler.h>
+#include <umps3/umps/libumps.h>
+#include <exceptions.h>
+
 void sysHandler();
 
 /* SYSCALLS */

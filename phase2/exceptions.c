@@ -6,7 +6,7 @@ void passUpOrDie(unsigned index) {
 
     if (support != NULL) {
         support->sup_exceptState[index] = *EXCTYPE;
-        context_t* context = &(supportStructure->sup_exceptContext[index]);
+        context_t* context = &(support->sup_exceptContext[index]);
         LDCXT(context->c_stackPtr, context->c_status, context->c_pc);
     }
     else {
@@ -18,14 +18,14 @@ void passUpOrDie(unsigned index) {
 
 unsigned  exceptionType(){
     unsigned int exType = (getCause() & GETEXECCODE) >> CAUSESHIFT;
-    if(exceptionNumber == 0) return IOINTERRUPTS;
-    else if(exceptionNumber == 8) return SYSEXCEPTION;
-    else if(exceptionNumber>=1 && exceptionNumber<=3) return TLBTRAP;
+    if(exType == 0) return IOINTERRUPTS;
+    else if(exType == 8) return SYSEXCEPTION;
+    else if(exType>=1 && exType<=3) return TLBTRAP;
     else return GENERAL;
 }
 
 void exceptionHandler(){
-    unsigned type = exceptionHandler();
+    unsigned type = exceptionType();
     switch (type){
         case IOINTERRUPTS:
             interruptHandler();

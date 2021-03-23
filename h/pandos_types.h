@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-//#include <umps3/src/umps/types.h>
-#include <umps/types.h>
+#include <umps3/umps/types.h>
+
 
 typedef signed int   cpu_t;
 typedef unsigned int memaddr;
