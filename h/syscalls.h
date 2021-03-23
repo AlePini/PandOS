@@ -1,21 +1,27 @@
-#ifndef SYSCALL_H
-#define SYSCALL_H
+#ifndef SYSCALLS_H
+#define SYSCALLS_H
 
 #include <initial.h>
-#include <scheduler.h>
 #include <umps3/umps/libumps.h>
-#include <exceptions.h>
 
 void sysHandler();
 
 /* SYSCALLS */
-void createProcess();
+void createProcess(state_t*, support_t*);
 void terminateProcess();
 void passeren(int*);
 void verhogen(int*);
 void waitIO(int, int, int);
-void getCPUTime();
+void getCpuTime();
 void waitForClock();
-void getSupportData();
+void getSupportStruct();
+
+extern int semDisk[];
+extern int semFlash[];
+extern int semNetwork[];
+extern int semPrinter[];
+extern int semTerminalTrans[];
+extern int semTerminalRecv[];
+extern int semIntTimer;
 
 #endif

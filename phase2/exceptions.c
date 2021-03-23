@@ -1,4 +1,6 @@
 #include <exceptions.h>
+#include <scheduler.h>
+#include <syscalls.h>
 
 void passUpOrDie(unsigned index) {
 
@@ -17,7 +19,7 @@ void passUpOrDie(unsigned index) {
 }
 
 unsigned  exceptionType(){
-    unsigned int exType = (getCause() & GETEXECCODE) >> CAUSESHIFT;
+    unsigned int exType = (getCAUSE() & GETEXECCODE) >> CAUSESHIFT;
     if(exType == 0) return IOINTERRUPTS;
     else if(exType == 8) return SYSEXCEPTION;
     else if(exType>=1 && exType<=3) return TLBTRAP;

@@ -1,7 +1,7 @@
-#include <syscall.h>
+#include <syscalls.h>
 #include <scheduler.h>
 #include <utils.h>
-#include <exception.h>
+#include <exceptions.h>
 
 
 void sysHandler(){
@@ -9,9 +9,9 @@ void sysHandler(){
     unsigned sysdnum = currentProcess->p_s.reg_a0;
     if(sysdnum >=1 && sysdnum<=8){
         //Se è fra 1 e 8 devo essere in kernel mode altrimenti eccezione
-        currentProcess->p_s = EXCTYPE;
+        currentProcess->p_s = *EXCTYPE;
         if(CHECK_USERMODE(currentProcess->p_s.status)){
-            setCause(EXC_RI<<CAUSESHIFT);
+            setCAUSE(EXC_RI<<CAUSESHIFT);
             exceptionHandler();
         }
         else{
@@ -26,7 +26,7 @@ void sysHandler(){
                     break;
                 case TERMPROCESS:
                 //Scheduler
-                    terminateProcess(void);
+                    terminateProcess();
                     break;
                 case PASSEREN:
                 //In alcuni casi scheduler
@@ -36,16 +36,16 @@ void sysHandler(){
                     verhogen((int*) arg1);
                     break;
                 case IOWAIT:
-                    waitIO(int arg1, int arg2, int arg3);
+                    waitIO(arg1, arg2, arg3);
                     break;
                 case GETTIME:
-                    getCpuTime(void);
+                    getCpuTime();
                     break;
                 case CLOCKWAIT:
-                    waitForClock(void);
+                    waitForClock();
                     break;
                 case GETSUPPORTPTR:
-                    getSupportStruct(void);
+                    getSupportStruct();
                     break;
                 default:
                     PANIC();
@@ -57,10 +57,10 @@ void sysHandler(){
     }
 }
 
-void createProcess(){
+void createProcess(state_t* arg1, support_t* arg2){
     pcb_t* newProcess;
-    newProcess->p_s = a1;
-    newProcess->p_supportStruct = a2;
+    newProcess->p_s = *arg1;
+    newProcess->p_supportStruct = arg2;
     insertChild(currentProcess, newProcess);
     insertProcQ(getReadyQueue(), newProcess);
     newProcess->p_time = 0;
@@ -143,7 +143,7 @@ void waitIO(int intlNo, int  dnum, int waitForTermRead){
 }
 
 // TODO + CPU time used during the current quantum/time slice;
-void getCPUTime(){
+void getCpuTime(){
     unsigned time = currentProcess->p_time;
     currentProcess->p_s.reg_v0 = time;
     return;
@@ -154,7 +154,7 @@ void waitForClock(){
     return;
 }
 
-void getSupportData(){
-    currentProccess->p_s.reg_v0 = currentProcess->p_supportStruct;
+void getSupportStruct(){
+    currentProcess->p_s.reg_v0 = currentProcess->p_supportStruct;
     return;
 }

@@ -8,13 +8,13 @@ void scheduler(){
     if(emptyProcQ(getReadyQueue()) && processCount == 0){   //Se non ci sono più processi spegni
         HALT();
     }else if(emptyProcQ(getReadyQueue()) && processCount>0 && softblockCount>0){    //Se ci son solo processi in attesa aspetta
-            unsigned oldStatus = getStatus();
+            unsigned oldStatus = getSTATUS();
             setSTATUS(oldStatus & ~TEBITON | IECON);
             WAIT();
             setSTATUS(oldStatus);
     }else if (emptyProcQ(getReadyQueue()) && processCount>0 && softblockCount==0){  //Se non ci son processi bloccati ma la queue è vuota PANICO
         if(CHECK_USERMODE(currentProcess->p_s.status)){
-            setCause(EXC_BP<<CAUSESHIFT);
+            setCAUSE(EXC_BP<<CAUSESHIFT);
             exceptionHandler(exceptionType());
         }
         else PANIC();
