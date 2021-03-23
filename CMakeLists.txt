@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION "3.13.0")
 
 project(PandOS VERSION 0.1)
 
+set(CMAKE_INSTALL_PREFIX /usr)
 include(GNUInstallDirs)
 
 # Set UMPS3 Dirs
@@ -14,19 +15,19 @@ endif()
 # If you have umps3 installed on some weird location,
 # set UMPS3_DIR_PREFIX by hand. or set them individually.
 if(NOT UMPS3_DIR_PREFIX)
-    set(UMPS3_DIR_PREFIX /usr)
+    set(UMPS3_DIR_PREFIX ${CMAKE_INSTALL_PREFIX})
 endif()
 
 if(NOT UMPS3_INCLUDE_DIR)
-    set(UMPS3_INCLUDE_DIR ${UMPS3_DIR_PREFIX}/include)
+    set(UMPS3_INCLUDE_DIR ${CMAKE_INSTALL_FULL_INCLUDEDIR})
 endif()
 
 if(NOT UMPS3_DATA_DIR)
-    set(UMPS3_DATA_DIR ${UMPS3_DIR_PREFIX}/share/umps3)
+    set(UMPS3_DATA_DIR ${CMAKE_INSTALL_FULL_DATADIR}/umps3)
 endif()
 
 if(NOT UMPS3_LIB_DIR)
-    set(UMPS3_LIB_DIR ${UMPS3_DIR_PREFIX}/lib/umps3)
+    set(UMPS3_LIB_DIR ${CMAKE_INSTALL_FULL_LIBDIR}/umps3)
 endif()
 
 # Compiler and linker setup
