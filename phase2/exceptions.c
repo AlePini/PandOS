@@ -11,12 +11,8 @@ void passUpOrDie(unsigned index) {
     }
     else {
         // TODO: Gestire come Syscall 2 (kill), non so se basta usare la syscall
+        //TODO: lo scheduler è chiamato chiamando sto coso
         terminateProcess();
-        //Toglierlo come figlio del suo padre nell albero
-        //Se è bloccato nel semaforo bisogna fargli +1
-        //Non va fatto nulla se è bloccato in un device semaphore
-        //Process Count e Soft Blocked count adjusted
-        //I processi o sono CurrentP (running) o sono ReadyQueue(ready) o sono nei semafori (Blocked)
     }
 }
 
@@ -28,7 +24,8 @@ unsigned  exceptionType(){
     else return GENERAL;
 }
 
-void exceptionHandler(unsigned type){
+void exceptionHandler(){
+    unsigned type = exceptionHandler();
     switch (type){
         case IOINTERRUPTS:
             interruptHandler();
