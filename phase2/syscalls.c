@@ -120,40 +120,30 @@ void verhogen(int* semaddr){
 }
 
 void waitIO(int intlNo, int  dnum, int waitForTermRead){
-    //Prendo la linea di interrupt(rimappandole da 0 a 4) e la moltiplico per 8. Se è un terminal line controllo se leggo e trasmetto
-    int startingPoint = 8*(intlNo+waitForTermRead-3);
-    passeren(semaphoreList[startingPoint + dnum]);
-    // switch (intlNo)
-    // {
-    // case 3:
-    //     //Sarebbero da 0-7
-    //     passeren(semaphoreList[dnum])
-    //     //passeren(semDisk[dnum]);
-    //     break;
-    // case 4:
-    //     //Sarebbero da 8-15
-    //     passeren(semFlash[8+dnum]);
-    //     break;
-    // case 5:
-    //     //Sarebbero da 16-23
-    //     passeren(semNetwork[16+dnum]);
-    //     break;
-    // case 6:
-    //     //Sarebbero da 24-31
-    //     passeren(semPrinter[24+dnum]);
-    //     break;
-    // case 7:
-    //     if(waitForTermRead)
-    //         //Sarebbero da 32-39
-    //         passeren(semTerminalRecv[32+dnum]);
-    //     else
-    //         //Sarebbero da 40-47
-    //         passeren(semTerminalTrans[40+dnum]);
-    //     break;
-    // default:
-    //     PANIC();
-    //     break;
-    // }
+    switch (intlNo)
+    {
+    case 3:
+        passeren(semDisk[dnum]);
+        break;
+    case 4:
+        passeren(semFlash[dnum]);
+        break;
+    case 5:
+        passeren(semNetwork[dnum]);
+        break;
+    case 6:
+        passeren(semPrinter[dnum]);
+        break;
+    case 7:
+        if(waitForTermRead)
+            passeren(semTerminalRecv[dnum]);
+        else
+            passeren(semTerminalTrans[dnum]);
+        break;
+    default:
+        PANIC();
+        break;
+    }
 }
 
 void getCpuTime(){

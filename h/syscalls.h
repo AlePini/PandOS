@@ -16,14 +16,13 @@ void getCpuTime();
 void waitForClock();
 void getSupportStruct();
 
-extern SEMAPHORE semaphoreList[];
-// extern int semDisk[];
-// extern int semFlash[];
-// extern int semNetwork[];
-// extern int semPrinter[];
-// extern int semTerminalTrans[];
-// extern int semTerminalRecv[];
-// extern int semIntTimer;
+extern int semDisk[];
+extern int semFlash[];
+extern int semNetwork[];
+extern int semPrinter[];
+extern int semTerminalTrans[];
+extern int semTerminalRecv[];
+extern int semIntTimer;
 
 extern unsigned endTimeSlice;
 extern unsigned startTimeSlice;
