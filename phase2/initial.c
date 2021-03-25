@@ -10,13 +10,14 @@ int softblockCount;
 pcb_t* readyQueue;
 pcb_t* currentProcess;
 
-int semDisk[INSTANCES_NUMBER];
-int semFlash[INSTANCES_NUMBER];
-int semNetwork[INSTANCES_NUMBER];
-int semPrinter[INSTANCES_NUMBER];
-int semTerminalTrans[INSTANCES_NUMBER];
-int semTerminalRecv[INSTANCES_NUMBER];
-int semIntTimer;
+SEMAPHORE semaphoreList[DEVICE_NUMBER];
+SEMAPHORE semIntTimer;
+// int semDisk[INSTANCES_NUMBER];
+// int semFlash[INSTANCES_NUMBER];
+// int semNetwork[INSTANCES_NUMBER];
+// int semPrinter[INSTANCES_NUMBER];
+// int semTerminalTrans[INSTANCES_NUMBER];
+// int semTerminalRecv[INSTANCES_NUMBER];
 
 //Prova a mettere la roba extern qui
 extern void test();
@@ -44,10 +45,11 @@ int main(){
     //Inizializzare le variabili globali
     readyQueue = mkEmptyProcQ();
     currentProcess = NULL;
-    //processCount, softBlockCount and device semaphores are automatically initialized at compile time
+    //processCount, softBlockCount and device semaphores si inizializzano da soli ai valori di default
 
 
     //Setup del system-wide timer
+    //TODO: capire quale dei due sia giusto
     LDIT(100000UL);
     //LDIT(SWTIMERVALUE);
 
@@ -56,12 +58,7 @@ int main(){
     processCount++;
 
     //Setup dello status
-    /*TEBITON Timer ON */
-    /*IEPON Interrupt abilitati */
-    /*IMON Attiva tutti gli interrupt */
     firstProcess->p_s.status = ALLOFF | TEBITON | IEPON | IMON;
-    setSTATUS(firstProcess -> p_s.status);
-    //copyState(&firstProcess, (&currentProcess->p_s));
 
     //SP is set to RAMTOP
     RAMTOP(firstProcess->p_s.reg_sp);
@@ -69,8 +66,6 @@ int main(){
     firstProcess->p_s.pc_epc = (memaddr) &test;
     firstProcess->p_s.reg_t9 = (memaddr) &test;
     insertProcQ(&readyQueue, firstProcess);
-    prova();
-    LDST(&(currentProcess->p_s));
 
     //Scheduler
     scheduler();
