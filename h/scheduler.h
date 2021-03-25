@@ -5,10 +5,6 @@
 #include <pandos_types.h>
 #include <umps3/umps/cp0.h>
 //Variabili
-extern int processCount;
-extern int softblockCount;
-extern pcb_t* readyQueue;
-extern pcb_t* currentProcess;
 
 //Funzioni
 
