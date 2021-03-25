@@ -52,7 +52,6 @@ void sysHandler(){
                     break;
             }
             //TODO: PENSO NON VADA BENE
-            EXCTYPE->pc_epc += 4;
             LDST(EXCTYPE);
         }
     }else{

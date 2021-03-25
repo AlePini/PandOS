@@ -9,7 +9,7 @@
         "asl.h": "c",
         "utils.h": "c",
         "initial.h": "c",
-
+        "scheduler.h": "c"
     },
     "cmake.configureOnOpen": true
 }
