@@ -6,9 +6,9 @@
 
 void sysHandler(){
     //Leggo l'id della syscall
-    unsigned sysdnum = *EXCTYPE->reg_a0;
-    if(sysdnum >=1 && sysdnum<=8){
-        currentProcess->p_s.status = *EXCTYPE;
+    unsigned sysdnum = EXCTYPE -> reg_a0;
+    if(sysdnum >= 1 && sysdnum <= 8){
+        currentProcess->p_s = *EXCTYPE;
         //Se è fra 1 e 8 devo essere in kernel mode altrimenti eccezione
         if(CHECK_USERMODE(currentProcess->p_s.status)){
             setCAUSE(EXC_RI<<CAUSESHIFT);
@@ -51,7 +51,8 @@ void sysHandler(){
                     PANIC();
                     break;
             }
-            LDST(&EXCTYPE);
+            //TODO: PENSO NON VADA BENE
+            LDST(EXCTYPE);
         }
     }else{
         exceptionHandler(GENERAL);
@@ -97,8 +98,8 @@ void terminateRecursive(pcb_t* p){
 void passeren(int* semaddr){
     (*semaddr)--;
     if(*semaddr <= 0){
-        STCK(endTimeSlice)
-        currentProcess->p_time+=(endTimeSlide-startTimeSlice);
+        STCK(endTimeSlice);
+        currentProcess->p_time+=(endTimeSlice-startTimeSlice);
         //TODO:Ti salvi lo stato attuale delle cose per poi bloccarlo, così che quando ripiglia ricomincia da qui
         currentProcess->p_s = *EXCTYPE;
         insertBlocked(semaddr, currentProcess);
@@ -147,11 +148,11 @@ void waitIO(int intlNo, int  dnum, int waitForTermRead){
 void getCpuTime(){
     STCK(endTimeSlice);
     //currentProcess->p_time+=(endTimeSlide-startTimeSlice);
-    unsigned time = currentProcess->p_time + (endTimeSlide-startTimeSlice);
+    unsigned time = currentProcess->p_time + (endTimeSlice-startTimeSlice);
     //TODO: non penso vada nel current process ma bensì nel BIOSDATAPAGE poichè tu fai LDST su quello li
     //currentProcess->p_s.reg_v0 = time;
     //TODO: non so se scritto così vada bene
-    *EXCTYPE->reg_v0 = time;
+    EXCTYPE->reg_v0 = time;
     return;
 }
 
@@ -162,6 +163,6 @@ void waitForClock(){
 
 void getSupportStruct(){
     //TODO: va bene?
-     *EXCTYPE->reg_v0 = currentProcess->p_supportStruct;
+     EXCTYPE->reg_v0 = currentProcess->p_supportStruct;
     return;
 }
