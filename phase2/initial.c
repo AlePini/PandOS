@@ -17,64 +17,55 @@ int semTerminalTrans[INSTANCES_NUMBER];
 int semTerminalRecv[INSTANCES_NUMBER];
 int semIntTimer;
 
+//Prova a mettere la roba extern qui
+
 int main(){
 
-    //Inizializzazione variabili
-    processCount = 0;
-    softblockCount = 0;
-    readyQueue = mkEmptyProcQ();
-    currentProcess = NULL;
-    for(int i=0; i<i; i++){
-        semDisk[i]=0;
-        semFlash[i]=0;
-        semNetwork[i]=0;
-        semPrinter[i]=0;
-        semTerminalTrans[i]=0;
-        semTerminalRecv[i]=0;
-    }
-    semIntTimer=0;
-
-    //Inizializzare strutture dati
+    //Inizializzare strutture dati livello 2
     initPcbs();
     initASL();
 
     //Popolare il passup vector
-    passupvector_t* passup;
+    passupvector_t* passup = (passupvector_t*)PASSUPVECTOR;
     passup->tlb_refill_handler = (memaddr) &uTLB_RefillHandler;
     passup->tlb_refill_stackPtr = (memaddr) KERNELSTACK;
     passup->exception_handler = (memaddr) exceptionHandler;
     passup->exception_stackPtr = (memaddr) KERNELSTACK;
 
+    // Initialize the Level 2 structures
+    initPcbs();
+    initASL();
+
+
+    //Inizializzare le variabili globali
+    readyQueue = mkEmptyProcQ();
+    currentProcess = NULL;
+    //processCount, softBlockCount and device semaphores are automatically initialized at compile time
+
+
     //Setup del system-wide timer
-    //100000UL
-    LDIT(SWTIMERVALUE);
+    LDIT(100000UL);
+    //LDIT(SWTIMERVALUE);
 
     //Parte sul primo processo
     pcb_t* firstProcess = allocPcb();
-    pc++;
-    // TODO : in teoria non serve
-    STST(&firstProcess->p_s);
+    processCount++;
 
     //Setup dello status
-    //In teoria USERPON non serve in quanto  facendo stst lui copia lo stato del processore che è gia kernel mode va testato
-    /*USERPON Kernel mode ON */
     /*TEBITON Timer ON */
     /*IEPON Interrupt abilitati */
     /*IMON Attiva tutti gli interrupt */
-    firstProcess->p_s.status |= | TEBITON | IEPON | IMON;
+    firstProcess->p_s.status = TEBITON | IEPON; //| IMON;
 
     //SP is set to RAMTOP
     RAMTOP(firstProcess->p_s.reg_sp);
     //Program Counter set to test address
     firstProcess->p_s.pc_epc = (memaddr) &test;
     firstProcess->p_s.reg_t9 = (memaddr) &test;
-    //Incremented program counter and inserted the process in the readyqueue
-    processCount++;
     insertProcQ(&readyQueue, firstProcess);
 
     //Scheduler
     scheduler();
 
-    //Non so se ci vuole il return 0
     return 0;
 }
