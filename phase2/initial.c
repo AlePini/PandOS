@@ -24,9 +24,6 @@ extern void test();
 extern void uTLB_RefillHandler();
 extern void exceptionHandler();
 
-void prova(){
-    return;
-}
 
 int main(){
 
