@@ -32,10 +32,6 @@ int main(){
     passup->exception_handler = (memaddr) exceptionHandler;
     passup->exception_stackPtr = (memaddr) KERNELSTACK;
 
-    // Initialize the Level 2 structures
-    initPcbs();
-    initASL();
-
 
     //Inizializzare le variabili globali
     readyQueue = mkEmptyProcQ();
