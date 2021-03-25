@@ -29,7 +29,7 @@ unsigned  exceptionType(){
 
 void exceptionHandler(){
     unsigned type = exceptionType();
-    *EXCTYPE->pc_epc += 4;
+    EXCTYPE->pc_epc += 4;
     switch (type){
         case IOINTERRUPTS:
             interruptHandler();
