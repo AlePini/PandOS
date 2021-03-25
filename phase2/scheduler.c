@@ -23,11 +23,16 @@ void scheduler(){
     }
     //Se c'è un processo attivo lo rimetto in coda
     //TODO: donno non ha messo sto if però penso serva. controllare poi
-    if(currentProcess != NULL){
-        insertProcQ(&readyQueue, currentProcess);
-    }
+    // if(currentProcess != NULL){
+    //     prova();
+    //     insertProcQ(&readyQueue, currentProcess);
+    // }
     currentProcess = removeProcQ(&readyQueue);
     setTIMER(PLTTIMER);
     STCK(startTimeSlice);
     LDST(&(currentProcess->p_s));
+}
+
+void prova(){
+    return;
 }
