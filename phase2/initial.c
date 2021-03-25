@@ -40,16 +40,18 @@ int main(){
 
     //Popolare il passup vector
     passupvector_t* passup;
-    passup->tlb_refill_handler = (memaddr) uTLB_RefillHandler;
+    passup->tlb_refill_handler = (memaddr) &uTLB_RefillHandler;
     passup->tlb_refill_stackPtr = (memaddr) KERNELSTACK;
     passup->exception_handler = (memaddr) exceptionHandler;
     passup->exception_stackPtr = (memaddr) KERNELSTACK;
 
     //Setup del system-wide timer
+    //100000UL
     LDIT(SWTIMERVALUE);
 
     //Parte sul primo processo
     pcb_t* firstProcess = allocPcb();
+    pc++;
     // TODO : in teoria non serve
     STST(&firstProcess->p_s);
 
@@ -59,7 +61,7 @@ int main(){
     /*TEBITON Timer ON */
     /*IEPON Interrupt abilitati */
     /*IMON Attiva tutti gli interrupt */
-    firstProcess->p_s.status |= ~USERPON | TEBITON | IEPON | IMON;
+    firstProcess->p_s.status |= | TEBITON | IEPON | IMON;
 
     //SP is set to RAMTOP
     RAMTOP(firstProcess->p_s.reg_sp);

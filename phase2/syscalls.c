@@ -6,10 +6,10 @@
 
 void sysHandler(){
     //Leggo l'id della syscall
-    unsigned sysdnum = currentProcess->p_s.reg_a0;
+    unsigned sysdnum = *EXCTYPE->reg_a0;
     if(sysdnum >=1 && sysdnum<=8){
+        currentProcess->p_s.status = *EXCTYPE;
         //Se è fra 1 e 8 devo essere in kernel mode altrimenti eccezione
-        currentProcess->p_s = *EXCTYPE;
         if(CHECK_USERMODE(currentProcess->p_s.status)){
             setCAUSE(EXC_RI<<CAUSESHIFT);
             exceptionHandler();
@@ -19,7 +19,7 @@ void sysHandler(){
             unsigned arg1 = currentProcess->p_s.reg_a1;
             unsigned arg2 = currentProcess->p_s.reg_a2;
             unsigned arg3 = currentProcess->p_s.reg_a3;
-            currentProcess->p_s.pc_epc += 4;
+
             switch(sysdnum){
                 case CREATEPROCESS:
                     createProcess((state_t*) arg1, (support_t*) arg2);
@@ -51,6 +51,7 @@ void sysHandler(){
                     PANIC();
                     break;
             }
+            LDST(&EXCTYPE);
         }
     }else{
         exceptionHandler(GENERAL);
@@ -62,15 +63,13 @@ void createProcess(state_t* arg1, support_t* arg2){
     newProcess->p_s = *arg1;
     newProcess->p_supportStruct = arg2;
     insertChild(currentProcess, newProcess);
-    insertProcQ(getReadyQueue(), newProcess);
+    insertProcQ(&readyQueue, newProcess);
     newProcess->p_time = 0;
     newProcess->p_semAdd = NULL;
-
 }
 
 void terminateProcess(){
     terminateRecursive(currentProcess);
-    // TODO check for exception handler
     scheduler();
     return;
 }
@@ -78,17 +77,17 @@ void terminateProcess(){
 void terminateRecursive(pcb_t* p){
     if(p == NULL) return;
     if(!emptyChild(p))
-        terminateRecursive(p -> p_child);
+        terminateRecursive(p->p_child);
     if(p -> p_next_sib != NULL)
-        terminateRecursive(p -> p_next_sib);
+        terminateRecursive(p->p_next_sib);
     outChild(p);
     if(p->p_semAdd != NULL){
+        softblockCount--;
+        outBlocked(p);
         //TODO: fare il ++ solo se è negativo e non intlNo
         (*(p->p_semAdd))++;
-        outBlocked(p);
-        softblockCount--;
     }else{
-        outProcQ(getReadyQueue(), p);
+        outProcQ(&readyQueue, p);
     }
     processCount--;
     freePcb(p);
@@ -98,8 +97,11 @@ void terminateRecursive(pcb_t* p){
 void passeren(int* semaddr){
     (*semaddr)--;
     if(*semaddr <= 0){
+        STCK(endTimeSlice)
+        currentProcess->p_time+=(endTimeSlide-startTimeSlice);
+        //TODO:Ti salvi lo stato attuale delle cose per poi bloccarlo, così che quando ripiglia ricomincia da qui
+        currentProcess->p_s = *EXCTYPE;
         insertBlocked(semaddr, currentProcess);
-        //manca gestione del time
         currentProcess=NULL;
         scheduler();
     }
@@ -142,10 +144,14 @@ void waitIO(int intlNo, int  dnum, int waitForTermRead){
     }
 }
 
-// TODO + CPU time used during the current quantum/time slice;
 void getCpuTime(){
-    unsigned time = currentProcess->p_time;
-    currentProcess->p_s.reg_v0 = time;
+    STCK(endTimeSlice);
+    //currentProcess->p_time+=(endTimeSlide-startTimeSlice);
+    unsigned time = currentProcess->p_time + (endTimeSlide-startTimeSlice);
+    //TODO: non penso vada nel current process ma bensì nel BIOSDATAPAGE poichè tu fai LDST su quello li
+    //currentProcess->p_s.reg_v0 = time;
+    //TODO: non so se scritto così vada bene
+    *EXCTYPE->reg_v0 = time;
     return;
 }
 
@@ -155,6 +161,7 @@ void waitForClock(){
 }
 
 void getSupportStruct(){
-    currentProcess->p_s.reg_v0 = currentProcess->p_supportStruct;
+    //TODO: va bene?
+     *EXCTYPE->reg_v0 = currentProcess->p_supportStruct;
     return;
 }
