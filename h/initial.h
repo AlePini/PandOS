@@ -10,9 +10,5 @@
 #include <exceptions.h>
 #include <umps3/umps/libumps.h>
 
-extern void test();
-extern void uTLB_RefillHandler();
-extern void exceptionHandler();
-
 
 #endif
