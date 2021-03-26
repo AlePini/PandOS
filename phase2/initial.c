@@ -1,7 +1,11 @@
-#include <initial.h>
+#include <pandos_const.h>
+#include <pandos_types.h>
+#include <pcb.h>
+#include <asl.h>
 #include <scheduler.h>
 #include <exceptions.h>
 #include <umps3/umps/libumps.h>
+
 //TODO: mettere HIDDEN tutto quello che viene usato solo nel suo file
 
 //Dichiarazione variabili
