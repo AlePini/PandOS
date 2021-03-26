@@ -1,6 +1,7 @@
 #ifndef INITIAL_H
 #define INITIAL_H
 
+// TODO eliminare questa merda e vedere se va
 
 #include <pandos_const.h>
 #include <pandos_types.h>
