@@ -13,7 +13,7 @@ void scheduler(){
         }
         if(processCount>0 && softblockCount>0){    //Se ci son solo processi in attesa aspetta
             unsigned oldStatus = getSTATUS();
-            setSTATUS(oldStatus & ~TEBITON | IECON);
+            setSTATUS(oldStatus & ~TEBITON | IEPON | IMON /*| IECON*/);
             WAIT();
             setSTATUS(oldStatus);
         }
@@ -23,16 +23,11 @@ void scheduler(){
     }
     //Se c'è un processo attivo lo rimetto in coda
     //TODO: donno non ha messo sto if però penso serva. controllare poi
-    // if(currentProcess != NULL){
-    //     prova();
-    //     insertProcQ(&readyQueue, currentProcess);
-    // }
+    if(currentProcess != NULL){
+        insertProcQ(&readyQueue, currentProcess);
+    }
     currentProcess = removeProcQ(&readyQueue);
     setTIMER(PLTTIMER);
     STCK(startTimeSlice);
     LDST(&(currentProcess->p_s));
-}
-
-void prova(){
-    return;
 }

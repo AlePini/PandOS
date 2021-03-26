@@ -75,6 +75,8 @@ void terminateProcess(){
     return;
 }
 
+
+
 void terminateRecursive(pcb_t* p){
     if(p == NULL) return;
     if(!emptyChild(p))
@@ -85,8 +87,13 @@ void terminateRecursive(pcb_t* p){
     if(p->p_semAdd != NULL){
         softblockCount--;
         outBlocked(p);
-        //TODO: fare il ++ solo se è negativo e non intlNo
-        (*(p->p_semAdd))++;
+        bool blockedDevice =
+        (p->p_semAdd >= semDevices &&
+        p->p_semAdd < semDevices + sizeof(SEMAPHORE) * DEVICE_TYPES * INSTANCES_NUMBER)
+        || p->p_semAdd == semIntTimer;
+        if(blockedDevice){
+            (*(p->p_semAdd))++;
+        }
     }else{
         outProcQ(&readyQueue, p);
     }

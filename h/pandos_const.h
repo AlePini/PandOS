@@ -32,6 +32,7 @@
 #define SWTIMER  PSECOND
 #define PLTTIMER  TIMESLICE * (* ((cpu_t *) TIMESCALEADDR))
 #define DEVICE_NUMBER 48
+#define DEVICE_TYPES 6
 #define INSTANCES_NUMBER  8
 #define EXCTYPE ((state_t *) BIOSDATAPAGE)
 #define TLBTRAP 2
