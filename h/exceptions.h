@@ -1,9 +1,10 @@
 #ifndef EXCEPTIONS_H
 #define EXCEPTIONS_H
 
-#include <initial.h>
 #include <umps3/umps/libumps.h>
 #include <memory.h>
+#include <pcb.h>
+#include <asl.h>
 
 extern pcb_t* currentProcess;
 

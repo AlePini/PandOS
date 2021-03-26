@@ -16,12 +16,7 @@ pcb_t* currentProcess;
 
 SEMAPHORE semaphoreList[DEVICE_NUMBER];
 SEMAPHORE semIntTimer;
-// int semDisk[INSTANCES_NUMBER];
-// int semFlash[INSTANCES_NUMBER];
-// int semNetwork[INSTANCES_NUMBER];
-// int semPrinter[INSTANCES_NUMBER];
-// int semTerminalTrans[INSTANCES_NUMBER];
-// int semTerminalRecv[INSTANCES_NUMBER];
+
 
 //Prova a mettere la roba extern qui
 extern void test();
@@ -50,9 +45,7 @@ int main(){
 
 
     //Setup del system-wide timer
-    //TODO: capire quale dei due sia giusto
-    LDIT(100000UL);
-    //LDIT(SWTIMERVALUE);
+    LDIT(SWTIMER);
 
     //Parte sul primo processo
     pcb_t* firstProcess = allocPcb();
