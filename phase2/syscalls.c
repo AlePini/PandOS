@@ -87,9 +87,9 @@ void terminateRecursive(pcb_t* p){
     if(p->p_semAdd != NULL){
         softblockCount--;
         outBlocked(p);
-        bool blockedDevice =
-        (p->p_semAdd >= semDevices &&
-        p->p_semAdd < semDevices + sizeof(SEMAPHORE) * DEVICE_TYPES * INSTANCES_NUMBER)
+        int blockedDevice =
+        (p->p_semAdd >= semaphoreList &&
+        p->p_semAdd < semaphoreList + sizeof(SEMAPHORE) * DEVICE_TYPES * INSTANCES_NUMBER)
         || p->p_semAdd == semIntTimer;
         if(blockedDevice){
             (*(p->p_semAdd))++;

@@ -5,17 +5,9 @@
 #include <scheduler.h>
 #include <exceptions.h>
 #include <umps3/umps/libumps.h>
+#include <initial.h>
 
 //TODO: mettere HIDDEN tutto quello che viene usato solo nel suo file
-
-//Dichiarazione variabili
-int processCount;
-int softblockCount;
-pcb_t* readyQueue;
-pcb_t* currentProcess;
-
-SEMAPHORE semaphoreList[DEVICE_NUMBER];
-SEMAPHORE semIntTimer;
 
 
 //Prova a mettere la roba extern qui
@@ -38,9 +30,9 @@ int main(){
     passup->exception_stackPtr = (memaddr) KERNELSTACK;
 
 
-    //Inizializzare le variabili globali
+    // //Inizializzare le variabili globali
     readyQueue = mkEmptyProcQ();
-    currentProcess = NULL;
+    //currentProcess = NULL;
     //processCount, softBlockCount and device semaphores si inizializzano da soli ai valori di default
 
 
@@ -57,9 +49,11 @@ int main(){
     //SP is set to RAMTOP
     RAMTOP(firstProcess->p_s.reg_sp);
     //Program Counter set to test address
-    firstProcess->p_s.pc_epc = (memaddr) &test;
-    firstProcess->p_s.reg_t9 = (memaddr) &test;
+    firstProcess->p_s.pc_epc = (memaddr) test;
+    firstProcess->p_s.reg_t9 = (memaddr) test;
     insertProcQ(&readyQueue, firstProcess);
+
+    currentProcess = NULL;
 
     //Scheduler
     scheduler();
