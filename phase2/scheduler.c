@@ -13,7 +13,7 @@ void scheduler(){
         }
         if(processCount>0 && softblockCount>0){    //Se ci son solo processi in attesa aspetta
             unsigned oldStatus = getSTATUS();
-            setSTATUS(oldStatus & ~TEBITON | IEPON | IMON /*| IECON*/);
+            setSTATUS(oldStatus & ~TEBITON | IECON);
             WAIT();
             setSTATUS(oldStatus);
         }
