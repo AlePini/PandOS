@@ -39,6 +39,17 @@
 #define GENERAL 4
 #define SEMAPHORE int
 
+#define INT_PLT      1
+#define INT_SWT      2
+#define INT_DISK     3
+#define INT_TAPE     4
+#define INT_NETWORK  5
+#define INT_PRINTER  6
+#define INT_TERMINAL 7
+
+#define ST_TRANS_RECV 5
+#define TERM_STATUS_MASK 0xFF
+
 
 /* Hardware & software constants */
 #define PAGESIZE 4096 /* page size in bytes	*/

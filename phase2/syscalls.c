@@ -52,6 +52,7 @@ void sysHandler(){
                     break;
             }
             //TODO: PENSO NON VADA BENE
+            EXCTYPE->pc_epc += 4;
             LDST(EXCTYPE);
         }
     }else{
@@ -116,17 +117,20 @@ void passeren(int* semaddr){
     return;
 }
 
-void verhogen(int* semaddr){
+pcb_t* verhogen(int* semaddr){
     (*semaddr)++;
     if(*semaddr <= 0){
         pcb_t* tmp = removeBlocked(semaddr);
-        insertProcQ(getReadyQueue(),tmp);
+        return tmp;
+        //insertProcQ(&readyQueue,tmp);
     }
-    return;
+    return NULL;
 }
 
 void waitIO(int intlNo, int  dnum, int waitForTermRead){
-        //Prendo la linea di interrupt(rimappandole da 0 a 4) e la moltiplico per 8. Se è un terminal line controllo se leggo e trasmetto
+    //TODO: potrei far una matrice di semafori che è stra easy
+    if(intlNo<3 || intlNo >7) terminateProcess();
+    //Prendo la linea di interrupt(rimappandole da 0 a 4) e la moltiplico per 8. Se è un terminal line controllo se leggo e trasmetto
     int startingPoint = 8*(intlNo+waitForTermRead-3);
     passeren(semaphoreList[startingPoint + dnum]);
     // switch (intlNo)
