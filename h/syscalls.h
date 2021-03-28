@@ -15,7 +15,7 @@ void sysHandler();
 void createProcess(state_t*, support_t*);
 void terminateProcess();
 void passeren(int*);
-void verhogen(int*);
+pcb_t* verhogen(int*);
 void waitIO(int, int, int);
 void getCpuTime();
 void waitForClock();

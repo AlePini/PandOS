@@ -1,5 +1,5 @@
 #include <interrupts.h>
-
+#include <initial.h>
 #define CAUSE_IP_GET(cause,line) (cause & CAUSE_IP_MASK) & CAUSE_IP(line)
 
 int getDeviceNr(unsigned bitmap){
@@ -12,8 +12,7 @@ int getDeviceNr(unsigned bitmap){
 }
 
 void interruptHandler(){
-    state_t *exceptionState = EXCTYPE;
-    unsigned int cause = exceptionState->cause.IP;
+    unsigned int cause = (EXCTYPE->cause);
 
     if(CAUSE_IP_GET(cause, INT_PLT)){
         PLTInterrupt();
@@ -42,10 +41,10 @@ void dtpHandler(int type){
 
     if ((device_nr = getDeviceNr(*interrupt_bitmap)) < 0) PANIC();
     else dev = (dtpreg_t*) DEV_REG_ADDR(type, device_nr);
-    i = DEV_PER_INT * (type - 3) + device_nr;
+    i = INSTANCES_NUMBER * (type - 3) + device_nr;
     status = dev->status;
     dev->command = CMD_ACK;
-    pcb_t* free = verhogen(&dev_sem[i]);
+    pcb_t* free = verhogen(&semaphoreList[i]);
     free->p_s.reg_v0 = status;
     if(free!=NULL)
         insertProcQ(&readyQueue, free);
@@ -62,17 +61,17 @@ void terminalHandler(){
     else term = (termreg_t*) DEV_REG_ADDR(INT_TERMINAL, device_nr);
 
     if ((term->recv_status & TERM_STATUS_MASK) == ST_TRANS_RECV){
-        i = DEV_PER_INT * (INT_TERMINAL - 3) + device_nr;
+        i = INSTANCES_NUMBER * (INT_TERMINAL - 3) + device_nr;
         status = term->recv_status;
         term->recv_command = CMD_ACK;
     }
     else if ((term->transm_status & TERM_STATUS_MASK) == ST_TRANS_RECV){
-        i = DEV_PER_INT * (INT_TERMINAL - 3 + 1) + device_nr;
+        i = INSTANCES_NUMBER * (INT_TERMINAL - 3 + 1) + device_nr;
         status = term->transm_status;
         term->transm_command = CMD_ACK;
     }
 
-    pcb_t* free = verhogen(&dev_sem[i]);
+    pcb_t* free = verhogen(&semaphoreList[i]);
     free->p_s.reg_v0 = status;
     if(free!=NULL)
         insertProcQ(&readyQueue, free);
@@ -82,7 +81,7 @@ void terminalHandler(){
 
 void PLTInterrupt(){
     setTIMER(PLTTIMER);
-    currentProcess->p_s = EXCTYPE;
+    currentProcess->p_s = *EXCTYPE;
     currentProcess->p_time += 5000;
     insertProcQ(&readyQueue, currentProcess);
     currentProcess = NULL;
@@ -93,9 +92,9 @@ void SWITInterrupt(){
     LDIT(SWTIMER);
     pcb_t* removedProcess;
     do{
-        removedProcess; = removeBlocked()
-    }while(removed != NULL);
-    (*semaddr) = 0;
+        removedProcess = removeBlocked();
+    }while(removedProcess != NULL);
+    semIntTimer = 0;
     if(currentProcess != NULL)
         LDST(EXCTYPE);
 }

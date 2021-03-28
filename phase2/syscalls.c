@@ -2,6 +2,7 @@
 #include <scheduler.h>
 #include <utils.h>
 #include <exceptions.h>
+#include <initial.h>
 
 
 void sysHandler(){
@@ -52,7 +53,6 @@ void sysHandler(){
                     break;
             }
             //TODO: PENSO NON VADA BENE
-            EXCTYPE->pc_epc += 4;
             LDST(EXCTYPE);
         }
     }else{
@@ -61,7 +61,7 @@ void sysHandler(){
 }
 
 void createProcess(state_t* arg1, support_t* arg2){
-    pcb_t* newProcess;
+    pcb_t* newProcess = allocPcb();
     newProcess->p_s = *arg1;
     newProcess->p_supportStruct = arg2;
     insertChild(currentProcess, newProcess);
@@ -76,28 +76,39 @@ void terminateProcess(){
     return;
 }
 
+//TODO: riscrivere diversa da donno
+void terminateRecursive(pcb_t *p) {
+    pcb_t *child;
+    
+    // Handle all children
+    while ((child = removeChild(p)) != NULL) {
+        terminateRecursive(child);
+    }
 
-
-void terminateRecursive(pcb_t* p){
-    if(p == NULL) return;
-    if(!emptyChild(p))
-        terminateRecursive(p->p_child);
-    if(p -> p_next_sib != NULL)
-        terminateRecursive(p->p_next_sib);
-    outChild(p);
+    // Handle the process itself
     if(p->p_semAdd != NULL){
-        softblockCount--;
-        outBlocked(p);
+        // A process is blocked on a device if the semaphore is
+        // semIntTimer or an element of semDevices
         int blockedDevice =
-        (p->p_semAdd >= semaphoreList &&
-        p->p_semAdd < semaphoreList + sizeof(SEMAPHORE) * DEVICE_TYPES * INSTANCES_NUMBER)
-        || p->p_semAdd == semIntTimer;
-        if(blockedDevice){
+            (p->p_semAdd >= semaphoreList &&
+            p->p_semAdd < semaphoreList + sizeof(SEMAPHORE) * DEVICE_TYPES * INSTANCES_NUMBER)
+            || p->p_semAdd == semIntTimer;
+        
+        // If the process is blocked on a user semaphore, remove it
+        outBlocked(p);
+
+        // For device processes, 
+        if (blockedDevice) {
+            softblockCount--;
+            }
+        else {
             (*(p->p_semAdd))++;
         }
-    }else{
+    }
+    else{
         outProcQ(&readyQueue, p);
     }
+
     processCount--;
     freePcb(p);
     return;
@@ -105,7 +116,7 @@ void terminateRecursive(pcb_t* p){
 
 void passeren(int* semaddr){
     (*semaddr)--;
-    if(*semaddr <= 0){
+    if(*semaddr < 0){
         STCK(endTimeSlice);
         currentProcess->p_time+=(endTimeSlice-startTimeSlice);
         //TODO:Ti salvi lo stato attuale delle cose per poi bloccarlo, così che quando ripiglia ricomincia da qui
@@ -131,7 +142,7 @@ void waitIO(int intlNo, int  dnum, int waitForTermRead){
     //TODO: potrei far una matrice di semafori che è stra easy
     if(intlNo<3 || intlNo >7) terminateProcess();
     //Prendo la linea di interrupt(rimappandole da 0 a 4) e la moltiplico per 8. Se è un terminal line controllo se leggo e trasmetto
-    int startingPoint = 8*(intlNo+waitForTermRead-3);
+    int startingPoint = INSTANCES_NUMBER*(intlNo+waitForTermRead-3);
     passeren(semaphoreList[startingPoint + dnum]);
     // switch (intlNo)
     // {
@@ -185,5 +196,13 @@ void waitForClock(){
 void getSupportStruct(){
     //TODO: va bene?
      EXCTYPE->reg_v0 = currentProcess->p_supportStruct;
+    return;
+}
+
+void provax(){
+    return;
+}
+
+void provax2(){
     return;
 }

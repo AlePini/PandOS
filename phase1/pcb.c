@@ -59,7 +59,7 @@ int emptyProcQ(pcb_t *tp){
 }
 
 void insertProcQ(pcb_t **tp, pcb_t *p){
-
+    if(p==NULL) return;
     //If tp == NULL, the list does not exist therefore there will be only p.
     if(*tp == NULL){
         *tp = p;

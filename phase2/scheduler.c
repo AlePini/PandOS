@@ -24,11 +24,11 @@ void scheduler(){
     }
     //Se c'è un processo attivo lo rimetto in coda
     //TODO: donno non ha messo sto if però penso serva. controllare poi
-    if(currentProcess != NULL){
-        prova(currentProcess);
-        insertProcQ(&readyQueue, currentProcess);
-    }
     prova();
+    if(currentProcess != NULL){
+        insertProcQ(&readyQueue, currentProcess);
+
+    }
     currentProcess = removeProcQ(&readyQueue);
     setTIMER(PLTTIMER);
     STCK(startTimeSlice);
@@ -36,10 +36,9 @@ void scheduler(){
 }
 
 void prova(){
-    pcb_t* boh = NULL;
-    if(boh == currentProcess)
+    if(currentProcess == NULL){
         prova2();
-    return;
+    }
 }
 
 void prova2(){

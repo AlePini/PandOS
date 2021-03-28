@@ -49,6 +49,7 @@
 
 #define ST_TRANS_RECV 5
 #define TERM_STATUS_MASK 0xFF
+#define CMD_ACK 1
 
 
 /* Hardware & software constants */
