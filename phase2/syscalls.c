@@ -98,10 +98,7 @@ void terminateRecursive(pcb_t *p) {
         outBlocked(p);
 
         // For device processes, 
-        if (blockedDevice) {
-            softblockCount--;
-            }
-        else {
+        if (!blockedDevice) {
             (*(p->p_semAdd))++;
         }
     }
@@ -142,8 +139,10 @@ void waitIO(int intlNo, int  dnum, int waitForTermRead){
     //TODO: potrei far una matrice di semafori che è stra easy
     if(intlNo<3 || intlNo >7) terminateProcess();
     //Prendo la linea di interrupt(rimappandole da 0 a 4) e la moltiplico per 8. Se è un terminal line controllo se leggo e trasmetto
-    int startingPoint = INSTANCES_NUMBER*(intlNo+waitForTermRead-3);
-    passeren(semaphoreList[startingPoint + dnum]);
+    int semaphoreIndex = INSTANCES_NUMBER*(intlNo+waitForTermRead-3) + dnum;
+    provax();
+    softblockCount++;
+    passeren(&semaphoreList[semaphoreIndex]);
     // switch (intlNo)
     // {
     // case 3:
@@ -189,6 +188,7 @@ void getCpuTime(){
 }
 
 void waitForClock(){
+    softblockCount++;
     passeren(&semIntTimer);
     return;
 }

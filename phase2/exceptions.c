@@ -16,6 +16,8 @@ void passUpOrDie(unsigned index) {
         // TODO: Gestire come Syscall 2 (kill), non so se basta usare la syscall
         terminateProcess();
     }
+    //TODO: serve?
+    scheduler();
 }
 
 unsigned  exceptionType(){

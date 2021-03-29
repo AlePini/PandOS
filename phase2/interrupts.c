@@ -1,5 +1,8 @@
 #include <interrupts.h>
 #include <initial.h>
+#include <syscalls.h>
+#include <asl.h>
+#include <pandos_types.h>
 #define CAUSE_IP_GET(cause,line) (cause & CAUSE_IP_MASK) & CAUSE_IP(line)
 
 int getDeviceNr(unsigned bitmap){
@@ -44,12 +47,15 @@ void dtpHandler(int type){
     i = INSTANCES_NUMBER * (type - 3) + device_nr;
     status = dev->status;
     dev->command = CMD_ACK;
+    softblockCount++;
     pcb_t* free = verhogen(&semaphoreList[i]);
-    free->p_s.reg_v0 = status;
-    if(free!=NULL)
+    if(free!=NULL){;
+        free->p_s.reg_v0 = status;
         insertProcQ(&readyQueue, free);
-    if(currentProcess != NULL)
+    }
+    if(currentProcess != NULL){
         LDST(EXCTYPE);
+    }else scheduler();
 }
 
 void terminalHandler(){
@@ -70,13 +76,18 @@ void terminalHandler(){
         status = term->transm_status;
         term->transm_command = CMD_ACK;
     }
-
+    softblockCount++;
+    saveme();
     pcb_t* free = verhogen(&semaphoreList[i]);
-    free->p_s.reg_v0 = status;
-    if(free!=NULL)
+    if(free!=NULL){
+        prova4();
+        free->p_s.reg_v0 = status;
         insertProcQ(&readyQueue, free);
-    if(currentProcess != NULL)
+    }
+    if(currentProcess != NULL){
+        prova3();
         LDST(EXCTYPE);
+    }else scheduler();
 }
 
 void PLTInterrupt(){
@@ -89,12 +100,32 @@ void PLTInterrupt(){
 }
 
 void SWITInterrupt(){
+    saveme();
     LDIT(SWTIMER);
-    pcb_t* removedProcess;
-    do{
-        removedProcess = removeBlocked();
-    }while(removedProcess != NULL);
+    pcb_t *removedProcess = NULL;
+    while((removedProcess=removeBlocked(&semIntTimer)) != NULL){
+        saveme();
+        insertProcQ(&readyQueue, removedProcess);
+    }
+    softblockCount += semIntTimer;
     semIntTimer = 0;
     if(currentProcess != NULL)
         LDST(EXCTYPE);
+    else scheduler();
+}
+
+void saveme(){
+    return;
+}
+
+void diocane2(){
+    return;
+}
+
+void prova4(){
+    return;
+}
+
+void prova3(){
+    return;
 }

@@ -32,7 +32,8 @@ int main(){
 
     // //Inizializzare le variabili globali
     readyQueue = mkEmptyProcQ();
-    //currentProcess = NULL;
+    semIntTimer = 0;
+    currentProcess = NULL;
     //processCount, softBlockCount and device semaphores si inizializzano da soli ai valori di default
 
 

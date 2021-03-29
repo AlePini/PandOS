@@ -19,12 +19,12 @@ void scheduler(){
             setSTATUS(oldStatus);
         }
         if(processCount>0 && softblockCount==0){  //Se non ci son processi bloccati ma la queue è vuota PANICO
+            prepanic();
             PANIC();
         }
     }
     //Se c'è un processo attivo lo rimetto in coda
     //TODO: donno non ha messo sto if però penso serva. controllare poi
-    prova();
     if(currentProcess != NULL){
         insertProcQ(&readyQueue, currentProcess);
 
@@ -35,12 +35,6 @@ void scheduler(){
     LDST(&(currentProcess->p_s));
 }
 
-void prova(){
-    if(currentProcess == NULL){
-        prova2();
-    }
-}
-
-void prova2(){
+void prepanic(){
     return;
 }
