@@ -228,16 +228,15 @@ void test() {
 	gchild4state.reg_sp = gchild3state.reg_sp - QPAGE;
 	gchild4state.pc_epc = gchild4state.reg_t9 = (memaddr)p8leaf;
 	gchild4state.status = gchild4state.status | IEPBITON | CAUSEINTMASK | TEBITON;
-	prova();
+
 	/* create process p2 */
 	SYSCALL(CREATETHREAD, (int)&p2state, (int) NULL , 0);				/* start p2     */
-	prova();
 	print("p2 was started\n");
 
 	SYSCALL(VERHOGEN, (int)&startp2, 0, 0);								/* V(startp2)   */
-
+	prova();
 	SYSCALL(PASSERN, (int)&endp2, 0, 0);								/* P(endp2)     */
-
+	
 	/* make sure we really blocked */
 	if (p1p2synch == 0)
 		print("error: p1/p2 synchronization bad\n");

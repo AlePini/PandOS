@@ -111,13 +111,12 @@ void PLTInterrupt(){
 void SWITInterrupt(){
     LDIT(SWTIMER);
     pcb_t *removedProcess = NULL;
-    while(headBlocked(&semIntTimer) != NULL){
-        pcb_t* removedProcess = removeBlocked(&semIntTimer);
+    while(semIntTimer < 0){
+        removedProcess = removeBlocked(&semIntTimer);
         insertProcQ(&readyQueue, removedProcess);
         softblockCount--;
+        semIntTimer++;
     }
-    //softblockCount += semIntTimer;
-    semIntTimer = 0;
     if(currentProcess != NULL)
         LDST(EXCTYPE);
     else scheduler();
