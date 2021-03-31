@@ -2,10 +2,15 @@
 #include <initial.h>
 #include <stdlib.h>
 unsigned startTimeSlice,endTimeSlice;
-// extern int processCount;
-// extern int softblockCount;
-// extern pcb_t* readyQueue;
-// extern pcb_t* currentProcess=NULL;
+
+//Dichiarazione variabili
+extern int processCount;
+extern int softblockCount;
+extern pcb_t* readyQueue;
+extern pcb_t* currentProcess;
+
+extern SEMAPHORE semaphoreList[];
+extern SEMAPHORE semIntTimer;
 
 void scheduler(){
     if(emptyProcQ(readyQueue)){

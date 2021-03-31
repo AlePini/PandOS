@@ -38,6 +38,7 @@
 #define TLBTRAP 2
 #define GENERAL 4
 #define SEMAPHORE int
+#define bool int
 
 #define INT_PLT      1
 #define INT_SWT      2

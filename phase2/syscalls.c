@@ -3,23 +3,31 @@
 #include <utils.h>
 #include <exceptions.h>
 #include <initial.h>
+//Dichiarazione variabili
+extern int processCount;
+extern int softblockCount;
+extern pcb_t* readyQueue;
+extern pcb_t* currentProcess;
 
+extern SEMAPHORE semaphoreList[];
+extern SEMAPHORE semIntTimer;
 
 void sysHandler(){
     //Leggo l'id della syscall
     unsigned sysdnum = EXCTYPE -> reg_a0;
     if(sysdnum >= 1 && sysdnum <= 8){
-        currentProcess->p_s = *EXCTYPE;
+        //currentProcess->p_s = *EXCTYPE;
+        state_t state = *EXCTYPE;
         //Se è fra 1 e 8 devo essere in kernel mode altrimenti eccezione
-        if(CHECK_USERMODE(currentProcess->p_s.status)){
+        if(CHECK_USERMODE(state.status)){
             setCAUSE(EXC_RI<<CAUSESHIFT);
             exceptionHandler();
         }
         else{
             //Se va tutto bene controllo che syscall sia
-            unsigned arg1 = currentProcess->p_s.reg_a1;
-            unsigned arg2 = currentProcess->p_s.reg_a2;
-            unsigned arg3 = currentProcess->p_s.reg_a3;
+            unsigned arg1 = state.reg_a1;
+            unsigned arg2 = state.reg_a2;
+            unsigned arg3 = state.reg_a3;
 
             switch(sysdnum){
                 case CREATEPROCESS:
@@ -62,12 +70,17 @@ void sysHandler(){
 
 void createProcess(state_t* arg1, support_t* arg2){
     pcb_t* newProcess = allocPcb();
-    newProcess->p_s = *arg1;
-    newProcess->p_supportStruct = arg2;
-    insertChild(currentProcess, newProcess);
-    insertProcQ(&readyQueue, newProcess);
-    newProcess->p_time = 0;
-    newProcess->p_semAdd = NULL;
+    int feedback = -1;
+    if(newProcess != NULL){
+        newProcess->p_s = *arg1;
+        newProcess->p_supportStruct = arg2;
+        insertChild(currentProcess, newProcess);
+        insertProcQ(&readyQueue, newProcess);
+        feedback = 1;
+    }
+    // newProcess->p_time = 0;
+    // newProcess->p_semAdd = NULL;
+    EXCTYPE->reg_v0 = feedback;
 }
 
 void terminateProcess(){
@@ -89,16 +102,16 @@ void terminateRecursive(pcb_t *p) {
     if(p->p_semAdd != NULL){
         // A process is blocked on a device if the semaphore is
         // semIntTimer or an element of semDevices
-        int blockedDevice =
-            (p->p_semAdd >= semaphoreList &&
-            p->p_semAdd < semaphoreList + sizeof(SEMAPHORE) * DEVICE_TYPES * INSTANCES_NUMBER)
-            || p->p_semAdd == semIntTimer;
+        bool blockedDevice =
+            (p->p_semAdd >= (int*)semaphoreList &&
+            p->p_semAdd < ((int *)semaphoreList + (sizeof(SEMAPHORE) * DEVICE_TYPES * INSTANCES_NUMBER)))
+            || (p->p_semAdd == (int*)semIntTimer);
         
         // If the process is blocked on a user semaphore, remove it
-        outBlocked(p);
+        pcb_t* removedProcess = outBlocked(p);
 
         // For device processes, 
-        if (!blockedDevice) {
+        if (!blockedDevice && removedProcess != NULL) {
             (*(p->p_semAdd))++;
         }
     }
@@ -122,12 +135,14 @@ void passeren(int* semaddr){
         currentProcess=NULL;
         scheduler();
     }
+    LDST(EXCTYPE);
     return;
 }
 
 pcb_t* verhogen(int* semaddr){
     (*semaddr)++;
     if(*semaddr <= 0){
+        provax();
         pcb_t* tmp = removeBlocked(semaddr);
         return tmp;
         //insertProcQ(&readyQueue,tmp);
@@ -143,37 +158,6 @@ void waitIO(int intlNo, int  dnum, int waitForTermRead){
     provax();
     softblockCount++;
     passeren(&semaphoreList[semaphoreIndex]);
-    // switch (intlNo)
-    // {
-    // case 3:
-    //     //Sarebbero da 0-7
-    //     passeren(semaphoreList[dnum])
-    //     //passeren(semDisk[dnum]);
-    //     break;
-    // case 4:
-    //     //Sarebbero da 8-15
-    //     passeren(semFlash[8+dnum]);
-    //     break;
-    // case 5:
-    //     //Sarebbero da 16-23
-    //     passeren(semNetwork[16+dnum]);
-    //     break;
-    // case 6:
-    //     //Sarebbero da 24-31
-    //     passeren(semPrinter[24+dnum]);
-    //     break;
-    // case 7:
-    //     if(waitForTermRead)
-    //         //Sarebbero da 32-39
-    //         passeren(semTerminalRecv[32+dnum]);
-    //     else
-    //         //Sarebbero da 40-47
-    //         passeren(semTerminalTrans[40+dnum]);
-    //     break;
-    // default:
-    //     PANIC();
-    //     break;
-    // }
 }
 
 void getCpuTime(){

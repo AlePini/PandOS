@@ -1,9 +1,17 @@
 #include <interrupts.h>
-#include <initial.h>
 #include <syscalls.h>
 #include <asl.h>
+#include <pandos_const.h>
 #include <pandos_types.h>
 #define CAUSE_IP_GET(cause,line) (cause & CAUSE_IP_MASK) & CAUSE_IP(line)
+
+//Dichiarazione variabili
+extern int processCount;
+extern int softblockCount;
+extern pcb_t* readyQueue;
+extern pcb_t* currentProcess;
+extern SEMAPHORE semaphoreList[];
+extern SEMAPHORE semIntTimer;
 
 int getDeviceNr(unsigned bitmap){
     int i;
@@ -41,14 +49,14 @@ void dtpHandler(int type){
     int i, status, device_nr;
     dtpreg_t* dev;
     memaddr* interrupt_bitmap = (memaddr*) CDEV_BITMAP_ADDR(type);
-
-    if ((device_nr = getDeviceNr(*interrupt_bitmap)) < 0) PANIC();
-    else dev = (dtpreg_t*) DEV_REG_ADDR(type, device_nr);
+    
+    dev = (dtpreg_t*) DEV_REG_ADDR(type, device_nr);
     i = INSTANCES_NUMBER * (type - 3) + device_nr;
     status = dev->status;
-    dev->command = CMD_ACK;
+    dev->command = ACK;
+
     softblockCount++;
-    pcb_t* free = verhogen(&semaphoreList[i]);
+    pcb_t* free = removeBlocked(&semaphoreList[i]);
     if(free!=NULL){;
         free->p_s.reg_v0 = status;
         insertProcQ(&readyQueue, free);
@@ -59,26 +67,27 @@ void dtpHandler(int type){
 }
 
 void terminalHandler(){
-    int i, status, device_nr;
+    int i, read, status, device_nr;
     termreg_t* term;
     memaddr* interrupt_bitmap = (memaddr*) CDEV_BITMAP_ADDR(INT_TERMINAL);
 
-    if ((device_nr = getDeviceNr(*interrupt_bitmap)) < 0) PANIC();
-    else term = (termreg_t*) DEV_REG_ADDR(INT_TERMINAL, device_nr);
+    term = (termreg_t*) DEV_REG_ADDR(INT_TERMINAL, device_nr);
 
-    if ((term->recv_status & TERM_STATUS_MASK) == ST_TRANS_RECV){
-        i = INSTANCES_NUMBER * (INT_TERMINAL - 3) + device_nr;
+    read = term->transm_status == READY;
+    if (read){
         status = term->recv_status;
-        term->recv_command = CMD_ACK;
+        term->recv_command = ACK;
     }
-    else if ((term->transm_status & TERM_STATUS_MASK) == ST_TRANS_RECV){
-        i = INSTANCES_NUMBER * (INT_TERMINAL - 3 + 1) + device_nr;
+    else {
         status = term->transm_status;
-        term->transm_command = CMD_ACK;
+        term->transm_command = ACK;
     }
+    i = INSTANCES_NUMBER * (INT_TERMINAL + read - 3) + device_nr;
+    
     softblockCount++;
     saveme();
-    pcb_t* free = verhogen(&semaphoreList[i]);
+    pcb_t* free = removeBlocked(&semaphoreList[i]);
+    semaphoreList[i]++;
     if(free!=NULL){
         prova4();
         free->p_s.reg_v0 = status;
@@ -91,23 +100,23 @@ void terminalHandler(){
 }
 
 void PLTInterrupt(){
-    setTIMER(PLTTIMER);
+    setTIMER(10000000000);
     currentProcess->p_s = *EXCTYPE;
     currentProcess->p_time += 5000;
     insertProcQ(&readyQueue, currentProcess);
-    currentProcess = NULL;
+    //currentProcess = NULL;
     scheduler();
 }
 
 void SWITInterrupt(){
-    saveme();
     LDIT(SWTIMER);
     pcb_t *removedProcess = NULL;
-    while((removedProcess=removeBlocked(&semIntTimer)) != NULL){
-        saveme();
+    while(headBlocked(&semIntTimer) != NULL){
+        pcb_t* removedProcess = removeBlocked(&semIntTimer);
         insertProcQ(&readyQueue, removedProcess);
+        softblockCount--;
     }
-    softblockCount += semIntTimer;
+    //softblockCount += semIntTimer;
     semIntTimer = 0;
     if(currentProcess != NULL)
         LDST(EXCTYPE);

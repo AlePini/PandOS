@@ -9,6 +9,13 @@
 
 //TODO: mettere HIDDEN tutto quello che viene usato solo nel suo file
 
+//Dichiarazione variabili
+int processCount;
+int softblockCount;
+pcb_t* readyQueue;
+pcb_t* currentProcess;
+SEMAPHORE semaphoreList[DEVICE_NUMBER];
+SEMAPHORE semIntTimer;
 
 //Prova a mettere la roba extern qui
 extern void test();
@@ -32,7 +39,6 @@ int main(){
 
     // //Inizializzare le variabili globali
     readyQueue = mkEmptyProcQ();
-    semIntTimer = 0;
     currentProcess = NULL;
     //processCount, softBlockCount and device semaphores si inizializzano da soli ai valori di default
 
@@ -54,7 +60,7 @@ int main(){
     firstProcess->p_s.reg_t9 = (memaddr) test;
     insertProcQ(&readyQueue, firstProcess);
 
-    currentProcess = NULL;
+    //currentProcess = NULL;
 
     //Scheduler
     scheduler();

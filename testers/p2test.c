@@ -228,10 +228,10 @@ void test() {
 	gchild4state.reg_sp = gchild3state.reg_sp - QPAGE;
 	gchild4state.pc_epc = gchild4state.reg_t9 = (memaddr)p8leaf;
 	gchild4state.status = gchild4state.status | IEPBITON | CAUSEINTMASK | TEBITON;
-
+	prova();
 	/* create process p2 */
 	SYSCALL(CREATETHREAD, (int)&p2state, (int) NULL , 0);				/* start p2     */
-
+	prova();
 	print("p2 was started\n");
 
 	SYSCALL(VERHOGEN, (int)&startp2, 0, 0);								/* V(startp2)   */
@@ -638,3 +638,5 @@ void p8leaf() {
 }
 
 
+
+void prova(){return;}

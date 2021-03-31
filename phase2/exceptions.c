@@ -2,6 +2,15 @@
 #include <scheduler.h>
 #include <syscalls.h>
 
+//Dichiarazione variabili
+extern int processCount;
+extern int softblockCount;
+extern pcb_t* readyQueue;
+extern pcb_t* currentProcess;
+
+extern SEMAPHORE semaphoreList[];
+extern SEMAPHORE semIntTimer;
+
 void passUpOrDie(unsigned index) {
 
     support_t *support = currentProcess->p_supportStruct;
