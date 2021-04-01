@@ -25,7 +25,8 @@ Also you can set *UMPS3_INCLUDE_DIR*, *UMPS3_DATA_DIR* and *UMPS3_LIB_DIR* indiv
 ### Launch
 * Follow the instructions above to compile the project.
 * Then open umps3 and create a new Machine.
-* Replace "Core File" with build/PandOS.core.umps and "Symbol Table" PandOS.stab.umps.
+* Replace "Core File" with build/kernel-*n*.core.umps and "Symbol Table" kernel-*n*.stab.umps. Where *n* refers to the pahse number.
+
 * Finally, click on "PowerON" and "Continue" to launch.
 
 ## Authors
