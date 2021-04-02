@@ -65,6 +65,6 @@ About
 
 #Custom
 umps3
-build
-.vscode
+build/
+.vscode/
 txt
