@@ -1,5 +1,5 @@
 #include <scheduler.h>
-#include <stdlib.h>
+
 unsigned startTimeSlice,endTimeSlice;
 
 //Dichiarazione variabili
@@ -10,6 +10,14 @@ extern pcb_t* currentProcess;
 
 extern SEMAPHORE semaphoreList[];
 extern SEMAPHORE semIntTimer;
+
+void prepanic(){
+    return;
+}
+
+void hello(){
+    return;   
+}
 
 void scheduler(){
     if(emptyProcQ(readyQueue)){
@@ -39,12 +47,4 @@ void scheduler(){
     setTIMER(PLTTIMER);
     STCK(startTimeSlice);
     LDST(&(currentProcess->p_s));
-}
-
-void prepanic(){
-    return;
-}
-
-void hello(){
-    return;   
 }

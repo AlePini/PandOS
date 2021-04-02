@@ -1,15 +1,8 @@
 #include <interrupts.h>
-#include <syscalls.h>
-#include <asl.h>
-#include <pandos_const.h>
-#include <pandos_types.h>
-#include <umps3/umps/libumps.h>
-#include <umps3/umps/cp0.h>
-#define CAUSE_IP_GET(cause,line) (cause & CAUSE_IP_MASK) & CAUSE_IP(line)
-
-unsigned startInterrupt, endInterrupt;
 
 //Dichiarazione variabili
+unsigned startInterrupt, endInterrupt;
+
 extern int processCount;
 extern int softblockCount;
 extern pcb_t* readyQueue;
@@ -19,14 +12,22 @@ extern SEMAPHORE semIntTimer;
 extern unsigned endTimeSlice;
 extern unsigned startTimeSlice;
 
-int getDeviceNr(unsigned bitmap){
-    int i;
-    for (i = 0; i < 8; i++){
-        if (bitmap == 1) return i;
-        else bitmap = bitmap >> 1;
-    }
-    return -1;
+void saveme(){
+    return;
 }
+
+void diocane2(){
+    return;
+}
+
+void prova4(){
+    return;
+}
+
+void plis(){
+    return;
+}
+
 
 void interruptHandler(state_t* excState){
     STCK(startInterrupt);
@@ -52,6 +53,14 @@ void interruptHandler(state_t* excState){
     }
 }
 
+int getDeviceNr(unsigned bitmap){
+    int i;
+    for (i = 0; i < 8; i++){
+        if (bitmap == 1) return i;
+        else bitmap = bitmap >> 1;
+    }
+    return -1;
+}
 
 void dtpHandler(int type){
     int i, status, device_nr;
@@ -133,20 +142,4 @@ void SWITInterrupt(){
     if(currentProcess != NULL)
         LDST(EXCTYPE);
     else scheduler();
-}
-
-void saveme(){
-    return;
-}
-
-void diocane2(){
-    return;
-}
-
-void prova4(){
-    return;
-}
-
-void plis(){
-    return;
 }

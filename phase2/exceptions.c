@@ -1,4 +1,5 @@
 #include <exceptions.h>
+#include <interrupts.h>
 #include <scheduler.h>
 #include <syscalls.h>
 
