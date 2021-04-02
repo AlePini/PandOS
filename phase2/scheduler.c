@@ -19,6 +19,7 @@ void scheduler(){
         }
         if(processCount>0 && softblockCount>0){    //Se ci son solo processi in attesa aspetta
             unsigned oldStatus = getSTATUS();
+            hello();
             setSTATUS(oldStatus & ~TEBITON | IMON | IECON);
             WAIT();
             setSTATUS(oldStatus);
@@ -32,7 +33,8 @@ void scheduler(){
     //TODO: donno non ha messo sto if però penso serva. controllare poi
     if(currentProcess != NULL){
         insertProcQ(&readyQueue, currentProcess);
-
+        STCK(endTimeSlice);
+        currentProcess->p_time += (endTimeSlice - startTimeSlice);
     }
     currentProcess = removeProcQ(&readyQueue);
     setTIMER(PLTTIMER);
@@ -42,4 +44,8 @@ void scheduler(){
 
 void prepanic(){
     return;
+}
+
+void hello(){
+    return;   
 }

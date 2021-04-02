@@ -3,7 +3,11 @@
 #include <asl.h>
 #include <pandos_const.h>
 #include <pandos_types.h>
+#include <umps3/umps/libumps.h>
+#include <umps3/umps/cp0.h>
 #define CAUSE_IP_GET(cause,line) (cause & CAUSE_IP_MASK) & CAUSE_IP(line)
+
+unsigned startInterrupt, endInterrupt;
 
 //Dichiarazione variabili
 extern int processCount;
@@ -12,6 +16,8 @@ extern pcb_t* readyQueue;
 extern pcb_t* currentProcess;
 extern SEMAPHORE semaphoreList[];
 extern SEMAPHORE semIntTimer;
+extern unsigned endTimeSlice;
+extern unsigned startTimeSlice;
 
 int getDeviceNr(unsigned bitmap){
     int i;
@@ -22,9 +28,10 @@ int getDeviceNr(unsigned bitmap){
     return -1;
 }
 
-void interruptHandler(){
-    unsigned int cause = (EXCTYPE->cause);
-
+void interruptHandler(state_t* excState){
+    STCK(startInterrupt);
+    unsigned int cause = (excState->cause);
+    plis();
     if(CAUSE_IP_GET(cause, INT_PLT)){
         PLTInterrupt();
     } else if(CAUSE_IP_GET(cause, INT_SWT)){
@@ -40,7 +47,8 @@ void interruptHandler(){
     } else if(CAUSE_IP_GET(cause, INT_TERMINAL)){
         terminalHandler();
     } else {
-        PANIC(); /* sollevato interrupt non riconosciuto */
+        plis();
+        return; /* sollevato interrupt non riconosciuto */
     }
 }
 
@@ -56,7 +64,9 @@ void dtpHandler(int type){
     dev->command = ACK;
 
     softblockCount++;
+    STCK(endInterrupt);
     pcb_t* free = removeBlocked(&semaphoreList[i]);
+    free->p_time += (endInterrupt - startInterrupt);
     if(free!=NULL){;
         free->p_s.reg_v0 = status;
         insertProcQ(&readyQueue, free);
@@ -86,7 +96,9 @@ void terminalHandler(){
     
     softblockCount++;
     saveme();
+    STCK(endInterrupt);
     pcb_t* free = removeBlocked(&semaphoreList[i]);
+    free->p_time += (endInterrupt - startInterrupt);
     semaphoreList[i]++;
     if(free!=NULL){
         prova4();
@@ -94,7 +106,6 @@ void terminalHandler(){
         insertProcQ(&readyQueue, free);
     }
     if(currentProcess != NULL){
-        prova3();
         LDST(EXCTYPE);
     }else scheduler();
 }
@@ -104,7 +115,7 @@ void PLTInterrupt(){
     currentProcess->p_s = *EXCTYPE;
     currentProcess->p_time += 5000;
     insertProcQ(&readyQueue, currentProcess);
-    //currentProcess = NULL;
+    currentProcess = NULL;
     scheduler();
 }
 
@@ -112,7 +123,9 @@ void SWITInterrupt(){
     LDIT(SWTIMER);
     pcb_t *removedProcess = NULL;
     while(semIntTimer < 0){
+        STCK(endInterrupt);
         removedProcess = removeBlocked(&semIntTimer);
+        removedProcess->p_time += (endInterrupt - startInterrupt);
         insertProcQ(&readyQueue, removedProcess);
         softblockCount--;
         semIntTimer++;
@@ -134,6 +147,6 @@ void prova4(){
     return;
 }
 
-void prova3(){
+void plis(){
     return;
 }

@@ -12,6 +12,9 @@ extern pcb_t* currentProcess;
 extern SEMAPHORE semaphoreList[];
 extern SEMAPHORE semIntTimer;
 
+extern unsigned endTimeSlice;
+extern unsigned startTimeSlice;
+
 void sysHandler(){
     //Leggo l'id della syscall
     unsigned sysdnum = EXCTYPE -> reg_a0;
@@ -74,6 +77,7 @@ void createProcess(state_t* arg1, support_t* arg2){
     if(newProcess != NULL){
         newProcess->p_s = *arg1;
         newProcess->p_supportStruct = arg2;
+        newProcess->p_child = NULL;
         insertChild(currentProcess, newProcess);
         insertProcQ(&readyQueue, newProcess);
         feedback = 1;
@@ -84,20 +88,27 @@ void createProcess(state_t* arg1, support_t* arg2){
 }
 
 void terminateProcess(){
-    terminateRecursive(currentProcess);
+    sgrodolox2();
+    if(emptyChild(currentProcess)){
+        outChild(currentProcess);
+        freePcb(currentProcess);
+        processCount--;
+    }else{
+        terminateRecursive(currentProcess);
+    }
+    currentProcess = NULL;
     scheduler();
     return;
 }
 
 //TODO: riscrivere diversa da donno
 void terminateRecursive(pcb_t *p) {
-    pcb_t *child;
-    
-    // Handle all children
-    while ((child = removeChild(p)) != NULL) {
-        terminateRecursive(child);
+    sgrodolox();
+    pcb_t* child;
+    while((child = removeChild(p)) != NULL){
+        terminateRecursive(removeChild(p));
     }
-
+    sgrodolox2();
     // Handle the process itself
     if(p->p_semAdd != NULL){
         // A process is blocked on a device if the semaphore is
@@ -114,6 +125,9 @@ void terminateRecursive(pcb_t *p) {
         if (!blockedDevice && removedProcess != NULL) {
             (*(p->p_semAdd))++;
         }
+    }
+    else if(p == currentProcess){
+        outChild(currentProcess);
     }
     else{
         outProcQ(&readyQueue, p);
@@ -144,8 +158,8 @@ pcb_t* verhogen(int* semaddr){
     if(*semaddr <= 0){
         provax();
         pcb_t* tmp = removeBlocked(semaddr);
+        insertProcQ(&readyQueue,tmp);
         return tmp;
-        //insertProcQ(&readyQueue,tmp);
     }
     return NULL;
 }
@@ -162,11 +176,7 @@ void waitIO(int intlNo, int  dnum, int waitForTermRead){
 
 void getCpuTime(){
     STCK(endTimeSlice);
-    //currentProcess->p_time+=(endTimeSlide-startTimeSlice);
     unsigned time = currentProcess->p_time + (endTimeSlice-startTimeSlice);
-    //TODO: non penso vada nel current process ma bensì nel BIOSDATAPAGE poichè tu fai LDST su quello li
-    //currentProcess->p_s.reg_v0 = time;
-    //TODO: non so se scritto così vada bene
     EXCTYPE->reg_v0 = time;
     return;
 }
@@ -188,5 +198,13 @@ void provax(){
 }
 
 void provax2(){
+    return;
+}
+
+void sgrodolox(){
+    return;
+}
+
+void sgrodolox2(){
     return;
 }

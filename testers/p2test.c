@@ -232,11 +232,8 @@ void test() {
 	/* create process p2 */
 	SYSCALL(CREATETHREAD, (int)&p2state, (int) NULL , 0);				/* start p2     */
 	print("p2 was started\n");
-
 	SYSCALL(VERHOGEN, (int)&startp2, 0, 0);								/* V(startp2)   */
-	prova();
 	SYSCALL(PASSERN, (int)&endp2, 0, 0);								/* P(endp2)     */
-	
 	/* make sure we really blocked */
 	if (p1p2synch == 0)
 		print("error: p1/p2 synchronization bad\n");
@@ -339,9 +336,9 @@ void p2() {
 	p1p2synch = 1;				/* p1 will check this */
 
 	SYSCALL(VERHOGEN, (int)&endp2, 0, 0);				/* V(endp2)     */
-
+	prova();
 	SYSCALL(TERMINATETHREAD, 0, 0, 0);			/* terminate p2 */
-
+	prova();
 	/* just did a SYS2, so should not get to this point */
 	print("error: p2 didn't terminate\n");
 	PANIC();					/* PANIC!           */
