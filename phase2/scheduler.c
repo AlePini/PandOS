@@ -1,5 +1,4 @@
 #include <scheduler.h>
-#include <initial.h>
 #include <stdlib.h>
 unsigned startTimeSlice,endTimeSlice;
 

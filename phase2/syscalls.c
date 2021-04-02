@@ -2,7 +2,6 @@
 #include <scheduler.h>
 #include <utils.h>
 #include <exceptions.h>
-#include <initial.h>
 //Dichiarazione variabili
 extern int processCount;
 extern int softblockCount;
@@ -189,7 +188,7 @@ void waitForClock(){
 
 void getSupportStruct(){
     //TODO: va bene?
-     EXCTYPE->reg_v0 = currentProcess->p_supportStruct;
+    EXCTYPE->reg_v0 = currentProcess->p_supportStruct;
     return;
 }
 

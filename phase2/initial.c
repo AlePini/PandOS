@@ -5,7 +5,6 @@
 #include <scheduler.h>
 #include <exceptions.h>
 #include <umps3/umps/libumps.h>
-#include <initial.h>
 
 //TODO: mettere HIDDEN tutto quello che viene usato solo nel suo file
 
