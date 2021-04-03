@@ -1,16 +1,12 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#include <pandos_const.h>
-#include <pandos_types.h>
-#include <umps3/umps/cp0.h>
-#include <umps3/umps/libumps.h>
-#include <memory.h>
-
-//Variabili
-
-//Funzioni
-
+/**
+ * @brief Picks the first process from the ready queue
+ * and and executes it. Before of doins so inserts the 
+ * current one back in the ready queue.
+ */
 void scheduler();
+
 
 #endif

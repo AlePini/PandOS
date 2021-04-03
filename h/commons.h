@@ -10,6 +10,6 @@ extern pcb_t* readyQueue;
 extern pcb_t* currentProcess;
 
 extern SEMAPHORE semaphoreList[];
-extern SEMAPHORE semIntTimer;
+extern SEMAPHORE swiSemaphore;
 
 #endif

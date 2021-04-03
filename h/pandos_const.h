@@ -34,11 +34,11 @@
 #define DEVICE_NUMBER 48
 #define DEVICE_TYPES 6
 #define INSTANCES_NUMBER  8
-#define EXCTYPE ((state_t *) BIOSDATAPAGE)
+#define EXCEPTION_STATE ((state_t *) BIOSDATAPAGE)
 #define TLBTRAP 2
 #define GENERAL 4
-#define SEMAPHORE int
 #define bool int
+#define LARGE_CONSTANT 100000000
 
 #define INT_PLT      1
 #define INT_SWT      2

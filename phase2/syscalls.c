@@ -2,45 +2,39 @@
 #include <scheduler.h>
 #include <utils.h>
 #include <exceptions.h>
-//Dichiarazione variabili
-extern int processCount;
-extern int softblockCount;
-extern pcb_t* readyQueue;
-extern pcb_t* currentProcess;
+#include <initial.h>
 
-extern SEMAPHORE semaphoreList[];
-extern SEMAPHORE semIntTimer;
-
-extern unsigned endTimeSlice;
-extern unsigned startTimeSlice;
 
 void sysHandler(){
+
     //Leggo l'id della syscall
-    unsigned sysdnum = EXCTYPE -> reg_a0;
+    unsigned sysdnum = EXCEPTION_STATE -> reg_a0;
+
+    //Recupero lo stato dell'eccezione
+    state_t state = *EXCEPTION_STATE;
+
+    //Recupero le informazioni sulla syscall dai registri
+    unsigned arg1 = state.reg_a1;
+    unsigned arg2 = state.reg_a2;
+    unsigned arg3 = state.reg_a3;
+
+    //Controllo la syscall sia valida 
     if(sysdnum >= 1 && sysdnum <= 8){
-        //currentProcess->p_s = *EXCTYPE;
-        state_t state = *EXCTYPE;
-        //Se è fra 1 e 8 devo essere in kernel mode altrimenti eccezione
+        
+        //Se è fra 1 e 8 devo essere in kernel mode altrimenti sollevo un'eccezione
         if(CHECK_USERMODE(state.status)){
             setCAUSE(EXC_RI<<CAUSESHIFT);
             exceptionHandler();
         }
         else{
-            //Se va tutto bene controllo che syscall sia
-            unsigned arg1 = state.reg_a1;
-            unsigned arg2 = state.reg_a2;
-            unsigned arg3 = state.reg_a3;
-
             switch(sysdnum){
                 case CREATEPROCESS:
                     createProcess((state_t*) arg1, (support_t*) arg2);
                     break;
                 case TERMPROCESS:
-                //Scheduler
                     terminateProcess();
                     break;
                 case PASSEREN:
-                //In alcuni casi scheduler
                     passeren((int*) arg1);
                     break;
                 case VERHOGEN:
@@ -62,60 +56,62 @@ void sysHandler(){
                     PANIC();
                     break;
             }
-            //TODO: PENSO NON VADA BENE
-            LDST(EXCTYPE);
+            LDST(EXCEPTION_STATE);
         }
-    }else{
-        exceptionHandler(GENERAL);
-    }
+
+    }//Se la syscall non era fra le 8 possibili sollevo una Trap Exception
+    else exceptionHandler(GENERAL);
 }
 
-void createProcess(state_t* arg1, support_t* arg2){
+
+void createProcess(state_t* state, support_t* supportStruct){
+    //Creo il nuovo processo e gli assegno lo stato e la support struct.
     pcb_t* newProcess = allocPcb();
     int feedback = -1;
     if(newProcess != NULL){
-        newProcess->p_s = *arg1;
-        newProcess->p_supportStruct = arg2;
-        newProcess->p_child = NULL;
+        newProcess->p_s = *state;
+        newProcess->p_supportStruct = supportStruct;
         insertChild(currentProcess, newProcess);
         insertProcQ(&readyQueue, newProcess);
-        feedback = 1;
+        feedback = 0;
     }
-    // newProcess->p_time = 0;
-    // newProcess->p_semAdd = NULL;
-    EXCTYPE->reg_v0 = feedback;
+    //Ritorna 1 o -1 in base a se allocPCB ritorna NULL o meno.
+    EXCEPTION_STATE->reg_v0 = feedback;
 }
 
 void terminateProcess(){
-    sgrodolox2();
-    if(emptyChild(currentProcess)){
-        outChild(currentProcess);
-        freePcb(currentProcess);
-        processCount--;
-    }else{
-        terminateRecursive(currentProcess);
-    }
-    currentProcess = NULL;
-    scheduler();
+    //Rimuovo il current process dall'essere figlio di suo padrew
+    outChild(currentProcess);
+    //Termino il current e tutta la sua progenie.
+	termProcessRecursive(currentProcess);
+	currentProcess = NULL;
+	scheduler();
     return;
 }
 
-//TODO: riscrivere diversa da donno
-void terminateRecursive(pcb_t *p) {
-    sgrodolox();
+/**
+ * @brief Recursively terminates a process and
+ * its progeny.
+ * 
+ * @param p Root process to kill.
+ */
+HIDDEN void terminateRecursive(pcb_t *p) {
     pcb_t* child;
-    while((child = removeChild(p)) != NULL){
-        terminateRecursive(removeChild(p));
-    }
-    sgrodolox2();
+    
+    
+    // REcursively kills all the progeny
+	while ((child = removeChild(p)) != NULL) {
+		termProcessRecursive(child);
+	}
+
     // Handle the process itself
     if(p->p_semAdd != NULL){
         // A process is blocked on a device if the semaphore is
-        // semIntTimer or an element of semDevices
+        // swiSemaphore or an element of semDevices
         bool blockedDevice =
             (p->p_semAdd >= (int*)semaphoreList &&
             p->p_semAdd < ((int *)semaphoreList + (sizeof(SEMAPHORE) * DEVICE_TYPES * INSTANCES_NUMBER)))
-            || (p->p_semAdd == (int*)semIntTimer);
+            || (p->p_semAdd == (int*) &swiSemaphore);
         
         // If the process is blocked on a user semaphore, remove it
         pcb_t* removedProcess = outBlocked(p);
@@ -125,12 +121,7 @@ void terminateRecursive(pcb_t *p) {
             (*(p->p_semAdd))++;
         }
     }
-    else if(p == currentProcess){
-        outChild(currentProcess);
-    }
-    else{
-        outProcQ(&readyQueue, p);
-    }
+    else outProcQ(&readyQueue, p);
 
     processCount--;
     freePcb(p);
@@ -142,20 +133,18 @@ void passeren(int* semaddr){
     if(*semaddr < 0){
         STCK(endTimeSlice);
         currentProcess->p_time+=(endTimeSlice-startTimeSlice);
-        //TODO:Ti salvi lo stato attuale delle cose per poi bloccarlo, così che quando ripiglia ricomincia da qui
-        currentProcess->p_s = *EXCTYPE;
+        //Salvi lo stato attuale delle cose per poi bloccarlo, così che quando ricomincia ricomincia da qui
+        currentProcess->p_s = *EXCEPTION_STATE;
         insertBlocked(semaddr, currentProcess);
         currentProcess=NULL;
         scheduler();
     }
-    LDST(EXCTYPE);
     return;
 }
 
 pcb_t* verhogen(int* semaddr){
     (*semaddr)++;
     if(*semaddr <= 0){
-        provax();
         pcb_t* tmp = removeBlocked(semaddr);
         insertProcQ(&readyQueue,tmp);
         return tmp;
@@ -164,11 +153,10 @@ pcb_t* verhogen(int* semaddr){
 }
 
 void waitIO(int intlNo, int  dnum, int waitForTermRead){
-    //TODO: potrei far una matrice di semafori che è stra easy
+    //Se non è uno dei device previsti termino il processo.
     if(intlNo<3 || intlNo >7) terminateProcess();
-    //Prendo la linea di interrupt(rimappandole da 0 a 4) e la moltiplico per 8. Se è un terminal line controllo se leggo e trasmetto
+    //Prendo la linea di interrupt(rimappandole da 0 a 4) e la moltiplico per 8. Se è un terminal line controllo se leggo o trasmetto.
     int semaphoreIndex = INSTANCES_NUMBER*(intlNo+waitForTermRead-3) + dnum;
-    provax();
     softblockCount++;
     passeren(&semaphoreList[semaphoreIndex]);
 }
@@ -176,34 +164,17 @@ void waitIO(int intlNo, int  dnum, int waitForTermRead){
 void getCpuTime(){
     STCK(endTimeSlice);
     unsigned time = currentProcess->p_time + (endTimeSlice-startTimeSlice);
-    EXCTYPE->reg_v0 = time;
+    EXCEPTION_STATE->reg_v0 = time;
     return;
 }
 
 void waitForClock(){
     softblockCount++;
-    passeren(&semIntTimer);
+    passeren(&swiSemaphore);
     return;
 }
 
 void getSupportStruct(){
-    //TODO: va bene?
-    EXCTYPE->reg_v0 = currentProcess->p_supportStruct;
-    return;
-}
-
-void provax(){
-    return;
-}
-
-void provax2(){
-    return;
-}
-
-void sgrodolox(){
-    return;
-}
-
-void sgrodolox2(){
+    EXCEPTION_STATE->reg_v0 = currentProcess->p_supportStruct;
     return;
 }

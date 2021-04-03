@@ -1,12 +1,12 @@
-#include <pandos_const.h>
-#include <pandos_types.h>
-#include <pcb.h>
-#include <asl.h>
-#include <scheduler.h>
-#include <exceptions.h>
 #include <umps3/umps/libumps.h>
+#include "asl.h"
+#include "pcb.h"
+#include "exceptions.h"
+#include "initial.h"
+#include "scheduler.h"
 
 //TODO: mettere HIDDEN tutto quello che viene usato solo nel suo file
+
 
 //Dichiarazione variabili
 int processCount;
@@ -14,12 +14,11 @@ int softblockCount;
 pcb_t* readyQueue;
 pcb_t* currentProcess;
 SEMAPHORE semaphoreList[DEVICE_NUMBER];
-SEMAPHORE semIntTimer;
+SEMAPHORE swiSemaphore;
 
 //Prova a mettere la roba extern qui
 extern void test();
 extern void uTLB_RefillHandler();
-extern void exceptionHandler();
 
 
 int main(){
@@ -39,7 +38,12 @@ int main(){
     // //Inizializzare le variabili globali
     readyQueue = mkEmptyProcQ();
     currentProcess = NULL;
-    //processCount, softBlockCount and device semaphores si inizializzano da soli ai valori di default
+    processCount = 0;
+    softBlockCount= 0;
+    swiSemaphore = 0;
+    for (int i=0; i<DEVICE_NUMBER; i++){
+        semaphoreList[i] = 0;
+    }
 
 
     //Setup del system-wide timer
@@ -51,18 +55,16 @@ int main(){
 
     //Setup dello status
     firstProcess->p_s.status = ALLOFF | TEBITON | IEPON | IMON;
-
     //SP is set to RAMTOP
+
     RAMTOP(firstProcess->p_s.reg_sp);
     //Program Counter set to test address
     firstProcess->p_s.pc_epc = (memaddr) test;
     firstProcess->p_s.reg_t9 = (memaddr) test;
     insertProcQ(&readyQueue, firstProcess);
 
-    //currentProcess = NULL;
-
-    //Scheduler
+    //Chiamo lo scheduler
     scheduler();
-
+    
     return 0;
 }

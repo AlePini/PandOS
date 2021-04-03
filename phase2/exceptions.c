@@ -1,37 +1,46 @@
+#include <umps3/umps/libumps.h>
+#include <pandos_const.h>
 #include <exceptions.h>
+#include <initial.h>
 #include <interrupts.h>
 #include <scheduler.h>
 #include <syscalls.h>
+#include <utils.h>
 
-//Dichiarazione variabili
-extern int processCount;
-extern int softblockCount;
-extern pcb_t* readyQueue;
-extern pcb_t* currentProcess;
-
-extern SEMAPHORE semaphoreList[];
-extern SEMAPHORE semIntTimer;
-
-void passUpOrDie(unsigned index) {
+/**
+ * @brief this function handles both TLB Exceptions and all others types of trap
+ * What type of exception is handled depends on the input passed and
+ * the function behaviour is related to the current process support 
+ * structure value, that can exist or be NULL.
+ * 
+ * @param index 0 (PGFAULTEXCEPT) or 1 (GENERALEXCEPT), indicating
+ * the type of the exception to be handled
+ */
+HIDDEN void passUpOrDie(unsigned index) {
 
     support_t *support = currentProcess->p_supportStruct;
 
+    //Se la support struct esiste eseguo la parte "Pass Up"
     if (support != NULL) {
-        //TODO: vedere se va bene o meno, dipende se extype quindi biosdatapage si aggiorna davvero da solo
-        support->sup_exceptState[index] = *EXCTYPE;
+        support->sup_exceptState[index] = *EXCEPTION_STATE;
         context_t* context = &(support->sup_exceptContext[index]);
         LDCXT(context->c_stackPtr, context->c_status, context->c_pc);
     }
+    //altrimenti la "Die"
     else {
-        // TODO: Gestire come Syscall 2 (kill), non so se basta usare la syscall
         terminateProcess();
     }
-    //TODO: serve?
     scheduler();
 }
 
-unsigned  exceptionType(){
-    state_t *exceptionState = EXCTYPE;
+/**
+ * @brief this function returns what type of exception
+ * is raised by checking the BIOSDATAPAGE
+ * 
+ * @return the type of exception among the possible four.
+ */
+HIDDEN unsigned  exceptionType(){
+    state_t *exceptionState = EXCEPTION_STATE;
     unsigned int exType = (exceptionState->cause & GETEXECCODE) >> CAUSESHIFT;
     if(exType == 0) return IOINTERRUPTS;
     else if(exType == 8) return SYSEXCEPTION;
@@ -39,21 +48,42 @@ unsigned  exceptionType(){
     else return GENERAL;
 }
 
+/**
+ * @brief Handles a TLB exception.
+ *  
+ */
+HIDDEN void TLBExcHandler() {
+	passUpOrDie(PGFAULTEXCEPT);
+}
+
+/**
+ * @brief Handles a Program Trap.
+ * 
+ */
+HIDDEN void generalTrapHandler() {
+	passUpOrDie(GENERALEXCEPT);
+}
+
 void exceptionHandler(){
-    EXCTYPE->pc_epc += 4;
+    //Increment the program counter by 4 to avoid loops
+    EXCEPTION_STATE->pc_epc += WORDLEN;
     unsigned type = exceptionType();
     switch (type){
+        //Interrupts
         case IOINTERRUPTS:
-            interruptHandler(EXCTYPE);
+            interruptHandler(EXCEPTION_STATE);
             break;
+        //Syscalls
         case SYSEXCEPTION:
             sysHandler();
             break;
+        //TLB exceptions
         case TLBTRAP:
-            passUpOrDie(PGFAULTEXCEPT);
+            TLBExcHandler();
             break;
+        //General trap exceptions
          case GENERAL:
-            passUpOrDie(GENERALEXCEPT);
+            generalTrapHandler()
             break;
         default:
             PANIC();
