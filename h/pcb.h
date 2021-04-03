@@ -5,8 +5,8 @@
  * @file    PCB
  * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
  * @brief   Process Control Block methods.
- * @version 0.1
- * @date 2021-02-18
+ * @version 0.2
+ * @date 2021-04-03
  *
  */
 
