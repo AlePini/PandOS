@@ -336,9 +336,7 @@ void p2() {
 	p1p2synch = 1;				/* p1 will check this */
 
 	SYSCALL(VERHOGEN, (int)&endp2, 0, 0);				/* V(endp2)     */
-	prova();
 	SYSCALL(TERMINATETHREAD, 0, 0, 0);			/* terminate p2 */
-	prova();
 	/* just did a SYS2, so should not get to this point */
 	print("error: p2 didn't terminate\n");
 	PANIC();					/* PANIC!           */
@@ -632,7 +630,3 @@ void p8leaf() {
 
 	SYSCALL(PASSERN, (int)&blkp8, 0, 0);
 }
-
-
-
-void prova(){return;}

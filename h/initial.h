@@ -39,13 +39,13 @@ extern pcb_t *currentProcess;
  * @brief Device semaphores.
  * 
  */
-extern semaphore semDevices[DEVICE_NUMBER];
+extern SEMAPHORE semaphoreList[DEVICE_NUMBER];
 
 /**
  * @brief Semaphore for the System Wide Interval Timer.
  * 
  */
-extern semaphore semIntTimer;
+extern SEMAPHORE swiSemaphore;
 
 /**
  * @brief PandOS entry point.

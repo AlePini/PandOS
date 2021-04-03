@@ -19,6 +19,9 @@
  * @return void* A pointer to the destination
  * address.
  */
+
+typedef unsigned int size_t;
+
 void *memcpy(void *dest, const void *src, size_t n);
 
 #endif

@@ -5,7 +5,6 @@
 #include <interrupts.h>
 #include <scheduler.h>
 #include <syscalls.h>
-#include <utils.h>
 
 /**
  * @brief this function handles both TLB Exceptions and all others types of trap
@@ -83,7 +82,7 @@ void exceptionHandler(){
             break;
         //General trap exceptions
          case GENERAL:
-            generalTrapHandler()
+            generalTrapHandler();
             break;
         default:
             PANIC();

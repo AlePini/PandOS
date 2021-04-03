@@ -9,8 +9,8 @@
 
 
 //Dichiarazione variabili
-int processCount;
-int softblockCount;
+unsigned int processCount;
+unsigned int softBlockCount;
 pcb_t* readyQueue;
 pcb_t* currentProcess;
 SEMAPHORE semaphoreList[DEVICE_NUMBER];

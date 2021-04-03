@@ -9,8 +9,6 @@
  * @date 2021-04-03
  */
 
-extern pcb_t* currentProcess;
-
 /**
  * @brief Handles exceptions passing the to their custom handler.
  */

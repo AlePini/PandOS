@@ -16,5 +16,6 @@
  */
 void scheduler();
 
+cpu_t getTimeSlice();
 
 #endif

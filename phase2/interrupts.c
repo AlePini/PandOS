@@ -1,17 +1,17 @@
-// #include <umps3/umps/cp0.h>
-// #include <umps3/umps/types.h>
+#include <umps3/umps/cp0.h>
+#include <umps3/umps/types.h>
 #include <umps3/umps/libumps.h>
 #include <umps3/umps/arch.h>
-#include "pandos_const.h"
-#include "asl.h"
-#include "pcb.h"
-#include "exceptions.h"
-#include "initial.h"
-#include "interrupts.h"
-#include "scheduler.h"
-#include "syscalls.h"
+#include <pandos_const.h>
+#include <asl.h>
+#include <pcb.h>
+#include <exceptions.h>
+#include <initial.h>
+#include <interrupts.h>
+#include <scheduler.h>
+#include <syscalls.h>
 
-HIDDEN unsigned startInterrupt, endInterrupt;
+HIDDEN cpu_t startInterrupt, endInterrupt;
 
 /**
  * @brief Return the device number of the interrupt line.
@@ -33,8 +33,8 @@ HIDDEN void returnControl(){
     }else scheduler();
 }
 
-HIDDEN void exitDeviceInterrupt(){
-    softblockCount++;
+HIDDEN void exitDeviceInterrupt(int i, int status){
+    softBlockCount++;
     STCK(endInterrupt);
     pcb_t* free = removeBlocked(&semaphoreList[i]);
     free->p_time += (endInterrupt - startInterrupt);
@@ -45,29 +45,6 @@ HIDDEN void exitDeviceInterrupt(){
     returnControl();
 }
 
-void interruptHandler(state_t* excState){
-    STCK(startInterrupt);
-    unsigned int cause = (excState->cause);
-    plis();
-    if(CAUSE_IP_GET(cause, INT_PLT)){
-        PLTInterrupt();
-    } else if(CAUSE_IP_GET(cause, INT_SWT)){
-        SWITInterrupt();
-    } else if(CAUSE_IP_GET(cause, INT_DISK)){
-        deviceHandler(INT_DISK);
-    } else if(CAUSE_IP_GET(cause, INT_TAPE)){
-        deviceHandler(INT_TAPE);
-    } else if(CAUSE_IP_GET(cause, INT_NETWORK)){
-        deviceHandler(INT_NETWORK);
-    } else if(CAUSE_IP_GET(cause, INT_PRINTER)){
-        deviceHandler(INT_PRINTER);
-    } else if(CAUSE_IP_GET(cause, INT_TERMINAL)){
-        terminalHandler();
-    } else {
-        /* sollevato interrupt non riconosciuto */
-        return; 
-    }
-}
 
 
 HIDDEN void deviceHandler(int type){
@@ -75,12 +52,14 @@ HIDDEN void deviceHandler(int type){
     dtpreg_t* dev;
     memaddr* interrupt_bitmap = (memaddr*) CDEV_BITMAP_ADDR(type);
     
-    dev = (dtpreg_t*) DEV_REG_ADDR(type, device_nr);
+    if ((device_nr = getDeviceNr(*interrupt_bitmap)) < 0) PANIC();
+    else dev = (dtpreg_t*) DEV_REG_ADDR(type, device_nr);
+
     i = INSTANCES_NUMBER * (type - 3) + device_nr;
     status = dev->status;
     dev->command = ACK;
 
-    exitDeviceInterrupt();
+    exitDeviceInterrupt(i, status);
 }
 
 HIDDEN void terminalHandler(){
@@ -88,7 +67,8 @@ HIDDEN void terminalHandler(){
     termreg_t* term;
     memaddr* interrupt_bitmap = (memaddr*) CDEV_BITMAP_ADDR(INT_TERMINAL);
 
-    term = (termreg_t*) DEV_REG_ADDR(INT_TERMINAL, device_nr);
+    if ((device_nr = getDeviceNr(*interrupt_bitmap)) < 0) PANIC();
+    else term = (termreg_t*) DEV_REG_ADDR(INT_TERMINAL, device_nr);
 
     read = term->transm_status == READY;
     if (read){
@@ -101,7 +81,7 @@ HIDDEN void terminalHandler(){
     }
     i = INSTANCES_NUMBER * (INT_TERMINAL + read - 3) + device_nr;
     
-    exitDeviceInterrupt()
+    exitDeviceInterrupt(i, status);
 }
 
 /**
@@ -128,10 +108,33 @@ HIDDEN void SWITInterrupt(){
         removedProcess = removeBlocked(&swiSemaphore);
         removedProcess->p_time += (endInterrupt - startInterrupt);
         insertProcQ(&readyQueue, removedProcess);
-        softblockCount--;
+        softBlockCount--;
         swiSemaphore++;
     }
     if(currentProcess != NULL)
         LDST(EXCEPTION_STATE);
     else scheduler();
+}
+
+void interruptHandler(state_t* excState){
+    STCK(startInterrupt);
+    unsigned int cause = (excState->cause);
+    if(CAUSE_IP_GET(cause, INT_PLT)){
+        PLTInterrupt();
+    } else if(CAUSE_IP_GET(cause, INT_SWT)){
+        SWITInterrupt();
+    } else if(CAUSE_IP_GET(cause, INT_DISK)){
+        deviceHandler(INT_DISK);
+    } else if(CAUSE_IP_GET(cause, INT_TAPE)){
+        deviceHandler(INT_TAPE);
+    } else if(CAUSE_IP_GET(cause, INT_NETWORK)){
+        deviceHandler(INT_NETWORK);
+    } else if(CAUSE_IP_GET(cause, INT_PRINTER)){
+        deviceHandler(INT_PRINTER);
+    } else if(CAUSE_IP_GET(cause, INT_TERMINAL)){
+        terminalHandler();
+    } else {
+        /* sollevato interrupt non riconosciuto */
+        return; 
+    }
 }

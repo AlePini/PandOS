@@ -9,7 +9,8 @@
  * @date 2021-04-03
  */
 
-#include "pandos_types.h"
+#include <pandos_types.h>
+#include <pandos_const.h>
 
 /**
  * @brief  Handler for the syscalls. It gets called by the exception handler.
@@ -31,7 +32,7 @@ void createProcess(state_t * statep, support_t * supportp);
 /**
  * @brief  SYS2: terminate the running process and all it's progeny recursively.
  */
-void terminateProcess()();
+void terminateProcess();
 
 /**
  * @brief SYS3 (P): Does a P operation on the semaphore passed as parameter.
@@ -68,7 +69,7 @@ void getCpuTime();
  * @brief SYS7: blocks the current process in the
  * System wide interval semaphore until the next SW interrupt.
  */
-void waitForClock()();
+void waitForClock();
 
 /**
  * @brief SYS8: returns the pointer to the currentProcess'
