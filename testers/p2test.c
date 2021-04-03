@@ -364,10 +364,10 @@ void p3() {
 	/* now let's check to see if we're really charge for CPU
 	   time correctly */
 	cpu_t1 = SYSCALL(GETCPUTIME, 0, 0, 0);
-
+	prova();
 	for (i=0; i<CLOCKLOOP; i++)
 		SYSCALL(WAITCLOCK, 0, 0, 0);
-
+	prova();
 	cpu_t2 = SYSCALL(GETCPUTIME, 0, 0, 0);
 
 	if (cpu_t2 - cpu_t1 < (MINCLOCKLOOP / (* ((cpu_t *) TIMESCALEADDR))))

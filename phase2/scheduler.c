@@ -14,9 +14,9 @@ void scheduler(){
         if(processCount>0 && softBlockCount>0){    //Se ci son solo processi in attesa aspetta
             //Save the current state
             unsigned oldStatus = getSTATUS();
-            //TODO: serve? setTIMER(PLTTIMER);
+            setTIMER(LARGE_CONSTANT);
             //Disabilita gli interrupt
-            setSTATUS(oldStatus & ~TEBITON | IMON | IECON);
+            setSTATUS(oldStatus | IMON | IECON);
             //Let's wait for an interrupt
             WAIT();
             //Restore the previous status
