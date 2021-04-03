@@ -241,11 +241,11 @@ void test() {
 	SYSCALL(CREATETHREAD, (int)&p3state, (int) NULL, 0);				/* start p3     */
 
 	print("p3 is started\n");
-
+	prova();
 	SYSCALL(PASSERN, (int)&endp3, 0, 0);								/* P(endp3)     */
-
+	
 	SYSCALL(CREATETHREAD, (int)&p4state, (int) NULL, 0);				/* start p4     */
-
+	
 	pFiveSupport.sup_exceptContext[GENERALEXCEPT].c_stackPtr = (int) p5Stack;
 	pFiveSupport.sup_exceptContext[GENERALEXCEPT].c_status = ALLOFF | IEPBITON | CAUSEINTMASK | TEBITON;
 	pFiveSupport.sup_exceptContext[GENERALEXCEPT].c_pc =  (memaddr) p5gen;
@@ -629,4 +629,8 @@ void p8leaf() {
 	SYSCALL(VERHOGEN, (int)&endcreate, 0, 0);
 
 	SYSCALL(PASSERN, (int)&blkp8, 0, 0);
+}
+
+void prova(){
+	return;
 }

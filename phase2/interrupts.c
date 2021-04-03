@@ -102,27 +102,17 @@ HIDDEN void PLTInterrupt(){
 HIDDEN void SWITInterrupt(){
     LDIT(SWTIMER);
     pcb_t *removedProcess = NULL;
-    
-    while ((blockedProcess = removeBlocked(&semIntTimer)) != NULL) {
+
+    while(headBlocked(&swiSemaphore) != NULL){
         STCK(endInterrupt);
-        removedProcess->p_time += (endInterrupt - startInterrupt);
-        insertProcQ(&readyQueue, blockedProcess);
+        removedProcess = removeBlocked(&swiSemaphore);
+        if(removedProcess != NULL){
+            removedProcess->p_time += (endInterrupt - startInterrupt);
+            insertProcQ(&readyQueue, removedProcess);
+            softBlockCount--;
+        }
     }
-
-	// Reset semaphore
-	softBlockCount += semIntTimer;
-	semIntTimer = 0;
-
-    // while(headBlocked(&swiSemaphore) != NULL){
-    //     STCK(endInterrupt);
-    //     removedProcess = removeBlocked(&swiSemaphore);
-    //     if(removedProcess != NULL){
-    //         removedProcess->p_time += (endInterrupt - startInterrupt);
-    //         insertProcQ(&readyQueue, removedProcess);
-    //         softBlockCount--;
-    //     }
-    // }
-    // swiSemaphore = 0;
+    swiSemaphore = 0;
 
     returnControl();
 }

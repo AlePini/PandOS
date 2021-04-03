@@ -13,6 +13,7 @@ void createProcess(state_t* state, support_t* supportStruct){
     pcb_t* newProcess = allocPcb();
     int feedback = -1;
     if(newProcess != NULL){
+        processCount++;
         newProcess->p_s = *state;
         newProcess->p_supportStruct = supportStruct;
         insertChild(currentProcess, newProcess);
@@ -79,6 +80,7 @@ void passeren(int* semaddr){
         currentProcess->p_s = *EXCEPTION_STATE;
         insertBlocked(semaddr, currentProcess);
         currentProcess=NULL;
+        if(processCount == 0) ciao();
         scheduler();
     }
     return;
@@ -95,6 +97,7 @@ pcb_t* verhogen(int* semaddr){
 }
 
 void waitIO(int intlNo, int  dnum, int waitForTermRead){
+    currentProcess->p_s = *EXCEPTION_STATE;
     //Se non è uno dei device previsti termino il processo.
     if(intlNo<3 || intlNo >7) terminateProcess();
     //Prendo la linea di interrupt(rimappandole da 0 a 4) e la moltiplico per 8. Se è un terminal line controllo se leggo o trasmetto.
@@ -176,4 +179,8 @@ void sysHandler(){
 
     }//Se la syscall non era fra le 8 possibili sollevo una Trap Exception
     else exceptionHandler(GENERAL);
+}
+
+void ciao(){
+    return;
 }
