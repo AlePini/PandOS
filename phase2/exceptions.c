@@ -29,7 +29,6 @@ HIDDEN void passUpOrDie(unsigned index) {
     else {
         terminateProcess();
     }
-    //scheduler();
 }
 
 /**

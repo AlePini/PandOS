@@ -85,10 +85,11 @@ pcb_t* verhogen(int* semaddr){
     (*semaddr)++;
     if(*semaddr <= 0){
         pcb_t* tmp = removeBlocked(semaddr);
-        insertProcQ(&readyQueue,tmp);
-        return tmp;
+        if (unblockedProcess != NULL) {
+			insertProcQ(&readyQueue, tmpp);
+		}
     }
-    return NULL;
+    return tmp;
 }
 
 void waitIO(int intlNo, int  dnum, int waitForTermRead){
