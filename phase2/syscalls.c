@@ -18,7 +18,7 @@ void createProcess(state_t* state, support_t* supportStruct){
         newProcess->p_supportStruct = supportStruct;
         insertChild(currentProcess, newProcess);
         insertProcQ(&readyQueue, newProcess);
-        feedback = 0;
+        feedback = 1;
     }
     //Ritorna 1 o -1 in base a se allocPCB ritorna NULL o meno.
     EXCEPTION_STATE->reg_v0 = feedback;
@@ -31,34 +31,30 @@ void createProcess(state_t* state, support_t* supportStruct){
  * @param p Root process to kill.
  */
 HIDDEN void terminateRecursive(pcb_t *p) {
+
     pcb_t* child;
     
-    // Recursively kills all the progeny
 	while ((child = removeChild(p)) != NULL) {
-        outProcQ(&readyQueue, p);
+        outProcQ(&readyQueue, child);
 		terminateRecursive(child);
 	}
+    
+    // A process is blocked on a device if the semaphore is
+    // swiSemaphore or an element of semDevices
+    bool blockedDevice =
+        (p->p_semAdd >= (int*)semaphoreList &&
+        p->p_semAdd < ((int *)semaphoreList + (sizeof(SEMAPHORE) * DEVICE_TYPES * INSTANCES_NUMBER)))
+        || (p->p_semAdd == (int*) &swiSemaphore);
 
-    // Handle the process itself
-    if(p->p_semAdd != NULL){
-        // A process is blocked on a device if the semaphore is
-        // swiSemaphore or an element of semDevices
-        bool blockedDevice =
-            (p->p_semAdd >= (int*)semaphoreList &&
-            p->p_semAdd < ((int *)semaphoreList + (sizeof(SEMAPHORE) * DEVICE_TYPES * INSTANCES_NUMBER)))
-            || (p->p_semAdd == (int*) &swiSemaphore);
-        
-        // If the process is blocked on a user semaphore, remove it
-        pcb_t* removedProcess = outBlocked(p);
-
-        // For device processes, 
-        if (!blockedDevice && removedProcess != NULL) {
-            (*(p->p_semAdd))++;
-        }
+    // If the process was not blocked on a device semaphore increment semadd by 1
+    pcb_t* removedProcess = outBlocked(p);
+    
+    if(!blockedDevice && removedProcess != NULL){
+        (*(p->p_semAdd))++;
     }
-
-    processCount--;
+    
     freePcb(p);
+    processCount--;
     return;
 }
 
@@ -79,8 +75,7 @@ void passeren(int* semaddr){
         //Salvi lo stato attuale delle cose per poi bloccarlo, così che quando ricomincia ricomincia da qui
         currentProcess->p_s = *EXCEPTION_STATE;
         insertBlocked(semaddr, currentProcess);
-        currentProcess=NULL;
-        if(processCount == 0) ciao();
+        currentProcess = NULL;
         scheduler();
     }
     return;
@@ -98,11 +93,12 @@ pcb_t* verhogen(int* semaddr){
 
 void waitIO(int intlNo, int  dnum, int waitForTermRead){
     currentProcess->p_s = *EXCEPTION_STATE;
+    softBlockCount++;
     //Se non è uno dei device previsti termino il processo.
     if(intlNo<3 || intlNo >7) terminateProcess();
     //Prendo la linea di interrupt(rimappandole da 0 a 4) e la moltiplico per 8. Se è un terminal line controllo se leggo o trasmetto.
     int semaphoreIndex = INSTANCES_NUMBER*(intlNo+waitForTermRead-3) + dnum;
-    softBlockCount++;
+    
     passeren(&semaphoreList[semaphoreIndex]);
 }
 
@@ -141,7 +137,8 @@ void sysHandler(){
         
         //Se è fra 1 e 8 devo essere in kernel mode altrimenti sollevo un'eccezione
         if(CHECK_USERMODE(state.status)){
-            setCAUSE(EXC_RI<<CAUSESHIFT);
+            EXCEPTION_STATE->cause &= ~GETEXECCODE;
+            EXCEPTION_STATE->cause |= EXC_RI << CAUSESHIFT;
             exceptionHandler();
         }
         else{
@@ -171,14 +168,17 @@ void sysHandler(){
                     getSupportStruct();
                     break;
                 default:
-                    PANIC();
+                    terminateProcess();
                     break;
             }
-            LDST(EXCEPTION_STATE);
+            
+            if(currentProcess != NULL)
+                LDST(EXCEPTION_STATE);
+            else scheduler();
         }
 
     }//Se la syscall non era fra le 8 possibili sollevo una Trap Exception
-    else exceptionHandler(GENERAL);
+    else generalTrapHandler();
 }
 
 void ciao(){

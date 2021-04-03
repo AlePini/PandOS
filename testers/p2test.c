@@ -241,7 +241,7 @@ void test() {
 	SYSCALL(CREATETHREAD, (int)&p3state, (int) NULL, 0);				/* start p3     */
 
 	print("p3 is started\n");
-	prova();
+
 	SYSCALL(PASSERN, (int)&endp3, 0, 0);								/* P(endp3)     */
 	
 	SYSCALL(CREATETHREAD, (int)&p4state, (int) NULL, 0);				/* start p4     */
@@ -260,11 +260,11 @@ void test() {
 	SYSCALL(CREATETHREAD, (int)&p7state, (int) NULL, 0);				/* start p7		*/
 
 	SYSCALL(PASSERN, (int)&endp5, 0, 0);								/* P(endp5)		*/
-
+	prova();
 	print("p1 knows p5 ended\n");
-
+	
 	SYSCALL(PASSERN, (int)&blkp4, 0, 0);								/* P(blkp4)		*/
-
+	
 	/* now for a more rigorous check of process termination */
 	for (p8inc=0; p8inc<4; p8inc++) {
 		creation = SYSCALL(CREATETHREAD, (int)&p8rootstate, (int) NULL, 0);
@@ -364,10 +364,9 @@ void p3() {
 	/* now let's check to see if we're really charge for CPU
 	   time correctly */
 	cpu_t1 = SYSCALL(GETCPUTIME, 0, 0, 0);
-	prova();
+
 	for (i=0; i<CLOCKLOOP; i++)
 		SYSCALL(WAITCLOCK, 0, 0, 0);
-	prova();
 	cpu_t2 = SYSCALL(GETCPUTIME, 0, 0, 0);
 
 	if (cpu_t2 - cpu_t1 < (MINCLOCKLOOP / (* ((cpu_t *) TIMESCALEADDR))))

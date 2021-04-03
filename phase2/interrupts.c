@@ -12,6 +12,7 @@
 #include <syscalls.h>
 
 HIDDEN cpu_t startInterrupt, endInterrupt;
+HIDDEN volatile int status;
 
 /**
  * @brief Return the device number of the interrupt line.
@@ -28,19 +29,19 @@ HIDDEN int getDeviceNr(unsigned bitmap){
 
 
 HIDDEN void returnControl(){
-    if(currentProcess != NULL){
-        LDST(EXCEPTION_STATE);
-    }else scheduler();
+    if(currentProcess == NULL){
+        scheduler();
+    }else LDST(EXCEPTION_STATE);
 }
 
-HIDDEN void exitDeviceInterrupt(int i, int status){
-    softBlockCount++;
+HIDDEN void exitDeviceInterrupt(int i){
     STCK(endInterrupt);
-    pcb_t* free = removeBlocked(&semaphoreList[i]);
+    pcb_t* free = verhogen(&semaphoreList[i]);
     free->p_time += (endInterrupt - startInterrupt);
-    if(free!=NULL){;
+    if(free!=NULL){
+        softBlockCount--;
         free->p_s.reg_v0 = status;
-        insertProcQ(&readyQueue, free);
+        //insertProcQ(&readyQueue, free);
     }
     returnControl();
 }
@@ -48,22 +49,22 @@ HIDDEN void exitDeviceInterrupt(int i, int status){
 
 
 HIDDEN void deviceHandler(int type){
-    int i, status, device_nr;
+    int i, device_nr;
     dtpreg_t* dev;
     memaddr* interrupt_bitmap = (memaddr*) CDEV_BITMAP_ADDR(type);
     
-    if ((device_nr = getDeviceNr(*interrupt_bitmap)) < 0) PANIC();
-    else dev = (dtpreg_t*) DEV_REG_ADDR(type, device_nr);
+    device_nr = getDeviceNr(*interrupt_bitmap);
+    dev = (dtpreg_t*) DEV_REG_ADDR(type, device_nr);
 
     i = INSTANCES_NUMBER * (type - 3) + device_nr;
     status = dev->status;
     dev->command = ACK;
 
-    exitDeviceInterrupt(i, status);
+    exitDeviceInterrupt(i);
 }
 
 HIDDEN void terminalHandler(){
-    int i, read, status, device_nr;
+    int i, read, device_nr;
     termreg_t* term;
     memaddr* interrupt_bitmap = (memaddr*) CDEV_BITMAP_ADDR(INT_TERMINAL);
 
@@ -81,7 +82,7 @@ HIDDEN void terminalHandler(){
     }
     i = INSTANCES_NUMBER * (INT_TERMINAL + read - 3) + device_nr;
     
-    exitDeviceInterrupt(i, status);
+    exitDeviceInterrupt(i);
 }
 
 /**
@@ -90,7 +91,7 @@ HIDDEN void terminalHandler(){
 HIDDEN void PLTInterrupt(){
     setTIMER(LARGE_CONSTANT);
     currentProcess->p_s = *EXCEPTION_STATE;
-    currentProcess->p_time += 5000;
+    currentProcess->p_time += TIMESLICE;
     insertProcQ(&readyQueue, currentProcess);
     currentProcess = NULL;
     scheduler();
@@ -103,15 +104,17 @@ HIDDEN void SWITInterrupt(){
     LDIT(SWTIMER);
     pcb_t *removedProcess = NULL;
 
-    while(headBlocked(&swiSemaphore) != NULL){
-        STCK(endInterrupt);
-        removedProcess = removeBlocked(&swiSemaphore);
-        if(removedProcess != NULL){
-            removedProcess->p_time += (endInterrupt - startInterrupt);
-            insertProcQ(&readyQueue, removedProcess);
-            softBlockCount--;
-        }
+    while((removedProcess = removeBlocked(&swiSemaphore)) != NULL){
+        // STCK(endInterrupt);
+        // removedProcess->p_time += (endInterrupt - startInterrupt);
+        insertProcQ(&readyQueue, removedProcess);
+        // removedProcess = removeBlocked(&swiSemaphore);
+        // if(removedProcess != NULL){
+        //     removedProcess->p_time += (endInterrupt - startInterrupt);
+        //     insertProcQ(&readyQueue, removedProcess);
+        // }
     }
+    softBlockCount += swiSemaphore;
     swiSemaphore = 0;
 
     returnControl();

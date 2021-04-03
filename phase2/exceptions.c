@@ -29,7 +29,7 @@ HIDDEN void passUpOrDie(unsigned index) {
     else {
         terminateProcess();
     }
-    scheduler();
+    //scheduler();
 }
 
 /**
@@ -44,22 +44,19 @@ HIDDEN unsigned  exceptionType(){
     if(exType == 0) return IOINTERRUPTS;
     else if(exType == 8) return SYSEXCEPTION;
     else if(exType>=1 && exType<=3) return TLBTRAP;
-    else return GENERAL;
+    else if((exType>=4 && exType <=7) || (exType >= 9 && exType <= 12))
+        return GENERAL;
+    else{
+        PANIC();
+        return;
+    }
 }
 
-/**
- * @brief Handles a TLB exception.
- *  
- */
-HIDDEN void TLBExcHandler() {
+void TLBExcHandler() {
 	passUpOrDie(PGFAULTEXCEPT);
 }
 
-/**
- * @brief Handles a Program Trap.
- * 
- */
-HIDDEN void generalTrapHandler() {
+void generalTrapHandler() {
 	passUpOrDie(GENERALEXCEPT);
 }
 

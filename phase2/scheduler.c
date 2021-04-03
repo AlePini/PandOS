@@ -23,6 +23,7 @@ void scheduler(){
             setSTATUS(oldStatus);
         }
         if(processCount>0 && softBlockCount==0){  //Se non ci son processi bloccati ma la queue è vuota PANICO
+            if(softBlockCount == 0) cprova();
             PANIC();
         }
     }
@@ -44,4 +45,8 @@ void scheduler(){
 cpu_t getTimeSlice(){
     STCK(endTimeSlice);
     return endTimeSlice - startTimeSlice;
+}
+
+void cprova(){
+    return;
 }

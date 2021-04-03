@@ -10,6 +10,18 @@
  */
 
 /**
+ * @brief Handles a TLB exception.
+ *  
+ */
+void TLBExcHandler();
+
+/**
+ * @brief Handles a Program Trap.
+ * 
+ */
+void generalTrapHandler();
+
+/**
  * @brief Handles exceptions passing the to their custom handler.
  */
 void exceptionHandler();
