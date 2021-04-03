@@ -1,6 +1,14 @@
 #ifndef SYSCALLS_H
 #define SYSCALLS_H
 
+/**
+ * @file Syscall
+ * @author Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
+ * @brief Implements syscall handler who manages syscalls.
+ * @version 0.2
+ * @date 2021-04-03
+ */
+
 #include "pandos_types.h"
 
 /**

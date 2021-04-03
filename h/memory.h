@@ -1,7 +1,13 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include <stddef.h>
+/**
+ * @file    Memory
+ * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
+ * @brief   Implements the memcopy function.
+ * @version 0.2
+ * @date 2021-04-03
+ */
 
 /**
  * @brief Copies bytes from an address to

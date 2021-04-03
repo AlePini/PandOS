@@ -1,5 +1,14 @@
 #ifndef INITIAL_H
 #define INITIAL_H
+
+/**
+ * @file Initial
+ * @author Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
+ * @brief Entry point of pandos project. Setup the nucleus.
+ * @version 0.2
+ * @date 2021-04-03
+ */
+
 #include <pandos_const.h>
 #include <pandos_types.h>
 

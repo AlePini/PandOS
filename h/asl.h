@@ -5,7 +5,7 @@
  * @file    ASL
  * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
  * @brief   Active Semaphore List methods.
- * @version 0.1
+ * @version 0.2
  * @date 2021-02-18
  *
  */

@@ -7,5 +7,4 @@ add_library(phase2
             memory.c
             scheduler.c
             syscalls.c
-            utils.c
             ${PROJECT_SOURCE_DIR}/testers/p2test.c)
