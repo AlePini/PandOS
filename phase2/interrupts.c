@@ -103,17 +103,16 @@ HIDDEN void SWITInterrupt(){
     LDIT(SWTIMER);
     pcb_t *removedProcess = NULL;
     //TODO: vedere se riva removedBlocked
-    while(swiSemaphore < 0){
+    while(headBlocked(&swiSemaphore) != NULL){
         STCK(endInterrupt);
         removedProcess = removeBlocked(&swiSemaphore);
         removedProcess->p_time += (endInterrupt - startInterrupt);
         insertProcQ(&readyQueue, removedProcess);
         softBlockCount--;
-        swiSemaphore++;
     }
-    if(currentProcess != NULL)
-        LDST(EXCEPTION_STATE);
-    else scheduler();
+
+    swiSemaphore = 0;
+    returnControl();
 }
 
 void interruptHandler(state_t* excState){

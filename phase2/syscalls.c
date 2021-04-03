@@ -34,6 +34,7 @@ HIDDEN void terminateRecursive(pcb_t *p) {
     
     // Recursively kills all the progeny
 	while ((child = removeChild(p)) != NULL) {
+        outProcQ(&readyQueue, p);
 		terminateRecursive(child);
 	}
 
@@ -54,7 +55,6 @@ HIDDEN void terminateRecursive(pcb_t *p) {
             (*(p->p_semAdd))++;
         }
     }
-    else outProcQ(&readyQueue, p);
 
     processCount--;
     freePcb(p);
