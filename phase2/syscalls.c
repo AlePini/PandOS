@@ -9,7 +9,7 @@
 
 
 void createProcess(state_t* state, support_t* supportStruct){
-    //Creo il nuovo processo e gli assegno lo stato e la support struct.
+    //Creates the new process and assigns the state and the support struct.
     pcb_t* newProcess = allocPcb();
     int feedback = -1;
     if(newProcess != NULL){
@@ -20,7 +20,7 @@ void createProcess(state_t* state, support_t* supportStruct){
         insertProcQ(&readyQueue, newProcess);
         feedback = 1;
     }
-    //Ritorna 1 o -1 in base a se allocPCB ritorna NULL o meno.
+    //Returns 1 or -1 based on what allocBCP returns (NULL or not).
     EXCEPTION_STATE->reg_v0 = feedback;
 }
 
@@ -40,13 +40,13 @@ HIDDEN void terminateRecursive(pcb_t *p) {
 	}
     
     // A process is blocked on a device if the semaphore is
-    // swiSemaphore or an element of semDevices
+    // swiSemaphore or an element of semDevices.
     bool blockedDevice =
         (p->p_semAdd >= (int*)semaphoreList &&
         p->p_semAdd < ((int *)semaphoreList + (sizeof(SEMAPHORE) * DEVICE_TYPES * INSTANCES_NUMBER)))
         || (p->p_semAdd == (int*) &swiSemaphore);
 
-    // If the process was not blocked on a device semaphore increment semadd by 1
+    // If the process was not blocked on a device semaphore increment semadd by 1.
     pcb_t* removedProcess = outBlocked(p);
     
     if(!blockedDevice && removedProcess != NULL){
@@ -59,9 +59,9 @@ HIDDEN void terminateRecursive(pcb_t *p) {
 }
 
 void terminateProcess(){
-    //Rimuovo il current process dall'essere figlio di suo padrew
+    //Removes current process from being his father's son.
     outChild(currentProcess);
-    //Termino il current e tutta la sua progenie.
+    //Terminates the current and all his progeny.
 	terminateRecursive(currentProcess);
 	currentProcess = NULL;
 	scheduler();
@@ -72,7 +72,7 @@ void passeren(int* semaddr){
     (*semaddr)--;
     if(*semaddr < 0){
         currentProcess->p_time+=getTimeSlice();
-        //Salvi lo stato attuale delle cose per poi bloccarlo, così che quando ricomincia ricomincia da qui
+        //Saves the current state of things and then block it, so when it restarts, it restarts from here.
         currentProcess->p_s = *EXCEPTION_STATE;
         insertBlocked(semaddr, currentProcess);
         currentProcess = NULL;
@@ -83,10 +83,11 @@ void passeren(int* semaddr){
 
 pcb_t* verhogen(int* semaddr){
     (*semaddr)++;
+    pcb_t* tmp = NULL;
     if(*semaddr <= 0){
-        pcb_t* tmp = removeBlocked(semaddr);
-        if (unblockedProcess != NULL) {
-			insertProcQ(&readyQueue, tmpp);
+        tmp = removeBlocked(semaddr);
+        if (tmp != NULL) {
+			insertProcQ(&readyQueue, tmp);
 		}
     }
     return tmp;
@@ -95,9 +96,10 @@ pcb_t* verhogen(int* semaddr){
 void waitIO(int intlNo, int  dnum, int waitForTermRead){
     currentProcess->p_s = *EXCEPTION_STATE;
     softBlockCount++;
-    //Se non è uno dei device previsti termino il processo.
+    //If it's not one of the expected device terminates the process.
     if(intlNo<3 || intlNo >7) terminateProcess();
-    //Prendo la linea di interrupt(rimappandole da 0 a 4) e la moltiplico per 8. Se è un terminal line controllo se leggo o trasmetto.
+    //Takes the line of interrupt (mapping them from 0 to 4) and multiply it by 8.
+    //If it's a terminal line checks if it reads or transmits.
     int semaphoreIndex = INSTANCES_NUMBER*(intlNo+waitForTermRead-3) + dnum;
     
     passeren(&semaphoreList[semaphoreIndex]);
@@ -122,21 +124,21 @@ void getSupportStruct(){
 
 void sysHandler(){
 
-    //Leggo l'id della syscall
+    //Reads the id of the syscall.
     unsigned sysdnum = EXCEPTION_STATE -> reg_a0;
 
-    //Recupero lo stato dell'eccezione
+    //Recovery of the state of the exception.
     state_t state = *EXCEPTION_STATE;
 
-    //Recupero le informazioni sulla syscall dai registri
+    //Recovery of the informations on the syscall from the registers.
     unsigned arg1 = state.reg_a1;
     unsigned arg2 = state.reg_a2;
     unsigned arg3 = state.reg_a3;
 
-    //Controllo la syscall sia valida 
+    //Checks if syscall is valid.
     if(sysdnum >= 1 && sysdnum <= 8){
         
-        //Se è fra 1 e 8 devo essere in kernel mode altrimenti sollevo un'eccezione
+        //If it's beetween 1 and 8 it must be on kernel mode or sn exception is raised.
         if(CHECK_USERMODE(state.status)){
             EXCEPTION_STATE->cause &= ~GETEXECCODE;
             EXCEPTION_STATE->cause |= EXC_RI << CAUSESHIFT;
@@ -178,7 +180,7 @@ void sysHandler(){
             else scheduler();
         }
 
-    }//Se la syscall non era fra le 8 possibili sollevo una Trap Exception
+    }//If the syscall wasn't from the previous 8 raises a trap exception.
     else generalTrapHandler();
 }
 
