@@ -5,6 +5,7 @@
 * Implementation of Queue Manager functions
 *
 *********************************************/
+
 HIDDEN pcb_t pcbFree_table[MAXPROC];
 HIDDEN pcb_t *pcbFree_h;
 
@@ -156,7 +157,6 @@ pcb_t *headProcQ(pcb_t *tp){
 *********************************************/
 
 HIDDEN pcb_t* trim(pcb_t *p){
-    p->p_child = NULL;
     p->p_next_sib=NULL;
     p->p_prev_sib=NULL;
     p->p_prnt=NULL;
@@ -184,7 +184,7 @@ void insertChild(pcb_t *prnt, pcb_t *p){
         }
     }
 }
-/*
+
 pcb_t* removeChild(pcb_t *p){
     if(p==NULL || p->p_child==NULL) return NULL;
 
@@ -196,6 +196,7 @@ pcb_t* removeChild(pcb_t *p){
         p->p_child=son->p_next_sib;
         p->p_child->p_prev_sib=NULL;
     }
+    
     return trim(son);
 }
 
@@ -214,55 +215,4 @@ pcb_t *outChild(pcb_t *p){
     if(p->p_next_sib != NULL )  p->p_next_sib->p_prev_sib=p->p_prev_sib;
 
     return trim(p);
-}
-
-
-*/
-pcb_t* removeChild(pcb_t *p) {
-    // Perform a head-remove to the
-    // children list
-
-    if (p->p_child == NULL) {
-        return NULL;
-    }
-    else {
-        pcb_t *child = p->p_child;
-        p->p_child = child->p_next_sib;
-
-        if (child->p_next_sib != NULL){
-            child->p_next_sib->p_prev_sib = NULL;
-        }
-
-        child->p_prnt = NULL;
-        child->p_next_sib = NULL;
-
-        return child;
-    }
-}
-
-pcb_t* outChild(pcb_t *p) {
-    if (p->p_prnt == NULL) {
-        // p has no parent
-        return NULL;
-    }
-
-    if (p->p_prev_sib != NULL) {
-        p->p_prev_sib->p_next_sib = p->p_next_sib;
-    }
-    
-    if (p->p_next_sib != NULL) {
-        p->p_next_sib->p_prev_sib = p->p_prev_sib;
-    }
-
-    // If p was the first child, p->p_next_sib
-    // becomes the new first child
-    if (p->p_prnt->p_child == p) {
-        p->p_prnt->p_child = p->p_next_sib;
-    }
-
-    p->p_prev_sib = NULL;
-    p->p_next_sib = NULL;
-    p->p_prnt = NULL;
-
-    return p;
 }
