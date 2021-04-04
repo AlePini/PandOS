@@ -14,7 +14,7 @@ void scheduler(){
         if(processCount>0 && softBlockCount>0){    //Waits if there's only waiting processes.
             //Saves the current state.
             unsigned oldStatus = getSTATUS();
-            setTIMER(LARGE_CONSTANT);
+            setTIMER(PLTBLOCK);
             //Disables the interrupts.
             setSTATUS(oldStatus | IMON | IECON);
             //Waits for an interrupt.
@@ -23,7 +23,6 @@ void scheduler(){
             setSTATUS(oldStatus);
         }
         if(processCount>0 && softBlockCount==0){  //If there's no blocked process but the queue is empty PANIC.
-            if(softBlockCount == 0) cprova();
             PANIC();
         }
     }
@@ -45,8 +44,4 @@ void scheduler(){
 cpu_t getTimeSlice(){
     STCK(endTimeSlice);
     return endTimeSlice - startTimeSlice;
-}
-
-void cprova(){
-    return;
 }

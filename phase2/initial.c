@@ -36,7 +36,7 @@ int main(){
     readyQueue = mkEmptyProcQ();
     currentProcess = NULL;
     processCount = 0;
-    softBlockCount= 0;
+    softBlockCount = 0;
     swiSemaphore = 0;
     for (int i=0; i<DEVICE_NUMBER; i++){
         semaphoreList[i] = 0;
@@ -53,7 +53,6 @@ int main(){
     //Setup of status.
     firstProcess->p_s.status = ALLOFF | TEBITON | IEPON | IMON;
     //SP is set to RAMTOP.
-
     RAMTOP(firstProcess->p_s.reg_sp);
     //Program Counter set to test address.
     firstProcess->p_s.pc_epc = (memaddr) test;

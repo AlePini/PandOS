@@ -37,7 +37,7 @@ HIDDEN void passUpOrDie(unsigned index) {
  * 
  * @return the type of exception among the possible four.
  */
-HIDDEN unsigned  exceptionType(){
+HIDDEN int exceptionType(){
     state_t *exceptionState = EXCEPTION_STATE;
     unsigned int exType = (exceptionState->cause & GETEXECCODE) >> CAUSESHIFT;
     if(exType == 0) return IOINTERRUPTS;
@@ -45,10 +45,7 @@ HIDDEN unsigned  exceptionType(){
     else if(exType>=1 && exType<=3) return TLBTRAP;
     else if((exType>=4 && exType <=7) || (exType >= 9 && exType <= 12))
         return GENERAL;
-    else{
-        PANIC();
-        return;
-    }
+    else return ERROR_TYPE;
 }
 
 void TLBExcHandler() {
@@ -62,7 +59,7 @@ void generalTrapHandler() {
 void exceptionHandler(){
     //Increment the program counter by 4 to avoid loops.
     EXCEPTION_STATE->pc_epc += WORDLEN;
-    unsigned type = exceptionType();
+    int type = exceptionType();
     switch (type){
         //Interrupts.
         case IOINTERRUPTS:

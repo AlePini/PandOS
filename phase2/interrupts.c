@@ -39,9 +39,8 @@ HIDDEN void exitDeviceInterrupt(int i){
     pcb_t* free = verhogen(&semaphoreList[i]);
     free->p_time += (endInterrupt - startInterrupt);
     if(free!=NULL){
-        softBlockCount--;
         free->p_s.reg_v0 = status;
-        //insertProcQ(&readyQueue, free);
+        softBlockCount--;
     }
     returnControl();
 }
@@ -49,6 +48,7 @@ HIDDEN void exitDeviceInterrupt(int i){
 
 
 HIDDEN void deviceHandler(int type){
+    boh();
     int i, device_nr;
     dtpreg_t* dev;
     memaddr* interrupt_bitmap = (memaddr*) CDEV_BITMAP_ADDR(type);
@@ -68,8 +68,8 @@ HIDDEN void terminalHandler(){
     termreg_t* term;
     memaddr* interrupt_bitmap = (memaddr*) CDEV_BITMAP_ADDR(INT_TERMINAL);
 
-    if ((device_nr = getDeviceNr(*interrupt_bitmap)) < 0) PANIC();
-    else term = (termreg_t*) DEV_REG_ADDR(INT_TERMINAL, device_nr);
+    device_nr = getDeviceNr(*interrupt_bitmap);
+    term = (termreg_t*) DEV_REG_ADDR(INT_TERMINAL, device_nr);
 
     read = term->transm_status == READY;
     if (read){
@@ -89,7 +89,7 @@ HIDDEN void terminalHandler(){
  * @brief Handles a PLT interrupt.
  */
 HIDDEN void PLTInterrupt(){
-    setTIMER(LARGE_CONSTANT);
+    setTIMER(PLTBLOCK);
     currentProcess->p_s = *EXCEPTION_STATE;
     currentProcess->p_time += TIMESLICE;
     insertProcQ(&readyQueue, currentProcess);
@@ -105,16 +105,11 @@ HIDDEN void SWITInterrupt(){
     pcb_t *removedProcess = NULL;
 
     while((removedProcess = removeBlocked(&swiSemaphore)) != NULL){
-        // STCK(endInterrupt);
-        // removedProcess->p_time += (endInterrupt - startInterrupt);
+        STCK(endInterrupt);
+        removedProcess->p_time += (endInterrupt - startInterrupt);
         insertProcQ(&readyQueue, removedProcess);
-        // removedProcess = removeBlocked(&swiSemaphore);
-        // if(removedProcess != NULL){
-        //     removedProcess->p_time += (endInterrupt - startInterrupt);
-        //     insertProcQ(&readyQueue, removedProcess);
-        // }
+        softBlockCount--;
     }
-    softBlockCount += swiSemaphore;
     swiSemaphore = 0;
 
     returnControl();
@@ -141,4 +136,8 @@ void interruptHandler(state_t* excState){
         /* raises interrupt not recognized */
         return; 
     }
+}
+
+void boh(){
+    return;
 }

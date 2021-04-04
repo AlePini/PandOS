@@ -9,6 +9,8 @@
 
 #include <umps3/umps/const.h>
 
+#define bool int
+
 //Phase 1 defined constants
 /**
  * @brief Identifier with the lowest value, used for the first
@@ -29,17 +31,33 @@
 
 //Phase 2 defined constants
 #define CHECK_USERMODE(var) ((var) & (1<<3))
+
+//Timers
 #define SWTIMER  PSECOND
 #define PLTTIMER  TIMESLICE * (* ((cpu_t *) TIMESCALEADDR))
+
+//Device Constants
 #define DEVICE_NUMBER 48
 #define DEVICE_TYPES 6
 #define INSTANCES_NUMBER  8
+
+/**
+ * @brief Cast to state_t of BIOSDATAPAGE
+ */
 #define EXCEPTION_STATE ((state_t *) BIOSDATAPAGE)
+
+//Types of exception
+#define ERROR_TYPE -1
 #define TLBTRAP 2
 #define GENERAL 4
-#define bool int
-#define LARGE_CONSTANT 100000000
 
+/**
+ * @brief Large constant to block the PLT timer
+ */
+#define PLTBLOCK 100000000
+
+
+//Interrupts
 #define INT_PLT      1
 #define INT_SWT      2
 #define INT_DISK     3
@@ -48,9 +66,9 @@
 #define INT_PRINTER  6
 #define INT_TERMINAL 7
 
+//Helful for the interrupts
 #define ST_TRANS_RECV 5
 #define TERM_STATUS_MASK 0xFF
-#define CMD_ACK 1
 
 
 /* Hardware & software constants */

@@ -18,9 +18,9 @@ void createProcess(state_t* state, support_t* supportStruct){
         newProcess->p_supportStruct = supportStruct;
         insertChild(currentProcess, newProcess);
         insertProcQ(&readyQueue, newProcess);
-        feedback = 1;
+        feedback = 0;
     }
-    //Returns 1 or -1 based on what allocBCP returns (NULL or not).
+    //Returns 0 or -1 based on what allocBCP returns (NULL or not).
     EXCEPTION_STATE->reg_v0 = feedback;
 }
 
@@ -32,18 +32,18 @@ void createProcess(state_t* state, support_t* supportStruct){
  */
 HIDDEN void terminateRecursive(pcb_t *p) {
 
-    pcb_t* child;
+    pcb_t* removed;
     
-	while ((child = removeChild(p)) != NULL) {
-        outProcQ(&readyQueue, child);
-		terminateRecursive(child);
+	while ((removed = removeChild(p)) != NULL) {
+        outProcQ(&readyQueue, removed);
+		terminateRecursive(removed);
 	}
     
     // A process is blocked on a device if the semaphore is
     // swiSemaphore or an element of semDevices.
     bool blockedDevice =
         (p->p_semAdd >= (int*)semaphoreList &&
-        p->p_semAdd < ((int *)semaphoreList + (sizeof(SEMAPHORE) * DEVICE_TYPES * INSTANCES_NUMBER)))
+        p->p_semAdd < ((int *)semaphoreList + (sizeof(SEMAPHORE) * DEVICE_NUMBER)))
         || (p->p_semAdd == (int*) &swiSemaphore);
 
     // If the process was not blocked on a device semaphore increment semadd by 1.
@@ -130,7 +130,7 @@ void sysHandler(){
     //Recovery of the state of the exception.
     state_t state = *EXCEPTION_STATE;
 
-    //Recovery of the informations on the syscall from the registers.
+    //Retrieve the informations of the syscall from the registers.
     unsigned arg1 = state.reg_a1;
     unsigned arg2 = state.reg_a2;
     unsigned arg3 = state.reg_a3;
@@ -142,7 +142,7 @@ void sysHandler(){
         if(CHECK_USERMODE(state.status)){
             EXCEPTION_STATE->cause &= ~GETEXECCODE;
             EXCEPTION_STATE->cause |= EXC_RI << CAUSESHIFT;
-            exceptionHandler();
+            generalTrapHandler();
         }
         else{
             switch(sysdnum){
@@ -182,8 +182,4 @@ void sysHandler(){
 
     }//If the syscall wasn't from the previous 8 raises a trap exception.
     else generalTrapHandler();
-}
-
-void ciao(){
-    return;
 }
