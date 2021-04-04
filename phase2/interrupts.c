@@ -138,7 +138,7 @@ void interruptHandler(state_t* excState){
     } else if(CAUSE_IP_GET(cause, INT_TERMINAL)){
         terminalHandler();
     } else {
-        /* sollevato interrupt non riconosciuto */
+        /* raises interrupt not recognized */
         return; 
     }
 }

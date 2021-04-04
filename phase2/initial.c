@@ -5,10 +5,8 @@
 #include "initial.h"
 #include "scheduler.h"
 
-//TODO: mettere HIDDEN tutto quello che viene usato solo nel suo file
 
-
-//Dichiarazione variabili
+//Variables declaration.
 unsigned int processCount;
 unsigned int softBlockCount;
 pcb_t* readyQueue;
@@ -16,18 +14,17 @@ pcb_t* currentProcess;
 SEMAPHORE semaphoreList[DEVICE_NUMBER];
 SEMAPHORE swiSemaphore;
 
-//Prova a mettere la roba extern qui
 extern void test();
 extern void uTLB_RefillHandler();
 
 
 int main(){
 
-    //Inizializzare strutture dati livello 2
+    //Initialize data structure level 2.
     initPcbs();
     initASL();
 
-    //Popolare il passup vector
+    //Populates the passup vector.
     passupvector_t* passup = (passupvector_t*)PASSUPVECTOR;
     passup->tlb_refill_handler = (memaddr) &uTLB_RefillHandler;
     passup->tlb_refill_stackPtr = (memaddr) KERNELSTACK;
@@ -35,7 +32,7 @@ int main(){
     passup->exception_stackPtr = (memaddr) KERNELSTACK;
 
 
-    // //Inizializzare le variabili globali
+    //Initializes global variables.
     readyQueue = mkEmptyProcQ();
     currentProcess = NULL;
     processCount = 0;
@@ -46,24 +43,24 @@ int main(){
     }
 
 
-    //Setup del system-wide timer
+    //Setup del system-wide timer.
     LDIT(SWTIMER);
 
-    //Parte sul primo processo
+    //Creation of first process.
     pcb_t* firstProcess = allocPcb();
     processCount++;
 
-    //Setup dello status
+    //Setup of status.
     firstProcess->p_s.status = ALLOFF | TEBITON | IEPON | IMON;
-    //SP is set to RAMTOP
+    //SP is set to RAMTOP.
 
     RAMTOP(firstProcess->p_s.reg_sp);
-    //Program Counter set to test address
+    //Program Counter set to test address.
     firstProcess->p_s.pc_epc = (memaddr) test;
     firstProcess->p_s.reg_t9 = (memaddr) test;
     insertProcQ(&readyQueue, firstProcess);
 
-    //Chiamo lo scheduler
+    //Call of the scheduler.
     scheduler();
     
     return 0;

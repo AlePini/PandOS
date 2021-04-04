@@ -8,37 +8,37 @@ cpu_t startTimeSlice,endTimeSlice = 0;
 
 void scheduler(){
     if(emptyProcQ(readyQueue)){
-        if(processCount == 0){   //Se non ci sono più processi spegni
+        if(processCount == 0){   //If there's no more process shuts down.
             HALT();
         }
-        if(processCount>0 && softBlockCount>0){    //Se ci son solo processi in attesa aspetta
-            //Save the current state
+        if(processCount>0 && softBlockCount>0){    //Waits if there's only waiting processes.
+            //Saves the current state.
             unsigned oldStatus = getSTATUS();
             setTIMER(LARGE_CONSTANT);
-            //Disabilita gli interrupt
+            //Disables the interrupts.
             setSTATUS(oldStatus | IMON | IECON);
-            //Let's wait for an interrupt
+            //Waits for an interrupt.
             WAIT();
-            //Restore the previous status
+            //Restores the previous status.
             setSTATUS(oldStatus);
         }
-        if(processCount>0 && softBlockCount==0){  //Se non ci son processi bloccati ma la queue è vuota PANICO
+        if(processCount>0 && softBlockCount==0){  //If there's no blocked process but the queue is empty PANIC.
             if(softBlockCount == 0) cprova();
             PANIC();
         }
     }
-    //Se c'è un processo attivo lo rimetto in coda
+    //If there's an active process puts it in the queue.
     if(currentProcess != NULL){
         insertProcQ(&readyQueue, currentProcess);
         currentProcess->p_time += getTimeSlice();
     }
-    //Sosituisco il current process
+    //Replace the current process.
     currentProcess = removeProcQ(&readyQueue);
-    //Resetto il timer
+    //Reset the timer
     setTIMER(PLTTIMER);
-    //Inizio a contare il tempo di questo processo
+    //Starts to count the time of this process.
     STCK(startTimeSlice);
-    //Carico lo stato nuovo
+    //Loads the new state.
     LDST(&(currentProcess->p_s));
 }
 

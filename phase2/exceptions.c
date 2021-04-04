@@ -19,13 +19,13 @@ HIDDEN void passUpOrDie(unsigned index) {
 
     support_t *support = currentProcess->p_supportStruct;
 
-    //Se la support struct esiste eseguo la parte "Pass Up"
+    //If the support struct exists execute the "Pass Up".
     if (support != NULL) {
         support->sup_exceptState[index] = *EXCEPTION_STATE;
         context_t* context = &(support->sup_exceptContext[index]);
         LDCXT(context->c_stackPtr, context->c_status, context->c_pc);
     }
-    //altrimenti la "Die"
+    //otherwise the "Die".
     else {
         terminateProcess();
     }
@@ -33,7 +33,7 @@ HIDDEN void passUpOrDie(unsigned index) {
 
 /**
  * @brief this function returns what type of exception
- * is raised by checking the BIOSDATAPAGE
+ * is raised by checking the BIOSDATAPAGE.
  * 
  * @return the type of exception among the possible four.
  */
@@ -60,23 +60,23 @@ void generalTrapHandler() {
 }
 
 void exceptionHandler(){
-    //Increment the program counter by 4 to avoid loops
+    //Increment the program counter by 4 to avoid loops.
     EXCEPTION_STATE->pc_epc += WORDLEN;
     unsigned type = exceptionType();
     switch (type){
-        //Interrupts
+        //Interrupts.
         case IOINTERRUPTS:
             interruptHandler(EXCEPTION_STATE);
             break;
-        //Syscalls
+        //Syscalls.
         case SYSEXCEPTION:
             sysHandler();
             break;
-        //TLB exceptions
+        //TLB exceptions.
         case TLBTRAP:
             TLBExcHandler();
             break;
-        //General trap exceptions
+        //General trap exceptions.
          case GENERAL:
             generalTrapHandler();
             break;
