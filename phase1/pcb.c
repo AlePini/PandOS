@@ -10,28 +10,28 @@ HIDDEN pcb_t *pcbFree_h;
 
 HIDDEN pcb_t* resetPcb(pcb_t* p){
     // Clean PCB 
-    head->p_next = NULL;
-    head->p_prev = NULL;
-    head->p_prnt = NULL;
-    head->p_child = NULL;
-    head->p_next_sib = NULL;
-    head->p_prev_sib = NULL;
-    head->p_semAdd = NULL;
-    head->p_time = 0;
+    p->p_next = NULL;
+    p->p_prev = NULL;
+    p->p_prnt = NULL;
+    p->p_child = NULL;
+    p->p_next_sib = NULL;
+    p->p_prev_sib = NULL;
+    p->p_semAdd = NULL;
+    p->p_time = 0;
     
     // Clean p_s
-    head->p_s.cause = 0;
-    head->p_s.entry_hi = 0;
+    p->p_s.cause = 0;
+    p->p_s.entry_hi = 0;
     for (int i = 0; i < STATE_GPR_LEN; ++i) {
-        head->p_s.gpr[i] = 0;
+        p->p_s.gpr[i] = 0;
     }
-    head->p_s.hi = 0;
-    head->p_s.lo = 0;
-    head->p_s.pc_epc = 0;
-    head->p_s.status = 0;
+    p->p_s.hi = 0;
+    p->p_s.lo = 0;
+    p->p_s.pc_epc = 0;
+    p->p_s.status = 0;
 
     // Clean p_supportStruct
-    head->p_supportStruct = NULL;
+    p->p_supportStruct = NULL;
     return p;
 }
 
@@ -155,86 +155,69 @@ pcb_t *headProcQ(pcb_t *tp){
 *
 *********************************************/
 
-// HIDDEN pcb_t* trim(pcb_t *p){
-//     p->p_child = NULL;
-//     p->p_next_sib=NULL;
-//     p->p_prev_sib=NULL;
-//     p->p_prnt=NULL;
-//     return p;
-// }
+HIDDEN pcb_t* trim(pcb_t *p){
+    p->p_child = NULL;
+    p->p_next_sib=NULL;
+    p->p_prev_sib=NULL;
+    p->p_prnt=NULL;
+    return p;
+}
 
-// int emptyChild(pcb_t *p){
-//     return p->p_child == NULL;
-// }
-
-// void insertChild(pcb_t *prnt, pcb_t *p){
-//     //Inserts p as a child of prnt if is not NULL.
-//     if(p!=NULL){
-//         //If prnt has no child just inserts.
-//         if(prnt->p_child==NULL){
-//             prnt->p_child=p;
-//             p->p_prnt=prnt;
-//         }
-//         //Otherwise handles also the sibilings
-//         else{
-//             p->p_next_sib = prnt->p_child;
-//             prnt->p_child->p_prev_sib=p;
-//             prnt->p_child = p;
-//             p->p_prnt=prnt;
-//         }
-//     }
-// }
-
-// pcb_t* removeChild(pcb_t *p){
-//     if(p==NULL || p->p_child==NULL) return NULL;
-
-//     //Identify the first child of p.
-//     pcb_t* son=p->p_child;
-//     if(son->p_next_sib==NULL){  //It's a only child.
-//         p->p_child=NULL;
-//     }else{                      //Has at least one brother.
-//         p->p_child=son->p_next_sib;
-//         p->p_child->p_prev_sib=NULL;
-//     }
-//     return trim(son);
-// }
-
-// pcb_t *outChild(pcb_t *p){
-//     if (p->p_prnt==NULL)
-//         return NULL;
-
-//     //If p has no left brother than it's the first of his parent, uses removechild.
-//     if (p->p_prev_sib == NULL)
-//         return removeChild(p->p_prnt);
-
-//     //Delete p from the brothers' list.
-//     p->p_prev_sib->p_next_sib=p->p_next_sib;
-//     //If p is not the last brother of the list,
-//     //the left brother of p becomes the left brother of the right brother of p.
-//     if(p->p_next_sib != NULL )  p->p_next_sib->p_prev_sib=p->p_prev_sib;
-
-//     return trim(p);
-// }
-
-int emptyChild(pcb_t *p) {
+int emptyChild(pcb_t *p){
     return p->p_child == NULL;
 }
 
-void insertChild(pcb_t *prnt, pcb_t *p) {
-    // Perform a head-insert to the children
-    // list
-
-    if (prnt->p_child != NULL) {
-        // The children list is empty
-        prnt->p_child->p_prev_sib = p;
+void insertChild(pcb_t *prnt, pcb_t *p){
+    //Inserts p as a child of prnt if is not NULL.
+    if(p!=NULL){
+        //If prnt has no child just inserts.
+        if(prnt->p_child==NULL){
+            prnt->p_child=p;
+            p->p_prnt=prnt;
+        }
+        //Otherwise handles also the sibilings
+        else{
+            p->p_next_sib = prnt->p_child;
+            prnt->p_child->p_prev_sib=p;
+            prnt->p_child = p;
+            p->p_prnt=prnt;
+        }
     }
+}
+/*
+pcb_t* removeChild(pcb_t *p){
+    if(p==NULL || p->p_child==NULL) return NULL;
 
-    p->p_prnt = prnt;
-    p->p_next_sib = prnt->p_child;
-    p->p_prev_sib = NULL;
-    prnt->p_child = p;
+    //Identify the first child of p.
+    pcb_t* son=p->p_child;
+    if(son->p_next_sib==NULL){  //It's a only child.
+        p->p_child=NULL;
+    }else{                      //Has at least one brother.
+        p->p_child=son->p_next_sib;
+        p->p_child->p_prev_sib=NULL;
+    }
+    return trim(son);
 }
 
+pcb_t *outChild(pcb_t *p){
+    if (p->p_prnt==NULL)
+        return NULL;
+
+    //If p has no left brother than it's the first of his parent, uses removechild.
+    if (p->p_prev_sib == NULL)
+        return removeChild(p->p_prnt);
+
+    //Delete p from the brothers' list.
+    p->p_prev_sib->p_next_sib=p->p_next_sib;
+    //If p is not the last brother of the list,
+    //the left brother of p becomes the left brother of the right brother of p.
+    if(p->p_next_sib != NULL )  p->p_next_sib->p_prev_sib=p->p_prev_sib;
+
+    return trim(p);
+}
+
+
+*/
 pcb_t* removeChild(pcb_t *p) {
     // Perform a head-remove to the
     // children list
