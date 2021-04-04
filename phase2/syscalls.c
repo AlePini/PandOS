@@ -1,10 +1,10 @@
 #include <syscalls.h>
-#include <umps3/umps/libumps.h>
 #include <umps3/umps/cp0.h>
+#include <umps3/umps/libumps.h>
 #include <asl.h>
 #include <pcb.h>
-#include <initial.h>
 #include <exceptions.h>
+#include <initial.h>
 #include <scheduler.h>
 
 
@@ -30,7 +30,7 @@ void createProcess(state_t* state, support_t* supportStruct){
  * 
  * @param p Root process to kill.
  */
-HIDDEN void terminateRecursive(pcb_t *p) {
+HIDDEN void terminateRecursive(pcb_t *p){
 
     pcb_t* removed;
     
@@ -41,17 +41,15 @@ HIDDEN void terminateRecursive(pcb_t *p) {
     
     // A process is blocked on a device if the semaphore is
     // swiSemaphore or an element of semDevices.
-    bool blockedDevice =
-        (p->p_semAdd >= (int*)semaphoreList &&
-        p->p_semAdd < ((int *)semaphoreList + (sizeof(SEMAPHORE) * DEVICE_NUMBER)))
-        || (p->p_semAdd == (int*) &swiSemaphore);
+    bool blockedDevice = ( p->p_semAdd >= (int*)semaphoreList
+                        && p->p_semAdd < ((int *)semaphoreList + (sizeof(SEMAPHORE) * DEVICE_NUMBER)) )
+                        || p->p_semAdd == (int*) &swiSemaphore;
 
     // If the process was not blocked on a device semaphore increment semadd by 1.
     pcb_t* removedProcess = outBlocked(p);
     
-    if(!blockedDevice && removedProcess != NULL){
+    if(!blockedDevice && removedProcess != NULL)
         (*(p->p_semAdd))++;
-    }
     
     freePcb(p);
     processCount--;
@@ -71,7 +69,7 @@ void terminateProcess(){
 void passeren(int* semaddr){
     (*semaddr)--;
     if(*semaddr < 0){
-        currentProcess->p_time+=getTimeSlice();
+        currentProcess->p_time += getTimeSlice();
         //Saves the current state of things and then block it, so when it restarts, it restarts from here.
         currentProcess->p_s = *EXCEPTION_STATE;
         insertBlocked(semaddr, currentProcess);
@@ -86,18 +84,20 @@ pcb_t* verhogen(int* semaddr){
     pcb_t* tmp = NULL;
     if(*semaddr <= 0){
         tmp = removeBlocked(semaddr);
-        if (tmp != NULL) {
+        if (tmp != NULL)
 			insertProcQ(&readyQueue, tmp);
-		}
     }
     return tmp;
 }
 
-void waitIO(int intlNo, int  dnum, int waitForTermRead){
+void waitIO(int intlNo, int dnum, int waitForTermRead){
     currentProcess->p_s = *EXCEPTION_STATE;
     softBlockCount++;
+    
     //If it's not one of the expected device terminates the process.
-    if(intlNo<3 || intlNo >7) terminateProcess();
+    if(intlNo<3 || intlNo >7)
+        terminateProcess();
+    
     //Takes the line of interrupt (mapping them from 0 to 4) and multiply it by 8.
     //If it's a terminal line checks if it reads or transmits.
     int semaphoreIndex = INSTANCES_NUMBER*(intlNo+waitForTermRead-3) + dnum;
@@ -106,7 +106,7 @@ void waitIO(int intlNo, int  dnum, int waitForTermRead){
 }
 
 void getCpuTime(){
-    unsigned time = currentProcess->p_time+getTimeSlice();
+    unsigned time = currentProcess->p_time + getTimeSlice();
     EXCEPTION_STATE->reg_v0 = time;
     return;
 }
@@ -125,7 +125,7 @@ void getSupportStruct(){
 void sysHandler(){
 
     //Reads the id of the syscall.
-    unsigned sysdnum = EXCEPTION_STATE -> reg_a0;
+    unsigned sysdnum = EXCEPTION_STATE->reg_a0;
 
     //Recovery of the state of the exception.
     state_t state = *EXCEPTION_STATE;
@@ -180,6 +180,7 @@ void sysHandler(){
             else scheduler();
         }
 
-    }//If the syscall wasn't from the previous 8 raises a trap exception.
+    }
+    //If the syscall wasn't from the previous 8 raises a trap exception.
     else generalTrapHandler();
 }

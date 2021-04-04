@@ -6,9 +6,11 @@ HIDDEN semd_t semd_table[MAXSEM];
 HIDDEN semd_t* semdFree_h;
 HIDDEN semd_t* semd_h;
 
-/** This function works also when the semaphore we're searching for is not present in the ASL.
-  * The function will return the last semaphore before the one whose identifier is MAXINT and
-  * the checks in the other functions will handle error situations.                         */
+/**This function works also when the semaphore we're searching for is not present in the ASL.
+ * The function will return the last semaphore before the one whose identifier is MAXINT and
+ * the checks in the other functions will handle error situations.
+ */
+
 HIDDEN semd_t* findPrevSem(int* semAdd){
     //Scan the ASL until the next semaphore identifier is bigger than semAdd
     semd_t* head = semd_h;

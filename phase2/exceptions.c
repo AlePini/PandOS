@@ -1,8 +1,8 @@
+#include <exceptions.h>
 #include <umps3/umps/libumps.h>
 #include <pandos_const.h>
-#include <exceptions.h>
-#include <initial.h>
 #include <interrupts.h>
+#include <initial.h>
 #include <scheduler.h>
 #include <syscalls.h>
 
@@ -15,7 +15,7 @@
  * @param index 0 (PGFAULTEXCEPT) or 1 (GENERALEXCEPT), indicating
  * the type of the exception to be handled
  */
-HIDDEN void passUpOrDie(unsigned index) {
+HIDDEN void passUpOrDie(unsigned index){
 
     support_t *support = currentProcess->p_supportStruct;
 
@@ -26,9 +26,8 @@ HIDDEN void passUpOrDie(unsigned index) {
         LDCXT(context->c_stackPtr, context->c_status, context->c_pc);
     }
     //otherwise the "Die".
-    else {
+    else
         terminateProcess();
-    }
 }
 
 /**
@@ -48,11 +47,11 @@ HIDDEN int exceptionType(){
     else return ERROR_TYPE;
 }
 
-void TLBExcHandler() {
+void TLBExcHandler(){
 	passUpOrDie(PGFAULTEXCEPT);
 }
 
-void generalTrapHandler() {
+void generalTrapHandler(){
 	passUpOrDie(GENERALEXCEPT);
 }
 

@@ -6,7 +6,7 @@
  * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
  * @brief   Implements exception handler who manages the other handlers
  * @version 0.2
- * @date 2021-04-03
+ * @date    2021-04-03
  */
 
 /**

@@ -1,6 +1,6 @@
+#include <scheduler.h>
 #include <umps3/umps/libumps.h>
 #include <pcb.h>
-#include <scheduler.h>
 #include <initial.h>
 
 
@@ -8,9 +8,8 @@ cpu_t startTimeSlice,endTimeSlice = 0;
 
 void scheduler(){
     if(emptyProcQ(readyQueue)){
-        if(processCount == 0){   //If there's no more process shuts down.
+        if(processCount == 0)   //If there's no more process shuts down.
             HALT();
-        }
         if(processCount>0 && softBlockCount>0){    //Waits if there's only waiting processes.
             //Saves the current state.
             unsigned oldStatus = getSTATUS();
@@ -22,9 +21,8 @@ void scheduler(){
             //Restores the previous status.
             setSTATUS(oldStatus);
         }
-        if(processCount>0 && softBlockCount==0){  //If there's no blocked process but the queue is empty PANIC.
+        if(processCount>0 && softBlockCount==0) //If there's no blocked process but the queue is empty PANIC.
             PANIC();
-        }
     }
     //If there's an active process puts it in the queue.
     if(currentProcess != NULL){

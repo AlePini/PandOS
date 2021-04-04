@@ -1,15 +1,16 @@
-#include <umps3/umps/cp0.h>
-#include <umps3/umps/types.h>
-#include <umps3/umps/libumps.h>
+#include <interrupts.h>
 #include <umps3/umps/arch.h>
+#include <umps3/umps/cp0.h>
+#include <umps3/umps/libumps.h>
+#include <umps3/umps/types.h>
 #include <pandos_const.h>
 #include <asl.h>
 #include <pcb.h>
 #include <exceptions.h>
 #include <initial.h>
-#include <interrupts.h>
 #include <scheduler.h>
 #include <syscalls.h>
+
 
 HIDDEN cpu_t startInterrupt, endInterrupt;
 HIDDEN volatile int status;
@@ -26,12 +27,11 @@ HIDDEN int getDeviceNr(unsigned bitmap){
     return -1;
 }
 
-
-
 HIDDEN void returnControl(){
-    if(currentProcess == NULL){
+    if(currentProcess == NULL)
         scheduler();
-    }else LDST(EXCEPTION_STATE);
+    else 
+        LDST(EXCEPTION_STATE);
 }
 
 HIDDEN void exitDeviceInterrupt(int i){
@@ -45,10 +45,7 @@ HIDDEN void exitDeviceInterrupt(int i){
     returnControl();
 }
 
-
-
 HIDDEN void deviceHandler(int type){
-    boh();
     int i, device_nr;
     dtpreg_t* dev;
     memaddr* interrupt_bitmap = (memaddr*) CDEV_BITMAP_ADDR(type);
@@ -75,8 +72,7 @@ HIDDEN void terminalHandler(){
     if (read){
         status = term->recv_status;
         term->recv_command = ACK;
-    }
-    else {
+    } else {
         status = term->transm_status;
         term->transm_command = ACK;
     }
@@ -136,8 +132,4 @@ void interruptHandler(state_t* excState){
         /* raises interrupt not recognized */
         return; 
     }
-}
-
-void boh(){
-    return;
 }

@@ -1,9 +1,9 @@
+#include <initial.h>
 #include <umps3/umps/libumps.h>
-#include "asl.h"
-#include "pcb.h"
-#include "exceptions.h"
-#include "initial.h"
-#include "scheduler.h"
+#include <asl.h>
+#include <pcb.h>
+#include <exceptions.h>
+#include <scheduler.h>
 
 
 //Variables declaration.
@@ -16,7 +16,6 @@ SEMAPHORE swiSemaphore;
 
 extern void test();
 extern void uTLB_RefillHandler();
-
 
 int main(){
 
@@ -31,7 +30,6 @@ int main(){
     passup->exception_handler = (memaddr) exceptionHandler;
     passup->exception_stackPtr = (memaddr) KERNELSTACK;
 
-
     //Initializes global variables.
     readyQueue = mkEmptyProcQ();
     currentProcess = NULL;
@@ -41,7 +39,6 @@ int main(){
     for (int i=0; i<DEVICE_NUMBER; i++){
         semaphoreList[i] = 0;
     }
-
 
     //Setup del system-wide timer.
     LDIT(SWTIMER);

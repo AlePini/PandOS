@@ -6,18 +6,17 @@
  * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
  * @brief   Process Control Block methods.
  * @version 0.2
- * @date 2021-04-03
- *
+ * @date    2021-04-03
  */
 
-#include <pandos_types.h>
 #include <pandos_const.h>
+#include <pandos_types.h>
 
 /****************************************
-*
-* Definitions of Queue Manager functions
-*
-*****************************************/
+ *
+ * Definitions of Queue Manager functions
+ *
+ *****************************************/
 
 /**
  * @brief Resets all the values of a pcb pointer to NULL.

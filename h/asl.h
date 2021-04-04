@@ -6,19 +6,17 @@
  * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
  * @brief   Active Semaphore List methods.
  * @version 0.2
- * @date 2021-02-18
- *
+ * @date    2021-02-18
  */
 
+#include <pandos_const.h>
+#include <pandos_types.h>
 
 /*************************************************
  *
  * Definition of Active Semaphore List functions.
  *
  *************************************************/
-#include <pandos_const.h>
-#include <pandos_types.h>
-#include <pcb.h>
 
 /**
  * @brief   This function takes as input a semAdd and returns the last semaphore in semd_h whose
