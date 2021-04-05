@@ -13,11 +13,16 @@
 
 /**
  * @brief Picks the first process from the ready queue
- * and and executes it. Before of doins so inserts the 
+ * and and executes it. Before of doing so inserts the 
  * current one back in the ready queue.
  */
 void scheduler();
 
+/**
+ * @brief Gets the time elapsed as current process.
+ * 
+ * @return time past from the moment the current process has been selected 
+ */
 cpu_t getTimeSlice();
 
 #endif

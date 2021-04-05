@@ -9,6 +9,10 @@
  * @date    2021-04-03
  */
 
+/**
+ * @brief a macro to get the line cause of an interrupt
+ * 
+ */
 #define CAUSE_IP_GET(cause,line) (cause & CAUSE_IP_MASK) & CAUSE_IP(line)
 
 /**

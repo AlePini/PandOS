@@ -4,7 +4,7 @@
 /**
  * @file    Initial
  * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
- * @brief   Entry point of pandos project. Setup the nucleus.
+ * @brief   Entry point of pandos project. Setups the nucleus.
  * @version 0.2
  * @date    2021-04-03
  */

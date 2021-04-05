@@ -57,7 +57,7 @@ pcb_t* verhogen(int *semAdd);
  * @param dNum  Device number of that line.
  * @param waitForTermRead Specifies if the terminal reads or writes.
  */
-void waitIO(int intlNo, int dNum, bool waitForTermRea);
+void waitIO(int intlNo, int dNum, bool waitForTermRead);
 
 /**
  * @brief SYS6: returns the total time a process
