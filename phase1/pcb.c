@@ -55,7 +55,7 @@ void initPcbs(){
     //Use tmp to cycle to don't lose the head
     pcb_t* tmp = pcbFree_h;
     //Adds all the other elements
-    for(int i = 1; i < MAXPROC-1; i++){
+    for(int i = 1; i < MAXPROC; i++){
         tmp->p_next = &pcbFree_table[i];
         tmp = tmp->p_next;
     }
