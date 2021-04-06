@@ -22,12 +22,23 @@ $ make
 $ cmake .. -DUMPS3_DIR_PREFIX=path
 ```
 Also you can set *UMPS3_INCLUDE_DIR*, *UMPS3_DATA_DIR* and *UMPS3_LIB_DIR* individually.
-### Launch
-* Follow the instructions above to compile the project.
-* Then open umps3 and create a new Machine.
-* Replace "Core File" with build/kernel-*n*.core.umps and "Symbol Table" kernel-*n*.stab.umps. Where *n* refers to the pahse number.
 
-* Finally, click on "PowerON" and "Continue" to launch.
+### Clean
+```
+$ cd build
+$ make clean-all
+```  
+If you want to clean just kernels and libraries
+```
+$ make clean-output
+```
+### Launch
+* Open umps3 and create a new Machine.
+* Replace "Core File" with bin/kernel-*n*.core.umps  
+    and "Symbol Table" bin/kernel-*n*.stab.umps  
+    ( where *n* refers to the pahse number )
+
+* Finally, click on "Power ON" and "Continue" to launch.
 
 ## Authors
 See [Authors](AUTHORS).

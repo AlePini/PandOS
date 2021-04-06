@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION "3.13.0")
 
-project(PandOS VERSION 0.1)
+project(PandOS VERSION 0.2)
 
 set(CMAKE_C_VERSION 11)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+
 set(CMAKE_INSTALL_PREFIX /usr)
 include(GNUInstallDirs)
 
@@ -41,6 +45,9 @@ set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -G 0 -nostdlib -T ${UMPS3_DATA_DIR
 set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_LINKER> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 
 set(PROJECT_INCLUDE_DIRS ${UMPS3_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/h)
+
+add_custom_target(clean-all COMMAND rm -rf ${PROJECT_SOURCE_DIR}/bin ${PROJECT_SOURCE_DIR}/lib ${PROJECT_SOURCE_DIR}/build/*)
+add_custom_target(clean-output COMMAND rm -rf ${PROJECT_SOURCE_DIR}/bin ${PROJECT_SOURCE_DIR}/lib)
 
 add_subdirectory(phase1)
 add_subdirectory(phase2)

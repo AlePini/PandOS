@@ -63,8 +63,12 @@ Training
 Blog
 About
 
-#Custom
+# Custom
+*.core.umps
+*.stab.umps
 umps3
+bin/
 build/
+lib/
 .vscode/
 txt

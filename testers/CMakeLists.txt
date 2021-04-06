@@ -22,5 +22,5 @@ target_link_libraries(${PHASE2} ${LIB_PHASE2})
 
 
 # Kernels
-add_custom_command(TARGET ${PHASE1} POST_BUILD COMMAND umps3-elf2umps -k ${PHASE1})
-add_custom_command(TARGET ${PHASE2} POST_BUILD COMMAND umps3-elf2umps -k ${PHASE2})
+add_custom_command(TARGET ${PHASE1} POST_BUILD COMMAND umps3-elf2umps -k ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PHASE1})
+add_custom_command(TARGET ${PHASE2} POST_BUILD COMMAND umps3-elf2umps -k ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PHASE2})
