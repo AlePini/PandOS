@@ -70,6 +70,8 @@
 #define ST_TRANS_RECV 5
 #define TERM_STATUS_MASK 0xFF
 
+//Phase 3 defined constants
+#define SWAPPOOLSTART 0x2002.0000
 
 /* Hardware & software constants */
 #define PAGESIZE 4096 /* page size in bytes	*/
@@ -214,9 +216,6 @@
 #define STATESIZE  0x8C
 #define DEVICECNT  (DEVINTNUM * DEVPERINT)
 #define MAXSTRLENG 128
-
-#define DELAYASID    (UPROCMAX + 1)
-#define KUSEG3SECTNO 0
 
 #define VMDISK        0
 #define MAXPAGES      32
