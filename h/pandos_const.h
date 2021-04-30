@@ -71,7 +71,7 @@
 #define TERM_STATUS_MASK 0xFF
 
 //Phase 3 defined constants
-#define SWAPPOOLSTART 0x2002.0000
+#define SWAPPOOLSTART 0x2002.0000 /* forse è più corretto 0x2000.0000 + (32 * PAGESIZE) */
 
 /* Hardware & software constants */
 #define PAGESIZE 4096 /* page size in bytes	*/
@@ -143,6 +143,7 @@
 #define PRINTINTERRUPT 0x00004000
 #define TERMINTERRUPT  0x00008000
 #define IOINTERRUPTS   0
+#define TLBMOD         1
 #define TLBINVLDL      2
 #define TLBINVLDS      3
 #define SYSEXCEPTION   8
