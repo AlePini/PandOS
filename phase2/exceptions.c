@@ -23,7 +23,7 @@ HIDDEN void passUpOrDie(unsigned index){
     if (support != NULL) {
         support->sup_exceptState[index] = *EXCEPTION_STATE;
         context_t* context = &(support->sup_exceptContext[index]);
-        LDCXT(context->c_stackPtr, context->c_status, context->c_pc);
+        LDCXT(context->stackPtr, context->status, context->pc);
     }
     //otherwise the "Die".
     else
