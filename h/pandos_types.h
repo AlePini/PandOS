@@ -67,4 +67,11 @@ typedef struct swap_t {
     pteEntry_t *sw_pte;    /* page's PTE entry.	*/
 } swap_t;
 
+/* Page swap pool information structure type */
+typedef struct swap_t {
+    int         sw_asid;   /* ASID number			*/
+    int         sw_pageNo; /* page's virt page no.	*/
+    pteEntry_t *sw_pte;    /* page's PTE entry.	*/
+} swap_t;
+
 #endif
