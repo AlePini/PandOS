@@ -55,7 +55,7 @@ void pager(){
 
 
         //Check if that entry is occupied
-        bool occupied = checkOccupied[i];
+        bool occupied = checkOccupied(i);
 
         //If it is occupied get its informations
         if(occupied){
