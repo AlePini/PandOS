@@ -14,7 +14,7 @@ void scheduler(){
             //Saves the current state.
             unsigned oldStatus = getSTATUS();
             setTIMER(PLTBLOCK);
-            //Disables the interrupts.
+            //Enables the interrupts.
             setSTATUS(oldStatus | IMON | IECON);
             //Waits for an interrupt.
             WAIT();
