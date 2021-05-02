@@ -123,7 +123,7 @@ void getSupportStruct(){
 }
 
 void sysHandler(){
-
+ 
     //Reads the id of the syscall.
     unsigned sysdnum = EXCEPTION_STATE->reg_a0;
 
@@ -174,7 +174,6 @@ void sysHandler(){
                     terminateProcess();
                     break;
             }
-            
             if(currentProcess != NULL)
                 LDST(EXCEPTION_STATE);
             else scheduler();

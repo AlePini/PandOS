@@ -39,7 +39,7 @@ void pager(){
     SYSCALL(GETSUPPORTPTR, 0, 0, 0);
     // Non mi serve tutta la support, mi basta lo state
     support_t support = EXCEPTION_STATE->reg_v0;
-    state_t currProcState = support->sup_exceptState[0];
+    state_t currProcState = support->sup_exceptState[PGFAULTEXCEPT];
 
     int tlbnum = currProcState->s_cause;
     if(tlbnum == TLBINVLDL || tlbnum == TLBINVLDS){
@@ -67,7 +67,11 @@ void pager(){
         //Disables the interrupts.
         setSTATUS(oldStatus & DISABLEINTS);
 
-        //TODO: parte a e b
+        //TODO: parte a e b da checkare sicuro
+        unsigned int eLO = swapTable[i].sw_pte->s_entryLO
+        eLO &= VOFF;
+
+
 
         //Restores the previous status.
         setSTATUS(oldStatus);
@@ -88,7 +92,8 @@ void pager(){
 
         //TODO: sta parte sicuro è sbagliata va checkata
         unsigned int eLO = swapTable[i].sw_pte->s_entryLO
-        eLO += 1<<9;
+        eLO |= 1<<9;
+        //Questo sicuro fa cagare
         eLO += i<<12;
 
         TLBCLR();

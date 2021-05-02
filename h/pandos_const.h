@@ -71,7 +71,10 @@
 #define TERM_STATUS_MASK 0xFF
 
 //Phase 3 defined constants
-#define SWAPPOOLSTART 0x2002.0000 /* forse è più corretto 0x2000.0000 + (32 * PAGESIZE) */
+#define SWAPPOOLSTART 0x2002.0000 //TODO: forse è più corretto 0x2000.0000 + (32 * PAGESIZE) */
+#define VOFF 011111111
+#define SYS_EX 0
+#define PROGRAM__EX 1
 
 /* Hardware & software constants */
 #define PAGESIZE 4096 /* page size in bytes	*/
