@@ -23,9 +23,9 @@ typedef struct pteEntry_t {
  
 
 typedef struct context_t {
-    unsigned int stackPtr;
-    unsigned int status;
-    unsigned int pc;
+    unsigned int c_stackPtr;
+    unsigned int c_status;
+    unsigned int c_pc;
 } context_t;
 
 
