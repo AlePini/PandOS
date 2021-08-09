@@ -72,7 +72,9 @@
 
 //Phase 3 defined constants
 #define SWAPPOOLSTART 0x2002.0000 //TODO: forse è più corretto 0x2000.0000 + (32 * PAGESIZE) */
-#define VOFF 011111111
+#define GON 1<<8
+#define VOFF 011111111;
+#define DON 1<<10
 #define SYS_EX 0
 #define PROGRAM__EX 1
 

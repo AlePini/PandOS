@@ -11,4 +11,11 @@
 #ifndef INITPROC_H
 #define INITPROC_H
 
+#include <pandos_types.h>
+
+#define VPNSTART 0x80000000
+#define UPROCSTACKSTART 0xBFFFF000
+
+void test();
+
 #endif

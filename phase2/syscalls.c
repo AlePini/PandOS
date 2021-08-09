@@ -27,18 +27,18 @@ void createProcess(state_t* state, support_t* supportStruct){
 /**
  * @brief Recursively terminates a process and
  * its progeny.
- * 
+ *
  * @param p Root process to kill.
  */
 HIDDEN void terminateRecursive(pcb_t *p){
 
     pcb_t* removed;
-    
+
 	while ((removed = removeChild(p)) != NULL) {
         outProcQ(&readyQueue, removed);
 		terminateRecursive(removed);
 	}
-    
+
     // A process is blocked on a device if the semaphore is
     // swiSemaphore or an element of semDevices.
     bool blockedDevice = ( p->p_semAdd >= (int*)semaphoreList
@@ -47,10 +47,10 @@ HIDDEN void terminateRecursive(pcb_t *p){
 
     // If the process was not blocked on a device semaphore increment semadd by 1.
     pcb_t* removedProcess = outBlocked(p);
-    
+
     if(!blockedDevice && removedProcess != NULL)
         (*(p->p_semAdd))++;
-    
+
     freePcb(p);
     processCount--;
     return;
@@ -93,15 +93,15 @@ pcb_t* verhogen(int* semaddr){
 void waitIO(int intlNo, int dnum, int waitForTermRead){
     currentProcess->p_s = *EXCEPTION_STATE;
     softBlockCount++;
-    
+
     //If it's not one of the expected device terminates the process.
     if(intlNo<3 || intlNo >7)
         terminateProcess();
-    
+
     //Takes the line of interrupt (mapping them from 0 to 4) and multiply it by 8.
     //If it's a terminal line checks if it reads or transmits.
     int semaphoreIndex = INSTANCES_NUMBER*(intlNo+waitForTermRead-3) + dnum;
-    
+
     passeren(&semaphoreList[semaphoreIndex]);
 }
 
@@ -123,7 +123,7 @@ void getSupportStruct(){
 }
 
 void sysHandler(){
- 
+
     //Reads the id of the syscall.
     unsigned sysdnum = EXCEPTION_STATE->reg_a0;
 
@@ -137,7 +137,7 @@ void sysHandler(){
 
     //Checks if syscall is valid.
     if(sysdnum >= 1 && sysdnum <= 8){
-        
+
         //If it's beetween 1 and 8 it must be on kernel mode or sn exception is raised.
         if(CHECK_USERMODE(state.status)){
             EXCEPTION_STATE->cause &= ~GETEXECCODE;

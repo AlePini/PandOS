@@ -30,7 +30,7 @@ HIDDEN int getDeviceNr(unsigned bitmap){
 HIDDEN void returnControl(){
     if(currentProcess == NULL)
         scheduler();
-    else 
+    else
         LDST(EXCEPTION_STATE);
 }
 

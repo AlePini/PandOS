@@ -1,112 +1,187 @@
+#include <umps3/umps/arch.h>
+#include <umps3/umps/libumps.h>
+
 #include <vmSupport.h>
 #include <syscalls.h>
-#include <limbumps.h>
+#include <initProc.h>
+#include <sysSupport.h>
 
+#define HEADERPAGE 0
+#define HEADERTEXTSIZE 0x0014
+#define HEADERDATASIZE 0x0014
+
+#define POOLSTART (RAMSTART + (32 * PAGESIZE))
+#define PAGESHIFT 12
+
+#define NOTUSED -1
+#define GETVPN(X) ((UPROCSTACKSTART <= X && X <= USERSTACKTOP) ?  (MAXPAGES-1) : ((X - VPNSTART) >> VPNSHIFT))
 //Forse della roba va volatile
 memaddr* swapPool;
 memaddr swapPoolEntries[POOLSIZE];
-swap_t swapTable[POOLSIZE];
-SEMAPHORE swapPoolSemaphore;
+HIDDEN swap_t swapTable[POOLSIZE];
+HIDDEN SEMAPHORE swapPoolSemaphore;
+int dataPages[UPROCNUMBER];
 
 void initSwapStructs(){
 
-    //Inizialization of swap pool
-    swapPool = (memaddr) &SWAPPOOLSTART;
-    memcpy(swapPool, swapPoolEntries, sizeof(memaddr)); //TODO: Devo capire bene cosa mettere nel sizeof
+
+    for (int i = 0; i < SUPP_SEM_NUMBER; i++){
+        for (int j = 0; j < UPROCMAX; j++){
+            semMutexDevices[i][j] = 1;
+        }
+    }
 
     //Per dire che un frame non è occupato si mette l'ASID a negativo dato che tutti i veri frame avranno ASID >0
     //Inizialization of swap table
     for(int i=0; i<POOLSIZE; i++){
-        swapTable[i].sw_asid = -1;
+        swapTable[i].sw_asid = NOTUSED;
     }
 
     //Initialization of the swap pool semaphore
     swapPoolSemaphore = 1;
+    #TODO: master semaphore
+    #TODO: roba sul supporto
+}
+
+int replacementAlgorithm() {
+
+    //Static so it stores the value of the last frame used
+    static int globalIndex = 0;
+    int i = 0;
+
+    //Finchè li trovo pieni e non ho gia fatto un giro completo di tutti i frame
+    while((swapTable[(globalIndex + i) % POOLSIZE].sw_pte->pte_entryLO & VALIDON) && (i < POOLSIZE))
+        i++;
+
+    if(i == POOLSIZE) i = 1;
+
+    globalIndex = (globalIndex + i) % POOLSIZE
+
+    return globalIndex;
+}
+
+void updateTLB(pteEntry_t *newEntry){
+
+    // Check if the new TLB entry is cached in the current TLB
+    setENTRYHI(newEntry->pte_entryHI);
+    TLBP();
+
+    if ((getINDEX() & PRESENTFLAG) == 0) {
+        // Update the TLB
+        setENTRYLO(newEntry->pte_entryLO);
+        TLBWI();
+    }
+}
+
+bool checkMutexBusy(){
+    return swapPoolSemaphore <= 0;
+}
+
+void PSV(){
+    SYSCALL(VERHOGEN, &swapPoolSemaphore, 0, 0)
 }
 
 bool checkOccupied(int i){
-    return swapTable[i].sw_asid == -1;
+    return swapTable[i].sw_pte->pte_entryLO & VALIDON
 }
 
-int PPRA(){
-    static int i=-1;
-    i++;
-    return i%POOLSIZE;
+void updateTLB(pteEntry_t *newEntry){
+
+    // Check if the updated TLB entry is cached in the TLB
+    setENTRYHI(newEntry->pte_entryHI);
+    TLBP();
+
+    if ((getINDEX() & PRESENTFLAG) == 0) {
+        // Update the TLB
+        setENTRYLO(updatedEntry->pte_entryLO);
+        TLBWI();
+    }
 }
 
 void pager(){
 
-    SYSCALL(GETSUPPORTPTR, 0, 0, 0);
-    // Non mi serve tutta la support, mi basta lo state
-    support_t support = EXCEPTION_STATE->reg_v0;
+    support_t *support = (support_t *) SYSCALL(GETSUPPORTPTR, 0, 0, 0);
     state_t currProcState = support->sup_exceptState[PGFAULTEXCEPT];
+    //Controllo la cause della tlb exception, se è una TLB-Modification genero una trap
+    if((currProcState.cause & GETEXECCODE) >> CAUSESHIFT == 1){
+        programTrapExceptionHandler(support);
+    }
 
-    int tlbnum = currProcState->s_cause;
-    if(tlbnum == TLBINVLDL || tlbnum == TLBINVLDS){
+    SYSCALL(PASSEREN, (memaddr) &swapPoolSemaphore, 0, 0);
 
-        SYSCALL(PASSEREN, &swapPoolSemaphore, 0, 0);
+    //Get missing page number
+    unsigned int p = GETVPN(support->sup_exceptState[PGFAULTEXCEPT].entry_hi);;
+    unsigned int a = support->sup_asid;
 
-        //Get missing page number
-        unsigned int p = currProcState->s_entryHI>>VPNSHIFT;
-        unsigned int a = currProcState->s_entryHI>>ASIDSHIFT
+    //Seleziono un frame con il replacement algorithm
+    int i = replacementAlgorithm();
 
-        //Selezionare il frame i con Algoritmo FIFO (Section 4.5.4)
-        int i = PPRA();
+    //Check if that entry is occupied
+    bool occupied = checkOccupied(i);
 
+    //If it is occupied get its informations
+    if(occupied){
+        //Numero pagina dell'occupante
+        int k = swapTable[i].sw_pageNo;
+        //ASID processo occupante
+        int x = swapTable[i].sw_asid;
 
-        //Check if that entry is occupied
-        bool occupied = checkOccupied(i);
-
-        //If it is occupied get its informations
-        if(occupied){
-            int k = swapTable[i].sw_pageNo;
-            int x = swapTable[i].sw_asid;
-
-        //Get the status
-        unsigned oldStatus = getSTATUS();
         //Disables the interrupts.
-        setSTATUS(oldStatus & DISABLEINTS);
+        setSTATUS(getSTATUS() & (~IECON));
 
-        //TODO: parte a e b da checkare sicuro
-        unsigned int eLO = swapTable[i].sw_pte->s_entryLO
-        eLO &= VOFF;
-
-
+        // Marco la entry come non valida
+        pteEntry_t *occupiedEntry = swapTable[i].sw_pte;
+        occupiedEntry->pte_entryLO &= ~VALIDON;
+        // Aggiorno il TLB se serve
+        updateTLB(occupiedEntry);
 
         //Restores the previous status.
-        setSTATUS(oldStatus);
+        setSTATUS(oldStatus | IECON);
 
-        //TODO: parte sui flash device (c)
+        // Update process x's backing store
+        if(occupiedEntry->pte_entryLO & DIRTYON){
+            writeFrameToFlash(x-1, k, i, support);
         }
+    }
 
-        //TODO: parte sui flash device(9)
+        // Read the contents from the flash device
+        readFrameFromFlash(x-1, k, i, support);
+
+        setSTATUS(getSTATUS() & (~IECON));
 
         swapTable[i].sw_asid = a;
         swapTable[i].sw_pageNo = p;
-        swapTable[i].sw_pte = &(support->sup_privatePgTbl[p])
+        swapTable[i].sw_pte = &(support->sup_privatePgTbl[p]);
 
-        //Get the status
-        unsigned oldStatus = getSTATUS();
-        //Disables the interrupts.
-        setSTATUS(oldStatus & DISABLEINTS);
+        // Update the process' page table
+        support->sup_privatePgTbl[p].pte_entryLO |= VALIDON;
+        SETPFN(support->sup_privatePgTbl[p].pte_entryLO, i);
 
-        //TODO: sta parte sicuro è sbagliata va checkata
-        unsigned int eLO = swapTable[i].sw_pte->s_entryLO
-        eLO |= 1<<9;
-        //Questo sicuro fa cagare
-        eLO += i<<12;
-
-        TLBCLR();
+        // Update the TLB
+        updateTLB(&(support->sup_privatePgTbl[i]));
 
         //Restores the previous status.
-        setSTATUS(oldStatus);
+        setSTATUS(getSTATUS() | IECON);
 
-        SYSCALL(VERHOGEN, &swapPoolSemaphore, 0, 0);
-        LDST(EXCEPTION_STATE);
+        SYSCALL(VERHOGEN, (memaddr) &swapPoolSemaphore, 0, 0);
 
-    } else if(tlbnum == TLBMOD){
-        //TODO: Call program trap exception handler
-    } else {
-        //TODO: metti syscall che termina la situa
-    }
+        LDST((state_t *) &(support->sup_exceptState[PGFAULTEXCEPT]));
+}
+
+
+void uTLB_RefillHandler() {
+
+    volatile unsigned int pageNum;
+    pageNum = GETVPN(EXCSTATE->entry_hi);
+
+    pteEntry_t *newEntry = &(currentProcess->p_supportStruct->sup_privatePgTbl[pageNum]);
+
+    setENTRYHI(entry->pte_entryHI);
+    setENTRYLO(entry->pte_entryLO);
+    TLBWR();
+
+    if (currentProcess == NULL)
+		schedule();
+	else
+		LDST(EXCEPTION_STATE);
 }
