@@ -12,6 +12,11 @@
 
 #define POOLSTART (RAMSTART + (32 * PAGESIZE))
 #define PAGESHIFT 12
+#define FLASH 1
+#define PRINT 3
+#define TREAD 4
+#define TWRITE 5
+
 
 #define NOTUSED -1
 #define GETVPN(X) ((UPROCSTACKSTART <= X && X <= USERSTACKTOP) ?  (MAXPAGES-1) : ((X - VPNSTART) >> VPNSHIFT))
@@ -99,35 +104,32 @@ void updateTLB(pteEntry_t *newEntry){
 }
 
 
-void executeFlashAction(int deviceNumber, unsigned int primaryPage, unsigned int command, support_t *currentSupport) {
+void executeFlashAction(int devNumber, unsigned int pageIndex, unsigned int action, support_t *support) {
     // Obtain the mutex on the device
-    memaddr primaryAddress = (primaryPage << PFNSHIFT) + POOLSTART;
-    SYSCALL(PASSEREN, (memaddr) &semMutexDevices[FLASHSEM][deviceNumber], 0, 0);
-    dtpreg_t *flashRegister = (dtpreg_t *) DEV_REG_ADDR(FLASHINT, deviceNumber);
-    flashRegister->data0 = primaryAddress;
-    flashRegister->data0 = primaryAddress;
+    memaddr primaryAddress = (pageIndex << 12) + POOLSTART;
+    SYSCALL(PASSEREN, (memaddr) &semMutexDevices[FLASH][devNumber], 0, 0);
+    dtpreg_t *deviceRegister = (dtpreg_t *) DEV_REG_ADDR(FLASH, devNumber);
+    deviceRegister->data0 = primaryAddress;
 
-    // Disabling interrupt doesn't interfere with SYS5, since SYSCALLS aren't
-    // interrupts
+    // Disabling interrupt doesn't interfere with SYS5, since SYSCALLS aren't interrupts
     setSTATUS(getSTATUS() & (~IECON));;
 
-    flashRegister->command = command;
+    deviceRegister->command = action;
 
     // Wait for the device
-    // Note: the device ACK is handled by SYS5
-    unsigned int deviceStatus = SYSCALL(IOWAIT, FLASHINT, deviceNumber, FALSE);
+    unsigned int deviceStatus = SYSCALL(IOWAIT, FLASHINT, devNumber, FALSE);
 
     setSTATUS(getSTATUS() | IECON);;
 
     // Release the mutex
-    SYSCALL(VERHOGEN, (memaddr) &semMutexDevices[FLASHSEM][deviceNumber], 0, 0);
+    SYSCALL(VERHOGEN, (memaddr) &semMutexDevices[FLASH][devNumber], 0, 0);
 
-    if (deviceStatus != READY) {
+    if (deviceStatus != OK) {
         // Release the mutex on the swap pool semaphore
-        SYSCALL(VERHOGEN, (memaddr) &semSwapPool, 0, 0);
+        SYSCALL(VERHOGEN, (memaddr) &swapPoolSemaphore, 0, 0);
 
-        // Raise a trap
-        trapExceptionHandler(currentSupport);
+        // Raise a trap cause something doesn't work
+        trapExceptionHandler(support);
     }
 }
 
