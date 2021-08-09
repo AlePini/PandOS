@@ -15,7 +15,6 @@
 #define UPROCSTACKSTART 0xBFFFF000
 #define EOL '\n'
 
-#define SUPP_SEM_NUMBER 6
 int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
 
 #define ADDRESS_IN_RANGE(S, E) = (S >= ( (char *) KUSEG) && (E <= (char *) TEXT_AND_DATA_TOP) || S >= (char *) UPROCSTACKSTART) && (E <= (char *) USERSTACKTOP);
