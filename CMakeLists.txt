@@ -25,14 +25,17 @@ endif()
 
 if(NOT UMPS3_INCLUDE_DIR)
     set(UMPS3_INCLUDE_DIR ${CMAKE_INSTALL_FULL_INCLUDEDIR})
+    message("[UMPS3_INCLUDE_DIR] : " ${UMPS3_INCLUDE_DIR})
 endif()
 
 if(NOT UMPS3_DATA_DIR)
     set(UMPS3_DATA_DIR ${CMAKE_INSTALL_FULL_DATADIR}/umps3)
+    message("[UMPS3_DATA_DIR] : " ${UMPS3_DATA_DIR})
 endif()
 
 if(NOT UMPS3_LIB_DIR)
     set(UMPS3_LIB_DIR ${CMAKE_INSTALL_FULL_LIBDIR}/umps3)
+    message("[UMPS3_LIB_DIR] : " ${UMPS3_LIB_DIR})
 endif()
 
 # Compiler and linker setup
@@ -51,5 +54,6 @@ add_custom_target(clean-output COMMAND rm -rf ${PROJECT_SOURCE_DIR}/bin ${PROJEC
 
 add_subdirectory(phase1)
 add_subdirectory(phase2)
+add_subdirectory(phase3)
 
 add_subdirectory(testers)
