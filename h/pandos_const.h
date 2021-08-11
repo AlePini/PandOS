@@ -10,6 +10,7 @@
 #include <umps3/umps/const.h>
 
 #define bool int
+#define SEMAPHORE int
 
 //Phase 1 defined constants
 /**
