@@ -1,10 +1,13 @@
 #include <umps3/umps/arch.h>
 #include <umps3/umps/libumps.h>
 
+#include <pandos_const.h>
+
 #include <vmSupport.h>
-#include <syscalls.h>
 #include <initProc.h>
 #include <sysSupport.h>
+#include <initial.h>
+#include <syscalls.h>
 
 #define HEADERPAGE 0
 #define HEADERTEXTSIZE 0x0014
@@ -17,22 +20,30 @@
 #define TREAD 4
 #define TWRITE 5
 
+#define PFNSHIFT 12
+#define PFNMASK 0xFFFFF000
 
 #define NOTUSED -1
 #define GETVPN(X) ((UPROCSTACKSTART <= X && X <= USERSTACKTOP) ?  (MAXPAGES-1) : ((X - VPNSTART) >> VPNSHIFT))
+#define GETPFN(T) ((T - POOLSTART) >> PFNSHIFT)
+#define SETPFN(TO, N) TO = (TO & ~PFNMASK) | ((N << PFNSHIFT) + POOLSTART)
+
 //Forse della roba va volatile
 memaddr* swapPool;
 memaddr swapPoolEntries[POOLSIZE];
 HIDDEN swap_t swapTable[POOLSIZE];
 HIDDEN SEMAPHORE swapPoolSemaphore;
-int dataPages[UPROCNUMBER];
+int dataPages[UPROCMAX];
+
+extern pcb_t* currentProcess;
+extern int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
 
 void initSwapStructs(){
 
 
     for (int i = 0; i < SUPP_SEM_NUMBER; i++){
         for (int j = 0; j < UPROCMAX; j++){
-            semMutexDevices[i][j] = 1;
+            deviceSemaphores[i][j] = 1;
         }
     }
 
@@ -44,8 +55,8 @@ void initSwapStructs(){
 
     //Initialization of the swap pool semaphore
     swapPoolSemaphore = 1;
-    #TODO: master semaphore
-    #TODO: roba sul supporto
+    // TODO: master semaphore
+    // TODO: roba sul supporto
 }
 
 int replacementAlgorithm() {
@@ -60,7 +71,7 @@ int replacementAlgorithm() {
 
     if(i == POOLSIZE) i = 1;
 
-    globalIndex = (globalIndex + i) % POOLSIZE
+    globalIndex = (globalIndex + i) % POOLSIZE;
 
     return globalIndex;
 }
@@ -83,66 +94,52 @@ bool checkMutexBusy(){
 }
 
 void PSV(){
-    SYSCALL(VERHOGEN, &swapPoolSemaphore, 0, 0)
+    SYSCALL(VERHOGEN, (int) &swapPoolSemaphore, 0, 0);
 }
 
 bool checkOccupied(int i){
-    return swapTable[i].sw_pte->pte_entryLO & VALIDON
+    return swapTable[i].sw_pte->pte_entryLO & VALIDON;
 }
 
-void updateTLB(pteEntry_t *newEntry){
-
-    // Check if the updated TLB entry is cached in the TLB
-    setENTRYHI(newEntry->pte_entryHI);
-    TLBP();
-
-    if ((getINDEX() & PRESENTFLAG) == 0) {
-        // Update the TLB
-        setENTRYLO(updatedEntry->pte_entryLO);
-        TLBWI();
-    }
-}
-
-
-void executeFlashAction(int devNumber, unsigned int pageIndex, unsigned int action, support_t *support) {
+void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int action, support_t *support) {
     // Obtain the mutex on the device
     memaddr primaryAddress = (pageIndex << 12) + POOLSTART;
-    SYSCALL(PASSEREN, (memaddr) &semMutexDevices[FLASH][devNumber], 0, 0);
-    dtpreg_t *deviceRegister = (dtpreg_t *) DEV_REG_ADDR(FLASH, devNumber);
+    SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[FLASH][deviceNumber], 0, 0);
+    dtpreg_t *deviceRegister = (dtpreg_t *) DEV_REG_ADDR(FLASH, deviceNumber);
     deviceRegister->data0 = primaryAddress;
 
     // Disabling interrupt doesn't interfere with SYS5, since SYSCALLS aren't interrupts
-    setSTATUS(getSTATUS() & (~IECON));;
+    setSTATUS(getSTATUS() & (~IECON));
 
     deviceRegister->command = action;
 
     // Wait for the device
-    unsigned int deviceStatus = SYSCALL(IOWAIT, FLASHINT, devNumber, FALSE);
+    unsigned int deviceStatus = SYSCALL(IOWAIT, FLASHINT, deviceNumber, FALSE);
 
-    setSTATUS(getSTATUS() | IECON);;
+    setSTATUS(getSTATUS() | IECON);
 
     // Release the mutex
-    SYSCALL(VERHOGEN, (memaddr) &semMutexDevices[FLASH][devNumber], 0, 0);
+    SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[FLASH][deviceNumber], 0, 0);
 
     if (deviceStatus != OK) {
         // Release the mutex on the swap pool semaphore
         SYSCALL(VERHOGEN, (memaddr) &swapPoolSemaphore, 0, 0);
 
         // Raise a trap cause something doesn't work
-        trapExceptionHandler(support);
+        programTrapExceptionHandler(support);
     }
 }
 
 
-void readFlash(int devNumber, unsigned int blockIndex, unsigned int pageIndex, support_t *support) {
+void readFlash(int deviceNumber, unsigned int blockIndex, unsigned int pageIndex, support_t *support) {
     unsigned int action = FLASHREAD | (blockIndex << 8);
-    executeFlashAction(devNumber, pageIndex, action, support);
+    executeFlashAction(deviceNumber, pageIndex, action, support);
 }
 
 
-void writeFlash(int devNumber, unsigned int blockIndex, unsigned int pageIndex, support_t *support) {
+void writeFlash(int deviceNumber, unsigned int blockIndex, unsigned int pageIndex, support_t *support) {
     unsigned int action = FLASHWRITE | (blockIndex << 8);
-    executeFlashAction(devNumber, pageIndex, action, support);
+    executeFlashAction(deviceNumber, pageIndex, action, support);
 }
 
 void pager(){
@@ -219,16 +216,16 @@ void pager(){
 void uTLB_RefillHandler() {
 
     volatile unsigned int pageNum;
-    pageNum = GETVPN(EXCSTATE->entry_hi);
+    pageNum = GETVPN(EXCEPTION_STATE->entry_hi);
 
     pteEntry_t *newEntry = &(currentProcess->p_supportStruct->sup_privatePgTbl[pageNum]);
 
-    setENTRYHI(entry->pte_entryHI);
-    setENTRYLO(entry->pte_entryLO);
+    setENTRYHI(newEntry->pte_entryHI);
+    setENTRYLO(newEntry->pte_entryLO);
     TLBWR();
 
     if (currentProcess == NULL)
-		schedule();
+		scheduler();
 	else
 		LDST(EXCEPTION_STATE);
 }

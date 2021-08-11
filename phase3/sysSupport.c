@@ -1,24 +1,27 @@
 #include <sysSupport.h>
-#include <syscall.h>
 
-#define printer 3
-#define writeTerminal 5
-#define readTerminal 4
+#include <memory.h>
+#include <syscall.h>
+#include <pandos_const.h>
+#include <umps3/umps/arch.h>
+
+#define printerSem 3
+#define writeTerminalSem 5
+#define readTerminalSem 4
 #define GETTERMSTATUS 0xFF
 #define GET_DEVICE_NUMBER(S) S->sup_asid - 1
 #define TERMSHIFT 8
 #define PRINTCHR 2
 #define RECEIVECHAR 2
 #define DEVICE_READY 1
-#define KUSEG_START 0x8000.0000
-#define TEXT_AND_DATA_TOP 0x8001.E000
+#define KUSEG_START 0x80000000
+#define TEXT_AND_DATA_TOP 0x8001E000
 #define UPROCSTACKSTART 0xBFFFF000
 #define EOL '\n'
 
+#define ADDRESS_IN_RANGE(S, E) (S >= ( (char *) KUSEG) && (E <= (char *) TEXT_AND_DATA_TOP) || S >= (char *) UPROCSTACKSTART) && (E <= (char *) USERSTACKTOP)
+
 int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
-
-#define ADDRESS_IN_RANGE(S, E) = (S >= ( (char *) KUSEG) && (E <= (char *) TEXT_AND_DATA_TOP) || S >= (char *) UPROCSTACKSTART) && (E <= (char *) USERSTACKTOP);
-
 
 void generalExceptionHandler(){
 
@@ -30,14 +33,16 @@ void generalExceptionHandler(){
     //Either this is a syscall 9<= x <= 13 or is a trap.
     volatile unsigned int sysNumber = support->sup_exceptState[GENERALEXCEPT].reg_a0;
 
-    if(9 <= sysNumber <= 13) syscallExceptionHandler(sysNumber, support);
-    else trapExceptionHandler(support);
+    if (9 <= sysNumber && sysNumber <= 13)
+        syscallExceptionHandler(sysNumber, support);
+    else
+        programTrapExceptionHandler(support);
 }
 
 void syscallExceptionHandler(int sysNumber, support_t *support){
 
     //Reads the id of the syscall.
-    state_t supportState = support->sup_exceptState[GENERALEXCEPT]
+    state_t supportState = support->sup_exceptState[GENERALEXCEPT];
 
     volatile unsigned int arg1 = (unsigned int) supportState.reg_a1;
     volatile unsigned int arg2 = (unsigned int) supportState.reg_a2;
@@ -66,7 +71,7 @@ void syscallExceptionHandler(int sysNumber, support_t *support){
     //Increment the program counter by 4 to avoid loops.
     support->sup_exceptState[GENERALEXCEPT].pc_epc += WORDLEN;
     //Load the current state
-    LDST(&support->sup_exceptState[GENERALEXCEPT])
+    LDST(&support->sup_exceptState[GENERALEXCEPT]);
 
 }
 
@@ -76,10 +81,10 @@ void programTrapExceptionHandler(support_t *support) {
 
 void terminate(support_t *support){
 
-    int deviceNumber = GET_DEVICE_NUMBER(support)
+    int deviceNumber = GET_DEVICE_NUMBER(support);
 
     for (int i = 0; i < SUPP_SEM_NUMBER; i++) {
-        if (deviceSemaphores[i][deviceNumber] <= 0)    //In teoria non scende mai sotto lo 0
+        if (deviceSemaphores[i][deviceNumber] <= 0)   //In teoria non scende mai sotto lo 0
             SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[i][deviceNumber], 0, 0);
     }
 
@@ -98,11 +103,11 @@ void terminate(support_t *support){
 }
 
 void getTOD(support_t *support){
-    STCK(support->sup_exceptState[GENERALEXCEPT]->reg_v0);
+    STCK(support->sup_exceptState[GENERALEXCEPT].reg_v0);
 }
 
 
-void writePrinter((char*) arg1, (int) len,support_t* support){
+void writePrinter(char* virtAddr, int len, support_t* support){
 
     int deviceNumber = GET_DEVICE_NUMBER(support);
     devreg_t* devReg = DEV_REG_ADDR(7, deviceNumber);
@@ -111,17 +116,17 @@ void writePrinter((char*) arg1, (int) len,support_t* support){
     // Check if the address and the length are valid
     bool stringSize = (len >= 0 && len <= MAXSTRLENG);
     if(ADDRESS_IN_RANGE(virtAddr, virtAddr+len) &&  stringSize) {
-        SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[writeTerminal][deviceNumber], 0, 0);
+        SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[printerSem][deviceNumber], 0, 0);
         for (int i = 0; i < len; i++) {
             if(devReg->dtp.status == DEVICE_READY) {
                 //Disabling interrupts
-                setSTATUS(getSTATUS() & (~IECON))
+                setSTATUS(getSTATUS() & (~IECON));
                 devReg->dtp.data0 = ((unsigned int) *(virtAddr + i));
                 devReg->dtp.command = PRINTCHR;
                 SYSCALL(IOWAIT, 6, deviceNumber, 0);
 
                 //Re-enabling interrupts
-                setSTATUS(getSTATUS() | IECON)
+                setSTATUS(getSTATUS() | IECON);
                 charsTransmitted++;
             }
             else {
@@ -131,15 +136,15 @@ void writePrinter((char*) arg1, (int) len,support_t* support){
             }
         }
 
-        currentSupport->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
-        SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[printer][devNumber], 0, 0);
+        support->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
+        SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[printerSem][deviceNumber], 0, 0);
     }
     else {
-        terminate(currentSupport);
+        terminate(support);
     }
 }
 
-void writeToTerminal(char *virtAddr, int len, support_t* support){
+void writeTerminal(char *virtAddr, int len, support_t* support){
 
     int deviceNumber = GET_DEVICE_NUMBER(support);
     volatile devreg_t* devReg = DEV_REG_ADDR(8, deviceNumber);
@@ -151,11 +156,11 @@ void writeToTerminal(char *virtAddr, int len, support_t* support){
     bool stringSize = len >= 0 && len <= MAXSTRLENG;
     if(ADDRESS_IN_RANGE(virtAddr, virtAddr+len) &&  stringSize) {
         //Get the mutex on the semaphore
-        SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[writeTerminal][deviceNumber], 0, 0);
+        SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[readTerminalSem][deviceNumber], 0, 0);
         for (int i = 0; i < len; i++) {
             if(((devReg->term.transm_status & GETTERMSTATUS) == DEVICE_READY) && (statusCode & GETTERMSTATUS) == OKCHARTRANS){
                 //Disabling interrupts
-                setSTATUS(getSTATUS() & (~IECON))
+                setSTATUS(getSTATUS() & (~IECON));
 
                 //Transm_command is divided in 2 parts:
                 //we have to set both  the  command we are using and the exact character we are transmitting
@@ -165,7 +170,7 @@ void writeToTerminal(char *virtAddr, int len, support_t* support){
                 //Get the status code
                 statusCode = SYSCALL(IOWAIT, 7, deviceNumber, FALSE);
                 //Re-enabling interrupts
-                setSTATUS(getSTATUS() | IECON)
+                setSTATUS(getSTATUS() | IECON);
                 //We always add one to charsTransmitted because if the status is not "OKCHAR"
                 //the next iteration it gets blocked and we put the negative of the status code anyway
                 charsTransmitted++;
@@ -177,50 +182,50 @@ void writeToTerminal(char *virtAddr, int len, support_t* support){
             }
         }
         //Return the value and release the mutex on the semaphore
-        currentSupport->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
-        SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[writeTerminal][devNumber], 0, 0);
+        support->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
+        SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[writeTerminalSem][deviceNumber], 0, 0);
     }
-    else terminate(currentSupport);
+    else terminate(support);
 }
 
-void readTerminal(char *buffer, support_t *currentSupport){
+void readTerminal(char *buffer, support_t *support){
 
     int deviceNumber = GET_DEVICE_NUMBER(support);
     devreg_t* devReg = DEV_REG_ADDR(8, deviceNumber);
 
     int charsTransmitted = 0;
     int statusCode;
-    char received = '';
+    char received = ' ';
 
-    SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[readTerminal][devNumber], 0, 0);
+    SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[readTerminalSem][deviceNumber], 0, 0);
 
-    while(ADDRESS_IN_RANGE(buffer, buffer) && ((devReg->term.recv_status & TERMSTATUSMASK) == DEVICE_READY) ) {
+    while(ADDRESS_IN_RANGE(buffer, buffer) && ((devReg->term.recv_status & TERM_STATUS_MASK) == DEVICE_READY) ) {
         setSTATUS(getSTATUS() & (~IECON));
         devReg->term.recv_command = RECEIVECHAR;
         statusCode = SYSCALL(IOWAIT, 7, deviceNumber, TRUE);
         setSTATUS(getSTATUS() | IECON);
         // If status code is not correct break out the while.
-        if((statusCode & TERMSTATUSMASK) != OKCHARTRANS) break;
+        if((statusCode & TERM_STATUS_MASK) != OKCHARTRANS) break;
         received = (statusCode >> TERMSHIFT);
         if(received != EOL) {
-            *buffer = recvd;
+            *buffer = received;
             buffer++;
             charsTransmitted++;
         } else break;
     }
 
     //If exited the code through a break
-    if((devReg->term.recv_status & TERMSTATUSMASK) != DEVICE_READY || (statusCode & TERMSTATUSMASK) != OKCHARTRANS) {
-        retValue = -(statusCode);
+    if((devReg->term.recv_status & TERM_STATUS_MASK) != DEVICE_READY || (statusCode & TERM_STATUS_MASK) != OKCHARTRANS) {
+        charsTransmitted = -(statusCode);
     }
 
-    SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[readTerminal][devNumber], 0, 0);
+    SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[readTerminalSem][deviceNumber], 0, 0);
 
     //If the buffer is not in the allowed range terminate the process otherwise return
-    if(CHECKADDR(buffer, buffer)){
-        currentSupport->sup_exceptState[GENERALEXCEPT].reg_v0 = retValue;
+    if(ADDRESS_IN_RANGE(buffer, buffer)){
+        support->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
     }
     else{
-        terminate(currentSupport);
+        terminate(support);
     }
 }
