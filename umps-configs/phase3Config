@@ -1,42 +1,42 @@
 {
     "boot": {
-        "core-file": "kernel.core.umps",
+        "core-file": "../bin/kernel-3.core.umps",
         "load-core-file": true
     },
-    "bootstrap-rom": "/usr/local/share/umps3/coreboot.rom.umps",
+    "bootstrap-rom": "/usr/share/umps3/coreboot.rom.umps",
     "clock-rate": 1,
     "devices": {
         "flash0": {
             "enabled": true,
-            "file": "testers/strConcat.umps"
+            "file": "../testers/devices/strConcat.umps"
         },
         "flash1": {
             "enabled": true,
-            "file": "testers/terminalTest2.umps"
+            "file": "../testers/devices/terminalTest2.umps"
         },
         "flash2": {
             "enabled": true,
-            "file": "testers/terminalTest3.umps"
+            "file": "../testers/devices/terminalTest3.umps"
         },
         "flash3": {
             "enabled": true,
-            "file": "testers/terminalTest4.umps"
+            "file": "../testers/devices/terminalTest4.umps"
         },
         "flash4": {
             "enabled": true,
-            "file": "testers/terminalTest5.umps"
+            "file": "../testers/devices/terminalTest5.umps"
         },
         "flash5": {
             "enabled": true,
-            "file": "testers/fibEight.umps"
+            "file": "../testers/devices/fibEight.umps"
         },
         "flash6": {
             "enabled": true,
-            "file": "testers/printerTest.umps"
+            "file": "../testers/devices/printerTest.umps"
         },
         "flash7": {
             "enabled": true,
-            "file": "testers/fibEleven.umps"
+            "file": "../testers/devices/fibEleven.umps"
         },
         "printer0": {
             "enabled": true,
@@ -103,12 +103,12 @@
             "file": "term7.umps"
         }
     },
-    "execution-rom": "/usr/local/share/umps3/exec.rom.umps",
+    "execution-rom": "/usr/share/umps3/exec.rom.umps",
     "num-processors": 1,
     "num-ram-frames": 128,
     "symbol-table": {
         "asid": 64,
-        "file": "kernel.stab.umps"
+        "file": "../bin/kernel-3.stab.umps"
     },
     "tlb-floor-address": "0x80000000",
     "tlb-size": 16
