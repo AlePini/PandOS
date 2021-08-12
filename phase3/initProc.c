@@ -12,12 +12,16 @@
 extern int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
 
 HIDDEN state_t UProcStructs[UPROCMAX];
-HIDDEN support_t supportStructs[UPROCMAX];
+HIDDEN support_t supportStructs[UPROCMAX+1];
 
+void brekk(){
+    return 0;
+}
 
 void instanciateUProcs(){
-    for (int i = 0; i < UPROCMAX; i++)
-        SYSCALL(CREATEPROCESS, (int)&UProcStructs[i], (int)&UProcStructs[i], 0);
+    brekk();
+    for (int i = 1; i <= UPROCMAX; i++)
+        SYSCALL(CREATEPROCESS, &UProcStructs[i], &supportStructs[i], 0);
 }
 
 void initializeSemaphores(){
@@ -67,6 +71,8 @@ void initializeSupports(){
         SET_ASID(supportStructs[i].sup_privatePgTbl[USERPGTBLSIZE-1].pte_entryHI, i);
         SET_D(supportStructs[i].sup_privatePgTbl[USERPGTBLSIZE-1].pte_entryLO);
     }
+
+    brekk();
 }
 
 void test(){
