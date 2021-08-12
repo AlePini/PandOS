@@ -1,7 +1,7 @@
 #include <umps3/umps/libumps.h>
 #include <pandos_const.h>
+#include <pandos_types.h>
 #include <initProc.h>
-
 #include <sysSupport.h>
 #include <vmSupport.h>
 
