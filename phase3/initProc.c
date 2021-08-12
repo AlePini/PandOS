@@ -5,22 +5,19 @@
 #include <sysSupport.h>
 #include <vmSupport.h>
 
-#define SET_VPN(M, x) (M = (x << (VPNSHIFT)))
-#define SET_ASID(M, x) (M = (x << (ASIDSHIFT)))
-#define SET_D(M) (M = DIRTYON)
-
+HIDDEN support_t supportStructs[UPROCMAX+1];
+SEMAPHORE masterSemaphore;
 extern int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
+extern void pager();
+extern void generalExceptionHandler();
 
-HIDDEN state_t UProcStructs[UPROCMAX];
-HIDDEN support_t supportStructs[UPROCMAX];
 
-
-void instanciateUProcs(){
-    for (int i = 0; i < UPROCMAX; i++)
-        SYSCALL(CREATEPROCESS, (int)&UProcStructs[i], (int)&UProcStructs[i], 0);
-}
 
 void initializeSemaphores(){
+
+    masterSemaphore = 0;
+
+    //Semaphores Initialization
     for (int i = 0; i < SUPP_SEM_NUMBER; i++){
         for (int j = 0; j < UPROCMAX; j++){
             deviceSemaphores[i][j] = 1;
@@ -28,55 +25,62 @@ void initializeSemaphores(){
     }
 }
 
-void initializeStates(){
-    for (int i = 1; i <= UPROCMAX; i++){
-        //Setup of status.
-        UProcStructs[i].status = IEPON | IMON | TEBITON | USERPON;
-        //SP is set to RAMTOP.
-        UProcStructs[i].reg_sp = (memaddr) USERSTACKTOP;
-        //Program Counter set to test address.
-        UProcStructs[i].pc_epc = (memaddr) UPROCSTARTADDR;
-        UProcStructs[i].reg_t9 = (memaddr) UPROCSTARTADDR;
-        SET_ASID(UProcStructs[i].entry_hi, i);
+void initializeProcesses(){
+
+    state_t pState;
+    pState.pc_epc = UPROCSTARTADDR;
+    pState.reg_t9 = UPROCSTARTADDR;
+    pState.reg_sp = USERSTACKTOP;
+    pState.status = IEPON | IMON | TEBITON | USERPON;
+
+    for(int id=1; id<= UPROCMAX; id++){
+
+        pState.entry_hi = (id << ASIDSHIFT);
+
+        //Stack pointer calculation
+        memaddr ramtop;
+        RAMTOP(ramtop);
+        memaddr topStack = ramtop - (2*id*PAGESIZE);
+
+        //Support struct setup
+        supportStructs[id].sup_asid = id;
+        supportStructs[id].sup_exceptContext[PGFAULTEXCEPT].c_stackPtr = (memaddr) (topStack + PAGESIZE);
+        supportStructs[id].sup_exceptContext[GENERALEXCEPT].c_stackPtr = (memaddr) topStack;
+        supportStructs[id].sup_exceptContext[PGFAULTEXCEPT].c_status = IMON | IEPON | TEBITON;
+        supportStructs[id].sup_exceptContext[GENERALEXCEPT].c_status = IMON | IEPON | TEBITON;
+        supportStructs[id].sup_exceptContext[PGFAULTEXCEPT].c_pc = (memaddr) &pager;
+        supportStructs[id].sup_exceptContext[GENERALEXCEPT].c_pc = (memaddr) &generalExceptionHandler;
+
+        //Page tables setup
+        for (int i = 0; i < USERPGTBLSIZE-1; i++){
+            //VPN and ASID setup
+            supportStructs[id].sup_privatePgTbl[i].pte_entryHI = VPNSTART + (i << VPNSHIFT) + (id << ASIDSHIFT); //VPN and ASID setup
+            supportStructs[id].sup_privatePgTbl[i].pte_entryLO = DIRTYON; //Dirty bit
+        }
+        //Stack setup
+        supportStructs[id].sup_privatePgTbl[USERPGTBLSIZE-1].pte_entryHI = UPROCSTACKSTART + (id << ASIDSHIFT); //VPN and ASID setup
+        supportStructs[id].sup_privatePgTbl[USERPGTBLSIZE-1].pte_entryLO = DIRTYON;   //Dirty Bit
+
+        //Create the process with the state and support prepared
+        SYSCALL(CREATEPROCESS, (memaddr) &pState, (memaddr) &(supportStructs[id]), 0);
     }
 }
 
-void initializeSupports(){
-
-    int status = TEBITON | IEPON | IMON;
-
-    //context_t first={ (memaddr) &sup_stackTLB[499], status, &pager};
-    //context_t second={ (memaddr) &sup_stackGen[499], status, &generalExceptionHandler};
-
-    for (int i = 1; i <= UPROCMAX; i++){
-        supportStructs[i].sup_asid=i;
-        supportStructs[i].sup_exceptContext[PGFAULTEXCEPT].c_stackPtr = (memaddr) &(supportStructs[i].sup_privatePgTbl[499]);
-        supportStructs[i].sup_exceptContext[GENERALEXCEPT].c_stackPtr = (memaddr) &(supportStructs[i].sup_stackGen[499]);
-        supportStructs[i].sup_exceptContext[PGFAULTEXCEPT].c_status = status;
-        supportStructs[i].sup_exceptContext[GENERALEXCEPT].c_status = status;
-        supportStructs[i].sup_exceptContext[PGFAULTEXCEPT].c_pc = (memaddr) &pager;
-        supportStructs[i].sup_exceptContext[GENERALEXCEPT].c_pc = (memaddr) &generalExceptionHandler;
-
-         for (int j = 0; j < USERPGTBLSIZE-1; j++){
-            SET_VPN(supportStructs[i].sup_privatePgTbl[j].pte_entryHI, VPNSTART + j);
-            SET_ASID(supportStructs[i].sup_privatePgTbl[j].pte_entryHI, i);
-            SET_D(supportStructs[i].sup_privatePgTbl[j].pte_entryLO);
-        }
-
-        SET_VPN(supportStructs[i].sup_privatePgTbl[USERPGTBLSIZE-1].pte_entryHI, UPROCSTACKSTART);
-        SET_ASID(supportStructs[i].sup_privatePgTbl[USERPGTBLSIZE-1].pte_entryHI, i);
-        SET_D(supportStructs[i].sup_privatePgTbl[USERPGTBLSIZE-1].pte_entryLO);
+void handleMasterSemaphore(){
+    for (int i = 0; i < UPROCMAX; i++){
+        SYSCALL(PASSEREN, (int) &masterSemaphore, 0, 0);
     }
 }
 
 void test(){
 
+    //Initialize swap structs and semaphores
     initSwapStructs();
     initializeSemaphores();
-    initializeStates();
-    initializeSupports();
-    instanciateUProcs();
-
+    //Initialize processes
+    initializeProcesses();
+    //Doing P on master semaphore
+    handleMasterSemaphore();
     SYSCALL(TERMPROCESS, 0, 0, 0);
 
 }

@@ -1,8 +1,6 @@
 #include <umps3/umps/arch.h>
 #include <umps3/umps/libumps.h>
-
 #include <pandos_const.h>
-
 #include <vmSupport.h>
 #include <initProc.h>
 #include <sysSupport.h>
@@ -40,23 +38,12 @@ extern int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
 
 void initSwapStructs(){
 
-
-    for (int i = 0; i < SUPP_SEM_NUMBER; i++){
-        for (int j = 0; j < UPROCMAX; j++){
-            deviceSemaphores[i][j] = 1;
-        }
-    }
-
-    //Per dire che un frame non è occupato si mette l'ASID a negativo dato che tutti i veri frame avranno ASID >0
-    //Inizialization of swap table
+    //Swap pool semaphore & Swap Table initialization
+    swapPoolSemaphore = 1;
     for(int i=0; i<POOLSIZE; i++){
         swapTable[i].sw_asid = NOTUSED;
     }
 
-    //Initialization of the swap pool semaphore
-    swapPoolSemaphore = 1;
-    // TODO: master semaphore
-    // TODO: roba sul supporto
 }
 
 int replacementAlgorithm() {
