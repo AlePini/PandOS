@@ -38,7 +38,7 @@ void generalExceptionHandler(){
         syscallExceptionHandler(sysNum, support);
     }
     //Otherwise kill it
-    else programTrapExceptionHandler(support)
+    else programTrapExceptionHandler(support);
 
     
 }
@@ -124,13 +124,13 @@ void writePrinter(char* string, int len, support_t* support){
 
                 devReg->dtp.data0 = ((unsigned int) *(string + i));
                 devReg->dtp.command = PRINTCHR;
-                SYSCALL(IOWAIT, PRNTINT, devNumber, FALSE);
+                SYSCALL(IOWAIT, PRNTINT, deviceNumber, FALSE);
                 //Re-enabling interrupts
                 setSTATUS(getSTATUS() | IECON);
                 charsTransmitted++;
             }else{
                 // Error: return the negative value of the status
-                charsTransmitted = -(devReg->status);
+                charsTransmitted = -(devReg->dtp.status);
                 break;
             }
         }
@@ -187,6 +187,7 @@ void readTerminal(char *buffer, support_t *support){
 
     int deviceNumber = GET_DEVICE_NUMBER(support);
     int charsTransmitted = 0;
+    int statusCode = 0;
     devreg_t* devReg = DEV_REG_ADDR(TERMINT, deviceNumber);
     char received = ' ';
 
@@ -198,7 +199,7 @@ void readTerminal(char *buffer, support_t *support){
         setSTATUS(getSTATUS() & (~IECON));
 
         devReg->term.recv_command = RECEIVECHAR;
-        int statusCode = SYSCALL(IOWAIT, TERMINT, deviceNumber, TRUE);
+        statusCode = SYSCALL(IOWAIT, TERMINT, deviceNumber, TRUE);
 
         //Renable interruputs
         setSTATUS(getSTATUS() | IECON);
@@ -221,7 +222,7 @@ void readTerminal(char *buffer, support_t *support){
     SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[readTerminalSem][deviceNumber], 0, 0);
 
     //If the address is not valid terminate the process otherwise return the correct value
-    if(CHECKADDR(buffer, buffer)){
+    if(ADDRESS_IN_RANGE(buffer, buffer)){
         support->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
     }else terminate(support);
 }
