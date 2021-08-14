@@ -20,7 +20,7 @@ typedef struct pteEntry_t {
     unsigned int pte_entryHI;
     unsigned int pte_entryLO;
 } pteEntry_t;
- 
+
 
 typedef struct context_t {
     unsigned int c_stackPtr;
@@ -34,8 +34,6 @@ typedef struct support_t {
     state_t    sup_exceptState[2];              /* old state exceptions			*/
     context_t  sup_exceptContext[2];            /* new contexts for passing up	*/
     pteEntry_t sup_privatePgTbl[USERPGTBLSIZE]; /* user page table				*/
-    int sup_stackGen[500];
-    int sup_stackTLB[500];    
 } support_t;
 
 

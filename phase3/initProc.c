@@ -11,8 +11,25 @@ extern int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
 extern void pager();
 extern void generalExceptionHandler();
 
+<<<<<<< HEAD
+=======
+HIDDEN state_t UProcStructs[UPROCMAX];
+HIDDEN support_t supportStructs[UPROCMAX+1];
+>>>>>>> 260f994fca2ed9c322c0738f50ae20c1b0be96d5
 
+void brekk(){
+    return 0;
+}
 
+<<<<<<< HEAD
+=======
+void instanciateUProcs(){
+    brekk();
+    for (int i = 1; i <= UPROCMAX; i++)
+        SYSCALL(CREATEPROCESS, &UProcStructs[i], &supportStructs[i], 0);
+}
+
+>>>>>>> 260f994fca2ed9c322c0738f50ae20c1b0be96d5
 void initializeSemaphores(){
 
     masterSemaphore = 0;
@@ -70,6 +87,8 @@ void handleMasterSemaphore(){
     for (int i = 0; i < UPROCMAX; i++){
         SYSCALL(PASSEREN, (int) &masterSemaphore, 0, 0);
     }
+
+    brekk();
 }
 
 void test(){
