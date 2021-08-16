@@ -48,8 +48,8 @@ void initSwapStructs(){
 
 void clearSwap(int asid){
     for (int i = 0; i < UPROCMAX * 2; i++){
-        if (swapPool[i].sw_asid == asid)
-            swapPool[i].sw_asid = -1;
+        if (swapTable[i].sw_asid == asid)
+            swapTable[i].sw_asid = -1;
     }
 }
 
@@ -101,7 +101,7 @@ void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int c
 
     memaddr address = (pageIndex * 4096) + POOLSTART;
     // Obtain the mutex on the device
-    SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[FDSEM][deviceNumber], 0, 0);
+    SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[FLASH][deviceNumber], 0, 0);
     devreg_t* flashDevice = (devreg_t*) DEV_REG_ADDR(FLASHINT, deviceNumber);
     flashDevice->dtp.data0 = address;
 
@@ -128,12 +128,12 @@ void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int c
 
 
 void readFlash(int deviceNumber, unsigned int blockIndex, unsigned int pageIndex, support_t *support) {
-    executeFlashAction(deviceNumber, pageIndex, (FLASHREAD | (blockIndex << 8), support);
+    executeFlashAction(deviceNumber, pageIndex, (FLASHREAD | (blockIndex << 8)), support);
 }
 
 
 void writeFlash(int deviceNumber, unsigned int blockIndex, unsigned int pageIndex, support_t *support) {
-    executeFlashAction(deviceNumber, pageIndex, (FLASHWRITE | (blockIndex << 8), support);
+executeFlashAction(deviceNumber, pageIndex, (FLASHWRITE | (blockIndex << 8)), support);
 }
 
 void pager(){

@@ -5,7 +5,6 @@
 #include <sysSupport.h>
 #include <vmSupport.h>
 
-HIDDEN support_t supportStructs[UPROCMAX+1];
 SEMAPHORE masterSemaphore;
 extern int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
 extern void pager();
@@ -15,11 +14,10 @@ HIDDEN state_t UProcStructs[UPROCMAX];
 HIDDEN support_t supportStructs[UPROCMAX+1];
 
 void brekk(){
-    return 0;
+    return;
 }
 
 void instanciateUProcs(){
-    brekk();
     for (int i = 1; i <= UPROCMAX; i++)
         SYSCALL(CREATEPROCESS, &UProcStructs[i], &supportStructs[i], 0);
 }
@@ -79,10 +77,9 @@ void initializeProcesses(){
 
 void handleMasterSemaphore(){
     for (int i = 0; i < UPROCMAX; i++){
+        brekk();
         SYSCALL(PASSEREN, (int) &masterSemaphore, 0, 0);
     }
-
-    brekk();
 }
 
 void test(){

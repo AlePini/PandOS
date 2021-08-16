@@ -23,7 +23,7 @@
 
 int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
 extern int masterSemaphore;
-extern void clearSwap;
+extern void clearSwap();
 extern pcb_t currentProcess;
 
 void generalExceptionHandler(){
