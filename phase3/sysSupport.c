@@ -23,6 +23,8 @@
 
 int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
 extern int masterSemaphore;
+extern void clearSwap;
+extern pcb_t currentProcess;
 
 void generalExceptionHandler(){
 
@@ -92,11 +94,11 @@ void terminate(support_t *support){
             SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[i][deviceNumber], 0, 0);
     }
 
-    //TODO: MANCA UN PEZZO?
+    //Mark as unused the entry
+    clearSwap(support->sup_asid);
 
     //Makes a V on the masterSemaphore
-    SYSCALL(VERHOGEN, (int) &masterSemaphore, 0, 0);
-
+    SYSCALL(VERHOGEN, (memaddr) &masterSemaphore, 0, 0);
     //Kills the process
     SYSCALL(TERMPROCESS, 0, 0, 0);
 }

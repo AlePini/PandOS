@@ -46,34 +46,43 @@ void initSwapStructs(){
 
 }
 
+void clearSwap(int asid){
+    for (int i = 0; i < UPROCMAX * 2; i++){
+        if (swapPool[i].sw_asid == asid)
+            swapPool[i].sw_asid = -1;
+    }
+}
+
 int replacementAlgorithm() {
 
     //Static so it stores the value of the last frame used
-    static int globalIndex = 0;
+    static int index = 0;
     int i = 0;
 
     //Finchè li trovo pieni e non ho gia fatto un giro completo di tutti i frame
-    while((swapTable[(globalIndex + i) % POOLSIZE].sw_pte->pte_entryLO & VALIDON) && (i < POOLSIZE))
+    while((swapTable[(index + i) % POOLSIZE].sw_asid != -1) && (i < POOLSIZE))
         i++;
 
     if(i == POOLSIZE) i = 1;
 
-    globalIndex = (globalIndex + i) % POOLSIZE;
+    index = (index + i) % POOLSIZE;
+    return index;
 
-    return globalIndex;
 }
 
 void updateTLB(pteEntry_t *newEntry){
 
-    // Check if the new TLB entry is cached in the current TLB
-    setENTRYHI(newEntry->pte_entryHI);
-    TLBP();
+    //TODO: scommenta e controlla se va
+    // // Check if the new TLB entry is cached in the current TLB
+    // setENTRYHI(newEntry->pte_entryHI);
+    // TLBP();
 
-    if ((getINDEX() & PRESENTFLAG) == 0) {
-        // Update the TLB
-        setENTRYLO(newEntry->pte_entryLO);
-        TLBWI();
-    }
+    // if ((getINDEX() & PRESENTFLAG) == 0) {
+    //     // Update the TLB
+    //     setENTRYLO(newEntry->pte_entryLO);
+    //     TLBWI();
+    // }
+    TLBCLR();
 }
 
 bool checkMutexBusy(){
@@ -85,77 +94,71 @@ void PSV(){
 }
 
 bool checkOccupied(int i){
-    return swapTable[i].sw_pte->pte_entryLO & VALIDON;
+    return swapTable[i].sw_asid != -1;
 }
 
-void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int action, support_t *support) {
+void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int command, support_t *support) {
+
+    memaddr address = (pageIndex * 4096) + POOLSTART;
     // Obtain the mutex on the device
-    memaddr primaryAddress = (pageIndex << 12) + POOLSTART;
-    SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[FLASH][deviceNumber], 0, 0);
-    dtpreg_t *deviceRegister = (dtpreg_t *) DEV_REG_ADDR(FLASH, deviceNumber);
-    deviceRegister->data0 = primaryAddress;
+    SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[FDSEM][deviceNumber], 0, 0);
+    devreg_t* flashDevice = (devreg_t*) DEV_REG_ADDR(FLASHINT, deviceNumber);
+    flashDevice->dtp.data0 = address;
 
     // Disabling interrupt doesn't interfere with SYS5, since SYSCALLS aren't interrupts
     setSTATUS(getSTATUS() & (~IECON));
 
-    deviceRegister->command = action;
+    flashDevice->dtp.command = command;
 
-    // Wait for the device
-    unsigned int deviceStatus = SYSCALL(IOWAIT, FLASHINT, deviceNumber, FALSE);
+    int deviceStatus = SYSCALL(IOWAIT, FLASHINT, deviceNumber, FALSE);
 
     setSTATUS(getSTATUS() | IECON);
 
     // Release the mutex
-    SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[FLASH][deviceNumber], 0, 0);
+    SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[FLASHINT][deviceNumber], 0, 0);
 
-    if (deviceStatus != OK) {
+    if (deviceStatus != 1) {
         // Release the mutex on the swap pool semaphore
         SYSCALL(VERHOGEN, (memaddr) &swapPoolSemaphore, 0, 0);
 
-        // Raise a trap cause something doesn't work
+        //Raise a trap and kill it if something doesn't work
         programTrapExceptionHandler(support);
     }
 }
 
 
 void readFlash(int deviceNumber, unsigned int blockIndex, unsigned int pageIndex, support_t *support) {
-    unsigned int action = FLASHREAD | (blockIndex << 8);
-    executeFlashAction(deviceNumber, pageIndex, action, support);
+    executeFlashAction(deviceNumber, pageIndex, (FLASHREAD | (blockIndex << 8), support);
 }
 
 
 void writeFlash(int deviceNumber, unsigned int blockIndex, unsigned int pageIndex, support_t *support) {
-    unsigned int action = FLASHWRITE | (blockIndex << 8);
-    executeFlashAction(deviceNumber, pageIndex, action, support);
+    executeFlashAction(deviceNumber, pageIndex, (FLASHWRITE | (blockIndex << 8), support);
 }
 
 void pager(){
 
     support_t *support = (support_t *) SYSCALL(GETSUPPORTPTR, 0, 0, 0);
-    state_t currProcState = support->sup_exceptState[PGFAULTEXCEPT];
     //Controllo la cause della tlb exception, se è una TLB-Modification genero una trap
-    if((currProcState.cause & GETEXECCODE) >> CAUSESHIFT == 1){
+    if((support->sup_exceptState[PGFAULTEXCEPT].cause & GETEXECCODE) >> CAUSESHIFT == 1){
         programTrapExceptionHandler(support);
     }
 
     SYSCALL(PASSEREN, (memaddr) &swapPoolSemaphore, 0, 0);
 
     //Get missing page number
-    unsigned int p = GETVPN(support->sup_exceptState[PGFAULTEXCEPT].entry_hi);;
-    unsigned int a = support->sup_asid;
+    unsigned int pageNum = GETVPN(support->sup_exceptState[PGFAULTEXCEPT].entry_hi);;
+    unsigned int id = support->sup_asid;
 
     //Seleziono un frame con il replacement algorithm
     int i = replacementAlgorithm();
 
-    //Check if that entry is occupied
-    bool occupied = checkOccupied(i);
-
     //If it is occupied get its informations
-    if(occupied){
+    if(swapTable[i].sw_asid != -1){
         //Numero pagina dell'occupante
-        int k = swapTable[i].sw_pageNo;
+        int ownerPageNum = swapTable[i].sw_pageNo;
         //ASID processo occupante
-        int x = swapTable[i].sw_asid;
+        int ownerId = swapTable[i].sw_asid;
 
         //Disables the interrupts.
         setSTATUS(getSTATUS() & (~IECON));
@@ -171,22 +174,32 @@ void pager(){
 
         // Update process x's backing store
         if(occupiedEntry->pte_entryLO & DIRTYON){
-            writeFlash(x-1, k, i, support);
+            writeFlash(ownerId-1, ownerPageNum, i, support);
         }
     }
 
         // Read the contents from the flash device
-        readFlash(a-1, p, i, support);
+        readFlash(id-1, pageNum, i, support);
 
         setSTATUS(getSTATUS() & (~IECON));
 
-        swapTable[i].sw_asid = a;
-        swapTable[i].sw_pageNo = p;
-        swapTable[i].sw_pte = &(support->sup_privatePgTbl[p]);
+        swapTable[i].sw_asid = id;
+        swapTable[i].sw_pageNo = pageNum;
+        swapTable[i].sw_pte = &(support->sup_privatePgTbl[pageNum]);
+
+        //BOH
 
         // Update the process' page table
-        support->sup_privatePgTbl[p].pte_entryLO |= VALIDON;
-        SETPFN(support->sup_privatePgTbl[p].pte_entryLO, i);
+        unsigned int pageAddress = POOLSTART + (i * PAGESIZE);
+        support->sup_privatePgTbl[pageNum].pte_entryLO = pageAddress | VALIDON | DIRTYON;
+        
+        // SETPFN(support->sup_privatePgTbl[pageNum].pte_entryLO, i);
+
+        // /*accende il V bit, il D bit e setta PNF*/
+        // unsigned int pageAddress = POOLSTART + (i * PAGESIZE);
+        // swapTable[i].sw_pte->pte_entryLO = pageAddress | VALIDON | DIRTYON;
+
+        //FINE BOH
 
         // Update the TLB
         updateTLB(&(support->sup_privatePgTbl[i]));
