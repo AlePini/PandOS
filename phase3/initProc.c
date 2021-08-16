@@ -10,16 +10,10 @@ extern int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
 extern void pager();
 extern void generalExceptionHandler();
 
-HIDDEN state_t UProcStructs[UPROCMAX];
 HIDDEN support_t supportStructs[UPROCMAX+1];
 
 void brekk(){
     return;
-}
-
-void instanciateUProcs(){
-    for (int i = 1; i <= UPROCMAX; i++)
-        SYSCALL(CREATEPROCESS, &UProcStructs[i], &supportStructs[i], 0);
 }
 
 void initializeSemaphores(){
@@ -43,7 +37,6 @@ void initializeProcesses(){
     pState.status = IEPON | IMON | TEBITON | USERPON;
 
     for(int id=1; id<= UPROCMAX; id++){
-
         pState.entry_hi = (id << ASIDSHIFT);
 
         //Stack pointer calculation
@@ -66,6 +59,7 @@ void initializeProcesses(){
             supportStructs[id].sup_privatePgTbl[i].pte_entryHI = VPNSTART + (i << VPNSHIFT) + (id << ASIDSHIFT); //VPN and ASID setup
             supportStructs[id].sup_privatePgTbl[i].pte_entryLO = DIRTYON; //Dirty bit
         }
+        brekk();
         //Stack setup
         supportStructs[id].sup_privatePgTbl[USERPGTBLSIZE-1].pte_entryHI = UPROCSTACKSTART + (id << ASIDSHIFT); //VPN and ASID setup
         supportStructs[id].sup_privatePgTbl[USERPGTBLSIZE-1].pte_entryLO = DIRTYON;   //Dirty Bit

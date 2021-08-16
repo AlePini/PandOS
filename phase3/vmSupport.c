@@ -36,6 +36,12 @@ int dataPages[UPROCMAX];
 extern pcb_t* currentProcess;
 extern int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
 
+extern void generalExceptionHandler();
+
+void vm_break(){
+    return;
+}
+
 void initSwapStructs(){
 
     //Swap pool semaphore & Swap Table initialization
@@ -102,6 +108,7 @@ void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int c
     memaddr address = (pageIndex * 4096) + POOLSTART;
     // Obtain the mutex on the device
     SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[FLASH][deviceNumber], 0, 0);
+    vm_break();
     devreg_t* flashDevice = (devreg_t*) DEV_REG_ADDR(FLASHINT, deviceNumber);
     flashDevice->dtp.data0 = address;
 
@@ -141,7 +148,7 @@ void pager(){
     support_t *support = (support_t *) SYSCALL(GETSUPPORTPTR, 0, 0, 0);
     //Controllo la cause della tlb exception, se è una TLB-Modification genero una trap
     if((support->sup_exceptState[PGFAULTEXCEPT].cause & GETEXECCODE) >> CAUSESHIFT == 1){
-        programTrapExceptionHandler(support);
+        generalExceptionHandler(support);
     }
 
     SYSCALL(PASSEREN, (memaddr) &swapPoolSemaphore, 0, 0);
