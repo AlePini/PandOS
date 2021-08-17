@@ -31,7 +31,7 @@ void generalExceptionHandler(){
     //Get the support struct
     support_t *support = (support_t*) SYSCALL(GETSUPPORTPTR, 0, 0, 0);
     //Get the exception type
-    unsigned int exType = ((support->sup_exceptState[GENERALEXCEPT].cause) & GETEXECCODE) >> CAUSESHIFT;
+    volatile unsigned int exType = ((support->sup_exceptState[GENERALEXCEPT].cause) & GETEXECCODE) >> CAUSESHIFT;
 
     //If it is a syscall handle it
     if (exType == SYSEXCEPTION){
@@ -46,9 +46,6 @@ void generalExceptionHandler(){
 }
 
 void syscallExceptionHandler(int sysNumber, support_t *support){
-
-    //Increment the program counter by 4 to avoid loops.
-    support->sup_exceptState[GENERALEXCEPT].pc_epc += WORDLEN;
 
     volatile unsigned int arg1 = (unsigned int) support->sup_exceptState[GENERALEXCEPT].reg_a1;
     volatile unsigned int arg2 = (unsigned int) support->sup_exceptState[GENERALEXCEPT].reg_a2;
@@ -74,8 +71,10 @@ void syscallExceptionHandler(int sysNumber, support_t *support){
                     break;
             }
 
+    //Increment the program counter by 4 to avoid loops.
+    support->sup_exceptState[GENERALEXCEPT].pc_epc += WORDLEN;
     //Load the current state
-    LDST(&(support->sup_exceptState[GENERALEXCEPT]));
+    LDST(&support->sup_exceptState[GENERALEXCEPT]);
 
 }
 
@@ -94,11 +93,9 @@ void terminate(support_t *support){
 
     //If the process hold the mutex on a semaphore release it
     for (int i = 0; i < SUPP_SEM_NUMBER; i++) {
-        if (deviceSemaphores[i][deviceNumber] <= 0)   //In teoria non scende mai sotto lo 0
+        if (deviceSemaphores[i][deviceNumber] == 0)
             SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[i][deviceNumber], 0, 0);
     }
-
-    
 
     //Makes a V on the masterSemaphore
     SYSCALL(VERHOGEN, (memaddr) &masterSemaphore, 0, 0);
@@ -161,7 +158,7 @@ void writeTerminal(char *string, int len, support_t* support){
     bool stringSize = len >= 0 && len <= MAXSTRLENG;
     if((int)string >= KUSEG && stringSize) {
         //Get the mutex on the semaphore
-        SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[readTerminalSem][deviceNumber], 0, 0);
+        SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[writeTerminalSem][deviceNumber], 0, 0);
 
         int status;
 
@@ -193,7 +190,7 @@ void writeTerminal(char *string, int len, support_t* support){
     else terminate(support);
 }
 
-void readTerminal(char *buffer, support_t *support){
+void readTerminal(char *string, support_t *support){
 
     int deviceNumber = GET_DEVICE_NUMBER(support);
     int charsTransmitted = 0;
@@ -203,7 +200,7 @@ void readTerminal(char *buffer, support_t *support){
     SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[readTerminalSem][deviceNumber], 0, 0);
 
     /*se l'indirizzo e' fuori dalla memoria virtuale si uccide*/
-    while ((int)buffer >= KUSEG && received != EOL){
+    while ((int)string >= KUSEG && received != EOL){
 
             //Disable interrupts
             setSTATUS(getSTATUS() & (~IECON));
@@ -218,8 +215,8 @@ void readTerminal(char *buffer, support_t *support){
             if((status & TERM_STATUS_MASK) == OKCHARTRANS){
                 received = (status >> BYTELENGTH);
                 if(received != EOL) {
-                    *buffer = received;
-                    buffer++;
+                    *string = received;
+                    string++;
                     charsTransmitted++;
                 }
             }else {
@@ -228,9 +225,9 @@ void readTerminal(char *buffer, support_t *support){
             }
         }
 
-    SYSCALL(VERHOGEN, (memaddr) &semMutexDevices[TERMWRSEM][devNumber], 0, 0);
+    SYSCALL(VERHOGEN, (memaddr) &semMutexDevices[readTerminalSem][devNumber], 0, 0);
 
-    if((int)buffer >= KUSEG)
+    if((int)string >= KUSEG)
         currentSupport->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
     else terminate(support);
 
