@@ -29,8 +29,8 @@
 //Forse della roba va volatile
 memaddr* swapPool;
 memaddr swapPoolEntries[POOLSIZE];
-HIDDEN swap_t swapTable[POOLSIZE];
-HIDDEN SEMAPHORE swapPoolSemaphore;
+swap_t swapTable[POOLSIZE];
+SEMAPHORE swapPoolSemaphore;
 int dataPages[UPROCMAX];
 
 extern pcb_t* currentProcess;
@@ -43,9 +43,8 @@ void vm_break(){
 }
 
 void initSwapStructs(){
-
-    //Swap pool semaphore & Swap Table initialization
     swapPoolSemaphore = 1;
+    //Swap pool semaphore & Swap Table initialization
     for(int i=0; i<POOLSIZE; i++){
         swapTable[i].sw_asid = NOTUSED;
     }
@@ -89,18 +88,6 @@ void updateTLB(pteEntry_t *newEntry){
     //     TLBWI();
     // }
     TLBCLR();
-}
-
-bool checkMutexBusy(){
-    return swapPoolSemaphore <= 0;
-}
-
-void PSV(){
-    SYSCALL(VERHOGEN, (int) &swapPoolSemaphore, 0, 0);
-}
-
-bool checkOccupied(int i){
-    return swapTable[i].sw_asid != -1;
 }
 
 void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int command, support_t *support) {

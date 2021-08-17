@@ -30,13 +30,13 @@ void initializeSemaphores(){
 
 void initializeProcesses(){
 
-    state_t pState;
-    pState.pc_epc = UPROCSTARTADDR;
-    pState.reg_t9 = UPROCSTARTADDR;
-    pState.reg_sp = USERSTACKTOP;
-    pState.status = IEPON | IMON | TEBITON | USERPON;
-
     for(int id=1; id<= UPROCMAX; id++){
+
+        state_t pState;
+        pState.pc_epc = UPROCSTARTADDR;
+        pState.reg_t9 = UPROCSTARTADDR;
+        pState.reg_sp = USERSTACKTOP;
+        pState.status = IEPON | IMON | TEBITON | USERPON;
         pState.entry_hi = (id << ASIDSHIFT);
 
         //Stack pointer calculation
@@ -72,12 +72,12 @@ void initializeProcesses(){
 void handleMasterSemaphore(){
     for (int i = 0; i < UPROCMAX; i++){
         brekk();
-        SYSCALL(PASSEREN, (int) &masterSemaphore, 0, 0);
+        SYSCALL(PASSEREN, (memaddr) &masterSemaphore, 0, 0);
     }
 }
 
 void test(){
-
+    
     //Initialize swap structs and semaphores
     initSwapStructs();
     initializeSemaphores();

@@ -18,7 +18,7 @@ void generalExceptionHandler();
 
 void syscallExceptionHandler(int sysNumber, support_t *support);
 
-void program(support_t *support);
+void programTrapExceptionHandler(support_t *support);
 
 void terminate(support_t *support);
 
