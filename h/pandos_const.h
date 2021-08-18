@@ -72,7 +72,7 @@
 #define TERM_STATUS_MASK 0xFF
 
 //Phase 3 defined constants
-#define SWAPPOOLSTART 0x2002.0000 //TODO: forse è più corretto 0x2000.0000 + (32 * PAGESIZE) */
+#define SWAPPOOLSTART 0x2000.0000 + (32 * PAGESIZE)
 #define GON 1<<8
 #define VOFF 011111111;
 #define DON 1<<10

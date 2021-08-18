@@ -27,7 +27,6 @@
 #define SETPFN(TO, N) TO = (TO & ~PFNMASK) | ((N << PFNSHIFT) + POOLSTART)
 
 //Forse della roba va volatile
-memaddr* swapPool;
 memaddr swapPoolEntries[POOLSIZE];
 swap_t swapTable[POOLSIZE];
 SEMAPHORE swapPoolSemaphore;
@@ -35,7 +34,7 @@ int dataPages[UPROCMAX];
 
 extern pcb_t* currentProcess;
 extern int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
-
+extern SEMAPHORE masterSemaphore;
 extern void generalExceptionHandler();
 
 void vm_break(){
@@ -92,7 +91,7 @@ void updateTLB(pteEntry_t *newEntry){
 
 void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int command, support_t *support) {
 
-    memaddr address = (pageIndex * 4096) + POOLSTART;
+    memaddr address = (pageIndex * PAGESIZE) + POOLSTART;
     // Obtain the mutex on the device
     SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[FLASH][deviceNumber], 0, 0);
     vm_break();
@@ -127,7 +126,7 @@ void readFlash(int deviceNumber, unsigned int blockIndex, unsigned int pageIndex
 
 
 void writeFlash(int deviceNumber, unsigned int blockIndex, unsigned int pageIndex, support_t *support) {
-executeFlashAction(deviceNumber, pageIndex, (FLASHWRITE | (blockIndex << 8)), support);
+    executeFlashAction(deviceNumber, pageIndex, (FLASHWRITE | (blockIndex << 8)), support);
 }
 
 void pager(){
@@ -150,9 +149,9 @@ void pager(){
     //If it is occupied get its informations
     if(swapTable[i].sw_asid != -1){
         //Numero pagina dell'occupante
-        int ownerPageNum = swapTable[i].sw_pageNo;
+        int occupiedPageNum = swapTable[i].sw_pageNo;
         //ASID processo occupante
-        int ownerId = swapTable[i].sw_asid;
+        int occupiedId = swapTable[i].sw_asid;
 
         //Disables the interrupts.
         setSTATUS(getSTATUS() & (~IECON));
@@ -168,7 +167,7 @@ void pager(){
 
         // Update process x's backing store
         if(occupiedEntry->pte_entryLO & DIRTYON){
-            writeFlash(ownerId-1, ownerPageNum, i, support);
+            writeFlash(occupiedId-1, occupiedPageNum, i, support);
         }
     }
 
@@ -181,19 +180,13 @@ void pager(){
         swapTable[i].sw_pageNo = pageNum;
         swapTable[i].sw_pte = &(support->sup_privatePgTbl[pageNum]);
 
-        //BOH
+        //Ti fa |= VALIDON
+        //Ti fa |= POOLSTART + (i * PAGESIZE)
+        //Ti fa 
 
         // Update the process' page table
         unsigned int pageAddress = POOLSTART + (i * PAGESIZE);
         support->sup_privatePgTbl[pageNum].pte_entryLO = pageAddress | VALIDON | DIRTYON;
-        
-        // SETPFN(support->sup_privatePgTbl[pageNum].pte_entryLO, i);
-
-        // /*accende il V bit, il D bit e setta PNF*/
-        // unsigned int pageAddress = POOLSTART + (i * PAGESIZE);
-        // swapTable[i].sw_pte->pte_entryLO = pageAddress | VALIDON | DIRTYON;
-
-        //FINE BOH
 
         // Update the TLB
         updateTLB(&(support->sup_privatePgTbl[i]));
@@ -218,8 +211,9 @@ void uTLB_RefillHandler() {
     setENTRYLO(newEntry->pte_entryLO);
     TLBWR();
 
-    if (currentProcess == NULL)
-		scheduler();
-	else
-		LDST(EXCEPTION_STATE);
+    //TODO: quando andrà provare a scommentare l'if
+    // if (currentProcess == NULL)
+	// 	scheduler();
+	// else
+	LDST(EXCEPTION_STATE);
 }
