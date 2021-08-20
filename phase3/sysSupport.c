@@ -86,7 +86,7 @@ void terminate(support_t *support){
 
     //TODO: quando andrà checkare se va bene anche support->sup_asid;
     //Mark as unused the entry
-    clearSwap(currentProcess->p_supportStruct->sup_asid);
+    clearSwap(currentProcess.p_supportStruct->sup_asid);
 
     //Get the device number
     int deviceNumber = GET_DEVICE_NUMBER(support);
@@ -128,7 +128,7 @@ void writePrinter(char* string, int len, support_t* support){
                 //Disabling interrupts
                 setSTATUS(getSTATUS() & (~IECON));
 
-                devReg->dtp.data0 = ((unsigned int) *(virtAddr + i));
+                devReg->dtp.data0 = ((unsigned int) *(string + i));
                 devReg->dtp.command = PRINTCHR;
                 status = SYSCALL(IOWAIT, PRNTINT, deviceNumber, FALSE);
                 //Re-enabling interrupts
@@ -220,15 +220,15 @@ void readTerminal(char *string, support_t *support){
                     charsTransmitted++;
                 }
             }else {
-                charsTransmitted = -(status & TERMSTATUSMASK);
+                charsTransmitted = -(status & TERM_STATUS_MASK);
                 break;
             }
         }
 
-    SYSCALL(VERHOGEN, (memaddr) &semMutexDevices[readTerminalSem][devNumber], 0, 0);
+    SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[readTerminalSem][deviceNumber], 0, 0);
 
     if((int)string >= KUSEG)
-        currentSupport->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
+        support->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
     else terminate(support);
 
 }
