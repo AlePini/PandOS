@@ -32,7 +32,7 @@ void scheduler(){
     //Replace the current process.
     currentProcess = removeProcQ(&readyQueue);
     //Reset the timer
-    setTIMER(__INT32_MAX__);
+    setTIMER(PLTTIMER);
     //Starts to count the time of this process.
     STCK(startTimeSlice);
     //Loads the new state.

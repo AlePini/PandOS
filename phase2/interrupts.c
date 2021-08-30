@@ -85,7 +85,7 @@ HIDDEN void terminalHandler(){
  * @brief Handles a PLT interrupt.
  */
 HIDDEN void PLTInterrupt(){
-    setTIMER(__INT32_MAX__);
+    setTIMER(PLTBLOCK);
     currentProcess->p_s = *EXCEPTION_STATE;
     currentProcess->p_time += TIMESLICE;
     insertProcQ(&readyQueue, currentProcess);
