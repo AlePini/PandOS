@@ -53,7 +53,6 @@ HIDDEN void terminateRecursive(pcb_t *p){
 
     freePcb(p);
     processCount--;
-    return;
 }
 
 void terminateProcess(){
@@ -63,7 +62,6 @@ void terminateProcess(){
 	terminateRecursive(currentProcess);
 	currentProcess = NULL;
 	scheduler();
-    return;
 }
 
 void passeren(int* semaddr){
@@ -76,7 +74,6 @@ void passeren(int* semaddr){
         currentProcess = NULL;
         scheduler();
     }
-    return;
 }
 
 pcb_t* verhogen(int* semaddr){
@@ -95,7 +92,7 @@ void waitIO(int intlNo, int dnum, int waitForTermRead){
     softBlockCount++;
 
     //If it's not one of the expected device terminates the process.
-    if(intlNo<3 || intlNo >7)
+    if(intlNo<DISKINT || intlNo >TERMINT)
         terminateProcess();
 
     //Takes the line of interrupt (mapping them from 0 to 4) and multiply it by 8.
@@ -108,32 +105,29 @@ void waitIO(int intlNo, int dnum, int waitForTermRead){
 void getCpuTime(){
     unsigned time = currentProcess->p_time + getTimeSlice();
     EXCEPTION_STATE->reg_v0 = time;
-    return;
 }
 
 void waitForClock(){
     softBlockCount++;
     passeren(&swiSemaphore);
-    return;
 }
 
 void getSupportStruct(){
     EXCEPTION_STATE->reg_v0 = currentProcess->p_supportStruct;
-    return;
 }
 
 void sysHandler(){
 
     //Reads the id of the syscall.
-    unsigned sysdnum = EXCEPTION_STATE->reg_a0;
+    volatile unsigned sysdnum = EXCEPTION_STATE->reg_a0;
 
     //Recovery of the state of the exception.
     state_t state = *EXCEPTION_STATE;
 
     //Retrieve the informations of the syscall from the registers.
-    unsigned arg1 = state.reg_a1;
-    unsigned arg2 = state.reg_a2;
-    unsigned arg3 = state.reg_a3;
+    volatile unsigned arg1 = state.reg_a1;
+    volatile unsigned arg2 = state.reg_a2;
+    volatile unsigned arg3 = state.reg_a3;
 
     //Checks if syscall is valid.
     if(sysdnum >= 1 && sysdnum <= 8){
@@ -145,6 +139,7 @@ void sysHandler(){
             generalTrapHandler();
         }
         else{
+            EXCEPTION_STATE->pc_epc += WORDLEN;
             switch(sysdnum){
                 case CREATEPROCESS:
                     createProcess((state_t*) arg1, (support_t*) arg2);
