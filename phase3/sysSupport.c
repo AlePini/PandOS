@@ -21,10 +21,15 @@
 
 #define ADDRESS_IN_RANGE(S, E) (S >= ( (char *) KUSEG) && (E <= (char *) TEXT_AND_DATA_TOP) || S >= (char *) UPROCSTACKSTART) && (E <= (char *) USERSTACKTOP)
 
-int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
+int deviceSemaphores[SEMNUM];
 extern int masterSemaphore;
 extern void clearSwap();
 extern pcb_t currentProcess;
+
+int getDeviceSemaphoreIndex(int line, int device, int read)
+{
+    return ((line - 3) * 8) + (line == 7 ? (read * 8) + device : device);
+}
 
 void generalExceptionHandler(){
 
@@ -51,25 +56,25 @@ void syscallExceptionHandler(int sysNumber, support_t *support){
     volatile unsigned int arg2 = (unsigned int) support->sup_exceptState[GENERALEXCEPT].reg_a2;
 
     switch(sysNumber){
-                case TERMINATE:
-                    terminate(support);
-                    break;
-                case GET_TOD:
-                    getTOD(support);
-                    break;
-                case WRITEPRINTER:
-                    writePrinter((char*) arg1, (int) arg2, support);
-                    break;
-                case WRITETERMINAL:
-                    writeTerminal((char*) arg1, (int) arg2, support);
-                    break;
-                case READTERMINAL:
-                    readTerminal((char*) arg1, support);
-                    break;
-                default:
-                    programTrapExceptionHandler(support);
-                    break;
-            }
+        case TERMINATE:
+            terminate(support);
+            break;
+        case GET_TOD:
+            getTOD(support);
+            break;
+        case WRITEPRINTER:
+            writePrinter((char*) arg1, arg2, support);
+            break;
+        case WRITETERMINAL:
+            writeTerminal((char*) arg1, arg2, support);
+            break;
+        case READTERMINAL:
+            readTerminal((char*) arg1, support);
+            break;
+        default:
+            programTrapExceptionHandler(support);
+            break;
+    }
 
     //Increment the program counter by 4 to avoid loops.
     support->sup_exceptState[GENERALEXCEPT].pc_epc += WORDLEN;
@@ -92,9 +97,9 @@ void terminate(support_t *support){
     int deviceNumber = GET_DEVICE_NUMBER(support);
 
     //If the process hold the mutex on a semaphore release it
-    for (int i = 0; i < SUPP_SEM_NUMBER; i++) {
-        if (deviceSemaphores[i][deviceNumber] == 0)
-            SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[i][deviceNumber], 0, 0);
+    for (int i = 0; i < SEMNUM; i++) {
+        if (deviceSemaphores[i] == 0)
+            SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[i], 0, 0);
     }
 
     //Makes a V on the masterSemaphore
@@ -112,6 +117,7 @@ void getTOD(support_t *support){
 void writePrinter(char* string, int len, support_t* support){
 
     int deviceNumber = GET_DEVICE_NUMBER(support);
+    int semNum = getDeviceSemaphoreIndex(PRNTINT, deviceNumber, 0);
     int charsTransmitted = 0;
     devreg_t* devReg = (devreg_t*) DEV_REG_ADDR(PRNTINT, deviceNumber);
 
@@ -120,7 +126,7 @@ void writePrinter(char* string, int len, support_t* support){
     //if(ADDRESS_IN_RANGE(string, string+len) && stringSize) {
     if((int)string >= KUSEG && stringSize) {
 
-        SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[printerSem][deviceNumber], 0, 0);
+        SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[semNum], 0, 0);
 
         int status;
 
@@ -141,7 +147,7 @@ void writePrinter(char* string, int len, support_t* support){
                 break;
             }
         }
-        SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[printerSem][deviceNumber], 0, 0);
+        SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[semNum], 0, 0);
         support->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
         }
 
@@ -151,6 +157,7 @@ void writePrinter(char* string, int len, support_t* support){
 void writeTerminal(char *string, int len, support_t* support){
 
     int deviceNumber = GET_DEVICE_NUMBER(support);
+    int semNum = getDeviceSemaphoreIndex(TERMINT, deviceNumber, 0);
     int charsTransmitted = 0;
     devreg_t* devReg = (devreg_t*) DEV_REG_ADDR(TERMINT, deviceNumber);
 
@@ -158,7 +165,7 @@ void writeTerminal(char *string, int len, support_t* support){
     bool stringSize = len >= 0 && len <= MAXSTRLENG;
     if((int)string >= KUSEG && stringSize) {
         //Get the mutex on the semaphore
-        SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[writeTerminalSem][deviceNumber], 0, 0);
+        SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[semNum], 0, 0);
 
         int status;
 
@@ -183,7 +190,7 @@ void writeTerminal(char *string, int len, support_t* support){
                 break;
             }
         }
-        SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[writeTerminalSem][deviceNumber], 0, 0);
+        SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[semNum], 0, 0);
         //Return the value and release the mutex on the semaphore
         support->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
     }
@@ -193,11 +200,12 @@ void writeTerminal(char *string, int len, support_t* support){
 void readTerminal(char *string, support_t *support){
 
     int deviceNumber = GET_DEVICE_NUMBER(support);
+    int semNum = getDeviceSemaphoreIndex(TERMINT, deviceNumber, 0);
     int charsTransmitted = 0;
     char received = ' ';
     devreg_t* devReg = (devreg_t*) DEV_REG_ADDR(TERMINT, deviceNumber);
 
-    SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[readTerminalSem][deviceNumber], 0, 0);
+    SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[semNum], 0, 0);
 
     /*se l'indirizzo e' fuori dalla memoria virtuale si uccide*/
     while ((int)string >= KUSEG && received != EOL){
@@ -225,7 +233,7 @@ void readTerminal(char *string, support_t *support){
             }
         }
 
-    SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[readTerminalSem][deviceNumber], 0, 0);
+    SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[semNum], 0, 0);
 
     if((int)string >= KUSEG)
         support->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;

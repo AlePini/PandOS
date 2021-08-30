@@ -6,25 +6,19 @@
 #include <vmSupport.h>
 
 SEMAPHORE masterSemaphore;
-extern int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
+extern int deviceSemaphores[SEMNUM];
 extern void pager();
 extern void generalExceptionHandler();
 
 HIDDEN support_t supportStructs[UPROCMAX+1];
-
-void brekk(){
-    return;
-}
 
 void initializeSemaphores(){
 
     masterSemaphore = 0;
 
     //Semaphores Initialization
-    for (int i = 0; i < SUPP_SEM_NUMBER; i++){
-        for (int j = 0; j < UPROCMAX; j++){
-            deviceSemaphores[i][j] = 1;
-        }
+    for (int i = 0; i < SEMNUM; i++){
+        deviceSemaphores[i] = 1;
     }
 }
 
@@ -59,7 +53,7 @@ void initializeProcesses(){
             supportStructs[id].sup_privatePgTbl[i].pte_entryHI = VPNSTART + (i << VPNSHIFT) + (id << ASIDSHIFT); //VPN and ASID setup
             supportStructs[id].sup_privatePgTbl[i].pte_entryLO = DIRTYON; //Dirty bit
         }
-        brekk();
+
         //Stack setup
         supportStructs[id].sup_privatePgTbl[USERPGTBLSIZE-1].pte_entryHI = UPROCSTACKSTART + (id << ASIDSHIFT); //VPN and ASID setup
         supportStructs[id].sup_privatePgTbl[USERPGTBLSIZE-1].pte_entryLO = DIRTYON;   //Dirty Bit
@@ -71,13 +65,11 @@ void initializeProcesses(){
 
 void handleMasterSemaphore(){
     for (int i = 0; i < UPROCMAX; i++){
-        brekk();
         SYSCALL(PASSEREN, (memaddr) &masterSemaphore, 0, 0);
     }
 }
 
 void test(){
-    
     //Initialize swap structs and semaphores
     initSwapStructs();
     initializeSemaphores();

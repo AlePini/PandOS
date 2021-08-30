@@ -27,19 +27,14 @@
 #define SETPFN(TO, N) TO = (TO & ~PFNMASK) | ((N << PFNSHIFT) + POOLSTART)
 
 //Forse della roba va volatile
-memaddr swapPoolEntries[POOLSIZE];
 swap_t swapTable[POOLSIZE];
 SEMAPHORE swapPoolSemaphore;
-int dataPages[UPROCMAX];
 
 extern pcb_t* currentProcess;
-extern int deviceSemaphores[SUPP_SEM_NUMBER][UPROCMAX];
+extern int deviceSemaphores[SEMNUM];
 extern SEMAPHORE masterSemaphore;
 extern void generalExceptionHandler();
-
-void vm_break(){
-    return;
-}
+extern int getDeviceSemaphoreIndex(int line, int device, int read);
 
 void initSwapStructs(){
     swapPoolSemaphore = 1;
@@ -92,9 +87,9 @@ void updateTLB(pteEntry_t *newEntry){
 void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int command, support_t *support) {
 
     memaddr address = (pageIndex * PAGESIZE) + POOLSTART;
+    int semNum = getDeviceSemaphoreIndex(FLASHINT, deviceNumber, 0);
     // Obtain the mutex on the device
-    SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[FLASH][deviceNumber], 0, 0);
-    vm_break();
+    SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[semNum], 0, 0);
     devreg_t* flashDevice = (devreg_t*) DEV_REG_ADDR(FLASHINT, deviceNumber);
     flashDevice->dtp.data0 = address;
 
@@ -108,7 +103,7 @@ void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int c
     setSTATUS(getSTATUS() | IECON);
 
     // Release the mutex
-    SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[FLASHINT][deviceNumber], 0, 0);
+    SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[semNum], 0, 0);
 
     if (deviceStatus != 1) {
         // Release the mutex on the swap pool semaphore
@@ -179,10 +174,6 @@ void pager(){
         swapTable[i].sw_asid = id;
         swapTable[i].sw_pageNo = pageNum;
         swapTable[i].sw_pte = &(support->sup_privatePgTbl[pageNum]);
-
-        //Ti fa |= VALIDON
-        //Ti fa |= POOLSTART + (i * PAGESIZE)
-        //Ti fa 
 
         // Update the process' page table
         unsigned int pageAddress = POOLSTART + (i * PAGESIZE);
