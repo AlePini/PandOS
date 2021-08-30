@@ -1,83 +1,108 @@
 #include <exceptions.h>
-#include <umps3/umps/libumps.h>
 #include <pandos_const.h>
+#include <pandos_types.h>
+#include <syscalls.h>
 #include <interrupts.h>
 #include <initial.h>
-#include <scheduler.h>
-#include <syscalls.h>
 
-/**
- * @brief this function handles both TLB Exceptions and all others types of trap
- * What type of exception is handled depends on the input passed and
- * the function behaviour is related to the current process support 
- * structure value, that can exist or be NULL.
- * 
- * @param index 0 (PGFAULTEXCEPT) or 1 (GENERALEXCEPT), indicating
- * the type of the exception to be handled
- */
-HIDDEN void passUpOrDie(unsigned index){
+extern int p_count;          //process count
+extern int sb_count;         //soft-block count
+extern pcb_PTR ready_q;      //ready queue
+extern pcb_PTR currentProcess;    //current process
+extern int dev_sem[SEM_NUM]; //device semaphores
 
-    support_t *support = currentProcess->p_supportStruct;
 
-    //If the support struct exists execute the "Pass Up".
-    if (support != NULL) {
-        support->sup_exceptState[index] = *EXCEPTION_STATE;
-        context_t* context = &(support->sup_exceptContext[index]);
-        LDCXT(context->c_stackPtr, context->c_status, context->c_pc);
-    }
-    //otherwise the "Die".
-    else
+void passUpOrDie(unsigned int cause, state_t *iep_s)
+{
+    /*Se il processo corrente non ha una support struct termina*/
+    if(currentProcess->p_supportStruct == NULL)
+    {        
         terminateProcess();
+    }
+    else
+    {
+        /*Cause differenzia tra TLB refill e Program Trap*/
+        int context_i = cause;
+
+        /*copia lo stato del processo che ha causato l'eccezione nella support struct*/
+        copyState(iep_s, &(currentProcess->p_supportStruct->sup_exceptState[context_i]));
+
+        /*salva lo stack pointer, status e pc del context corretto*/
+        unsigned int stackPtr = currentProcess->p_supportStruct->sup_exceptContext[context_i].c_stackPtr;
+        unsigned int status = currentProcess->p_supportStruct->sup_exceptContext[context_i].c_status;
+        unsigned int pc = currentProcess->p_supportStruct->sup_exceptContext[context_i].c_pc;
+
+        /*carica il context per gestire l'eccezione*/
+        LDCXT(stackPtr, status, pc);
+    }
 }
 
-/**
- * @brief this function returns what type of exception
- * is raised by checking the BIOSDATAPAGE.
- * 
- * @return the type of exception among the possible four.
- */
-HIDDEN int exceptionType(){
-    state_t *exceptionState = EXCEPTION_STATE;
-    unsigned int exType = (exceptionState->cause & GETEXECCODE) >> CAUSESHIFT;
-    if(exType == 0) return IOINTERRUPTS;
-    else if(exType == 8) return SYSEXCEPTION;
-    else if(exType>=1 && exType<=3) return TLBTRAP;
-    else if((exType>=4 && exType <=7) || (exType >= 9 && exType <= 12))
-        return GENERAL;
-    else return ERROR_TYPE;
+
+void exceptionHandler()
+{
+    state_t* iep_s;
+    /*Preleva l'exception state*/
+    iep_s = (state_t*)BIOSDATAPAGE;
+    /*Preleva il campo ExcCode*/
+    int exc_code = (iep_s->cause & 0x3C) >> CAUSESHIFT;
+
+    switch(exc_code)
+    {
+        case 0:                     //interrupt
+            interruptHandler();
+            break;
+        case 1 ... 3:               //TLB
+            passUpOrDie(PGFAULTEXCEPT, iep_s);
+            break;
+        case 4 ... 7: case 9 ... 12: //trap
+            passUpOrDie(GENERALEXCEPT, iep_s);
+            break;
+        case 8:                     //syscall
+            /*Il controllo passa all'syscall handler*/
+            syscallHandler(iep_s->reg_a0, iep_s);
+            break;
+    }
 }
 
-void TLBExcHandler(){
-	passUpOrDie(PGFAULTEXCEPT);
-}
-
-void generalTrapHandler(){
-	passUpOrDie(GENERALEXCEPT);
-}
-
-void exceptionHandler(){
-    //Increment the program counter by 4 to avoid loops.
-    EXCEPTION_STATE->pc_epc += WORDLEN;
-    int type = exceptionType();
-    switch (type){
-        //Interrupts.
-        case IOINTERRUPTS:
-            interruptHandler(EXCEPTION_STATE);
+void syscallHandler(unsigned int sys, state_t* iep_s)
+{
+    /*Controlla se il processo chiamante è in user mode*/
+    if(((iep_s->status & USERPON) != ALLOFF) && (sys > 0) && (sys < 9))
+    {
+        iep_s->cause |= (RI<<CAUSESHIFT);
+        passUpOrDie(GENERALEXCEPT, iep_s);
+    }
+    /*Incrementa PC alla istruzione dopo*/
+    iep_s->pc_epc += 4;
+    switch (sys)
+    {
+        case 1:
+            createProcess(iep_s);
             break;
-        //Syscalls.
-        case SYSEXCEPTION:
-            sysHandler();
+        case 2:
+            terminateProcess();
             break;
-        //TLB exceptions.
-        case TLBTRAP:
-            TLBExcHandler();
+        case 3:
+            passeren(iep_s);
             break;
-        //General trap exceptions.
-         case GENERAL:
-            generalTrapHandler();
+        case 4:
+            verhogen(iep_s);
             break;
+        case 5:
+            waitForIO(iep_s);
+            break;
+        case 6:
+            getCpuTime(iep_s);
+            break;
+        case 7:
+            waitForClock(iep_s);
+            break;
+        case 8:
+            getSupportData(iep_s);
+            break;
+            /*syscall sconosciuta*/
         default:
-            PANIC();
+            passUpOrDie(GENERALEXCEPT, iep_s);
             break;
-        }
+    }
 }

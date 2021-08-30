@@ -78,7 +78,7 @@
 #define DON 1<<10
 #define SYS_EX 0
 #define PROGRAM__EX 1
-#define SUPP_SEM_NUMBER 6
+#define SEMNUM 48
 
 /* Hardware & software constants */
 #define PAGESIZE 4096 /* page size in bytes	*/

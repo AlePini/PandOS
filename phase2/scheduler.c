@@ -1,45 +1,80 @@
 #include <scheduler.h>
-#include <umps3/umps/libumps.h>
+#include <pandos_const.h>
+#include <pandos_types.h>
 #include <pcb.h>
+#include <asl.h>
 #include <initial.h>
 
 
-cpu_t startTimeSlice,endTimeSlice = 0; 
+extern int p_count;          //process count
+extern int sb_count;         //soft-block count
+extern pcb_PTR ready_q;      //ready queue
+extern pcb_PTR currentProcess;    //current process
+extern int dev_sem[SEM_NUM]; //device semaphores
 
-void scheduler(){
-    if(emptyProcQ(readyQueue)){
-        if(processCount == 0)   //If there's no more process shuts down.
+/*Variabili per mantenere traccia del tempo*/
+cpu_t startTod;              //Inizio dell'intervallo
+cpu_t finTod;                //Fine dell'intervallo
+
+/*funzione per settare il PLT*/
+void setPLT(unsigned int us)
+{
+    int timescale = *((memaddr*)TIMESCALEADDR);
+    setTIMER(us * timescale);
+}
+
+void scheduler()
+{    
+    /*Se il processo corrente esiste, allora aggiungiamo il tempo in cui ha usato la CPU*/
+    if (currentProcess != NULL)
+    {
+        /*Ferma il cronometro*/
+        STCK(finTod);
+        /*Aggiorna il campo time del processo facendo un delta tempo tra fine e inizio intervallo*/
+        currentProcess->p_time += (finTod - startTod);
+    }
+    /*Prende il nuovo processo da schedulare*/
+    currentProcess = removeProcQ(&ready_q);
+
+    /*Se esisteva un processo pronto*/
+    if(currentProcess != NULL)
+    {
+        /*Rinizia a cronometrare*/
+        STCK(startTod);
+        /*Imposta il PLT a 5ms*/
+        setPLT(TIMESLICE);
+        /*Carica lo stato nel processore*/
+        LDST(&(currentProcess->p_s));
+    }
+    /*Se non esistevano processi pronti*/
+    else
+    {
+        /*Se non ci sono processi abbiamo finito*/
+        if (p_count == 0)
+        {
+            /*Fine*/
             HALT();
-        if(processCount>0 && softBlockCount>0){    //Waits if there's only waiting processes.
-            //Saves the current state.
-            unsigned oldStatus = getSTATUS();
-            setTIMER(PLTBLOCK);
-            //Enables the interrupts.
-            setSTATUS(oldStatus | IMON | IECON);
-            //Waits for an interrupt.
-            WAIT();
-            //Restores the previous status.
-            setSTATUS(oldStatus);
         }
-        if(processCount>0 && softBlockCount==0) //If there's no blocked process but the queue is empty PANIC.
+        /*Se esistono processi ma sono soft blockati*/
+        if(p_count > 0 && sb_count > 0)
+        {
+            /*Crea di uno stato da zero*/
+            unsigned int status;
+            /*Abilita interrupt, interrupt mask*/
+            status = ALLOFF | IECON | IMON;
+            /*Setta il PLT ad un valore altissimo*/
+            setPLT(__INT32_MAX__);
+            setSTATUS(status);
+            /*Aspetta interrupt*/
+            WAIT();
+        }
+        /*Se ci sono processi ma sono in attesa circolare*/
+        else if(p_count > 0 && sb_count == 0)
+        {
+            /*Deadlock*/
             PANIC();
+        }
     }
-    //If there's an active process puts it in the queue.
-    if(currentProcess != NULL){
-        insertProcQ(&readyQueue, currentProcess);
-        currentProcess->p_time += getTimeSlice();
-    }
-    //Replace the current process.
-    currentProcess = removeProcQ(&readyQueue);
-    //Reset the timer
-    setTIMER(PLTTIMER);
-    //Starts to count the time of this process.
-    STCK(startTimeSlice);
-    //Loads the new state.
-    LDST(&(currentProcess->p_s));
 }
 
-cpu_t getTimeSlice(){
-    STCK(endTimeSlice);
-    return endTimeSlice - startTimeSlice;
-}
+

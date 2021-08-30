@@ -1,24 +1,14 @@
-#ifndef INTERRUPTS_H
-#define INTERRUPTS_H
+#ifndef INTERRUPTHANDLER_H
+#define INTERRUPTHANDLER_H
 
-/**
- * @file    Interrupts
- * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
- * @brief   Implements interrupt handler who manages interrupts.
- * @version 0.2
- * @date    2021-04-03
- */
+#include <pandos_types.h>
 
-/**
- * @brief a macro to get the line cause of an interrupt
- * 
- */
-#define CAUSE_IP_GET(cause,line) (cause & CAUSE_IP_MASK) & CAUSE_IP(line)
+#define INTERRUPTLINEBASEADDR 0x1000002C;
+#define INTERRUPTINGLINEBASEADDR 0x10000040;
 
-/**
- * @brief Handler for the interrupts. It gets called by the exception handler.
- */
 void interruptHandler();
-
+memaddr* getDevRegAddr(int int_line, int dev_n);
+memaddr* getInterruptLine(int n);
+int getHighestPriorityIntDevice(memaddr* int_line_addr);
 
 #endif

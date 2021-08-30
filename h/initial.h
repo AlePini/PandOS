@@ -1,57 +1,10 @@
-#ifndef INITIAL_H
-#define INITIAL_H
+#ifndef MAIN_H
+#define MAIN_H
 
-/**
- * @file    Initial
- * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
- * @brief   Entry point of pandos project. Setups the nucleus.
- * @version 0.2
- * @date    2021-04-03
- */
-
-#include <pandos_const.h>
 #include <pandos_types.h>
+#include "umps3/umps/libumps.h"
 
-#define SEMAPHORE int
+#define SEM_NUM 49  //numero di semafori da mantenere
 
-/**
- * @brief Counts active processes.
- */
-extern unsigned int processCount;
-
-/**
- * @brief Counts blocked processes on device semaphores.
- */
-extern unsigned int softBlockCount;
-
-/**
- * @brief Queue of the processes in the
- * running state.
- */
-extern pcb_t *readyQueue;
-
-/**
- * @brief The active process.
- */
-extern pcb_t *currentProcess;
-
-/**
- * @brief Device semaphores.
- * 
- */
-extern SEMAPHORE semaphoreList[DEVICE_NUMBER];
-
-/**
- * @brief Semaphore for the System Wide Interval Timer.
- * 
- */
-extern SEMAPHORE swiSemaphore;
-
-/**
- * @brief PandOS entry point.
- * 
- * @return The exit code.
- */
-int main(void);
 
 #endif

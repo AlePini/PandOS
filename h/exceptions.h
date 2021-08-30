@@ -1,29 +1,25 @@
-#ifndef EXCEPTIONS_H
-#define EXCEPTIONS_H
+#ifndef EXCEPTIONHANDLER_H
+#define EXCEPTIONHANDLER_H
+
+#include <pandos_types.h>
+#define RI 10
 
 /**
- * @file    Exceptions
- * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
- * @brief   Implements exception handler who manages the other handlers
- * @version 0.2
- * @date    2021-04-03
- */
-
-/**
- * @brief Handles a TLB exception.
- *  
- */
-void TLBExcHandler();
-
-/**
- * @brief Handles a Program Trap.
- * 
- */
-void generalTrapHandler();
-
-/**
- * @brief Handles exceptions passing the to their custom handler.
+ * @brief Funzione che implementa il gestore delle eccezioni
  */
 void exceptionHandler();
+/**
+ * @brief Funzione che implementa il gestore delle system call
+ * 
+ */
+void syscallHandler();
+/**
+ * @brief Funzione che implementa il PassupOrDie.
+ * Se il processo corrente non ha support struct viene terinato
+ * 
+ * @param cause
+ * @param iep_s 
+ */
+void passUpOrDie(unsigned int cause, state_t *iep_s);
 
 #endif

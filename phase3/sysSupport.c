@@ -26,10 +26,10 @@ extern int masterSemaphore;
 extern void clearSwap();
 extern pcb_t currentProcess;
 
-int getDeviceSemaphoreIndex(int line, int device, int read)
-{
-    return ((line - 3) * 8) + (line == 7 ? (read * 8) + device : device);
-}
+// int getDeviceSemaphoreIndex(int line, int device, int read)
+// {
+//     return ((line - 3) * 8) + (line == 7 ? (read * 8) + device : device);
+// }
 
 void generalExceptionHandler(){
 
