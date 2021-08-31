@@ -1,4 +1,6 @@
 #include <interrupts.h>
+#include <umps3/umps/arch.h>
+#include <umps3/umps/cp0.h>
 #include <pandos_const.h>
 #include <pandos_types.h>
 #include <pcb.h>
@@ -6,142 +8,137 @@
 #include <syscalls.h>
 #include <initial.h>
 
-extern int p_count;          //process count
-extern int sb_count;         //soft-block count
-extern pcb_PTR ready_q;      //ready queue
+#define CAUSE_IP_GET(cause,line) (cause & CAUSE_IP_MASK) & CAUSE_IP(line)
+
+extern pcb_PTR readyQueue;      //ready queue
 extern pcb_PTR currentProcess;    //current process
-extern int dev_sem[SEM_NUM]; //device semaphores
-extern void setPLT(unsigned int us);
-extern void scheduler();
-extern cpu_t startTod;
-
-int pow2[] =  {1,2,4,8,16,32,64,128,256};
+extern int semaphoreList[SEM_NUM]; //device semaphores
+extern int swiSemaphore;
 
 
-memaddr* getDevRegAddr(int int_line, int dev_n)
-{
-    return (memaddr*) (0x10000054 + ((int_line - 3) * 0x80) + (dev_n * 0x10));
-}
+HIDDEN cpu_t startInterrupt, endInterrupt;
+HIDDEN volatile int status;
 
-memaddr* getInterruptLineAddr(int n)
-{
-    return (memaddr*) (0x10000040 + (0x04 * (n-3)));
-}
-
-
-int getHighestPriorityIntLine(int intmap)
-{
-    for(int i=0; i<8; i++)
-    {
-        if(intmap & pow2[i])
-        {
-            return i;
-        }
+/**
+ * @brief Return the device number of the interrupt line.
+ */
+HIDDEN int getDeviceNr(unsigned bitmap){
+    int i;
+    for (i = 0; i < 8; i++){
+        if (bitmap == 1) return i;
+        else bitmap = bitmap >> 1;
     }
     return -1;
 }
 
-int getHighestPriorityIntDevice(memaddr* int_line_addr)
-{
-    unsigned int bitmap = *(int_line_addr);
-
-    for(int i=0; i<8; i++)
-    {
-        if(bitmap & pow2[i])
-        {
-            return i;
-        }
-    }
-    return -1;
+HIDDEN void returnControl(){
+    if(currentProcess == NULL)
+        scheduler();
+    else
+        LDST(EXCEPTION_STATE);
 }
 
-void interruptHandler(){
-    state_t* iep_s = (state_t*) BIOSDATAPAGE;    //preleviamo l'exception state
-    cpu_t start, end;
-    int int_map = ((iep_s->cause & 0xFF00) >> 8);       //calcolo l'indirizzo dell'interrupt map
-    int int_line = getHighestPriorityIntLine(int_map);  //trovo l'interrupt con priorità più alta
-    int read;
-    STCK(start);
-    switch(int_line){
-    case 0: //interprocessor interrupt, disabilitato su nostra macchina
-        PANIC();
-    case 1: //PLT Interrupt
-        setPLT(__INT32_MAX__);        //ack interrupt
-        copyState(iep_s, &(currentProcess->p_s));
-        insertProcQ(&ready_q, currentProcess);  //reinserisce il processo nella ready queue
-        scheduler();               //chiamo lo scheduler
-        break;
-    case 2: //System wide interval timer
-        LDIT(100000);
-        while(headBlocked(&(dev_sem[SEM_NUM-1])) != NULL) //svuoto processi bloccati su semaforo interval timer
-        {
-            STCK(end);
-            pcb_PTR blocked = removeBlocked(&(dev_sem[SEM_NUM - 1]));
-            if (blocked != NULL)
-            {
-                blocked->p_time += (end - start);
-                insertProcQ(&ready_q, blocked);
-                sb_count--;
-            }
+HIDDEN void exitDeviceInterrupt(int i){
+    semaphoreList[i]++;
+    STCK(endInterrupt);
+    if (semaphoreList[i] <= 0){
+        pcb_PTR blocked_proc = removeBlocked(&(semaphoreList[i]));
+        if (blocked_proc != NULL){
+            blocked_proc->p_time += (endInterrupt - startInterrupt);  //aggiorna tempo processo bloccato
+            blocked_proc->p_s.reg_v0 = status; //inserisce status code in v0
+            insertProcQ(&readyQueue, blocked_proc);     //processo passa da blocked a ready
+            softBlockCount--;
         }
-        
-        dev_sem[SEM_NUM-1] = 0;
+    }
+    returnControl();
+}
 
-        /*torna al processo in esecuzione se esiste, oppure rientro nello scheduler*/
-        if(currentProcess != NULL)
-            LDST(iep_s);
-        else
-            scheduler();
+HIDDEN void deviceHandler(int type){
+     int i, device_nr;
+    dtpreg_t* dev;
+    memaddr* interrupt_bitmap = (memaddr*) CDEV_BITMAP_ADDR(type);
+    
+    device_nr = getDeviceNr(*interrupt_bitmap);
+    dev = (dtpreg_t*) DEV_REG_ADDR(type, device_nr);
 
-        break;
-    case 3 ... 7: ;//interrupt lines
-        memaddr* interrupting_line_addr = getInterruptLineAddr(int_line); //calcola l'indirizzo dell'interrupt line
-        int dev_n = getHighestPriorityIntDevice(interrupting_line_addr);  //controlla il device con priorità maggiore che ha causato l'interrupt
-        devreg_t* d_r = (devreg_t*) getDevRegAddr(int_line, dev_n);       //calcola il device register
-        int status_code;
+    i = INSTANCES_NUMBER * (type - 3) + device_nr;
+    status = dev->status;
+    dev->command = ACK;
+    
+    exitDeviceInterrupt(i);
+}
 
-        /*l'interrupt line 7 è riservata ai terminali, che hanno registri
-          diversi dagli altri device*/
-        if(int_line == 7)   
-        {
-            termreg_t* t_r = (termreg_t*) d_r;
-            read = t_r->transm_status == READY;
-            if(!read)
-            {
-                status_code = t_r->transm_status;
-                t_r->transm_command = ACK;
-            }
-            else
-            {
-                status_code = t_r->recv_status;
-                t_r->recv_command = ACK;
-            }
-        }
-        else //le altre interrupt line hanno gli stessi registri
-        {
-            status_code = d_r->dtp.status;  //salva lo status code
-            d_r->dtp.command = ACK;          //invio comando ack per riconoscere l'interrupt
-        }
+HIDDEN void terminalHandler(){
+    int i, read, device_nr;
+    termreg_t* term;
+    memaddr* interrupt_bitmap = (memaddr*) CDEV_BITMAP_ADDR(INT_TERMINAL);
 
-        int sem_i = getDeviceSemaphoreIndex(int_line, dev_n, read); //V operation su semaforo associato a device
-        dev_sem[sem_i]++;
-        STCK(end);
-        if (dev_sem[sem_i] <= 0)
-        {
-            pcb_PTR blocked_proc = removeBlocked(&(dev_sem[sem_i]));
-            if (blocked_proc != NULL)
-            {
-                blocked_proc->p_time += (end - start);  //aggiorna tempo processo bloccato
-                blocked_proc->p_s.reg_v0 = status_code; //inserisce status code in v0
-                insertProcQ(&ready_q, blocked_proc);     //processo passa da blocked a ready
-                sb_count--;
-            }
-        }
-        /*torna al processo in esecuzione se esiste, oppure rientra nello scheduler*/
-        if(currentProcess != NULL)
-            LDST(iep_s);
-        else
-            scheduler();
-        break;
+    device_nr = getDeviceNr(*interrupt_bitmap);
+    term = (termreg_t*) DEV_REG_ADDR(INT_TERMINAL, device_nr);
+
+    read = term->transm_status == READY;
+    if (read){
+        status = term->recv_status;
+        term->recv_command = ACK;
+    } else {
+        status = term->transm_status;
+        term->transm_command = ACK;
+    }
+    i = INSTANCES_NUMBER * (INT_TERMINAL + read - 3) + device_nr;
+
+    exitDeviceInterrupt(i);
+}
+
+/**
+ * @brief Handles a PLT interrupt.
+ */
+HIDDEN void PLTInterrupt(){
+    setTIMER(PLTBLOCK);
+    currentProcess->p_s = *EXCEPTION_STATE;
+    currentProcess->p_time += TIMESLICE;
+    insertProcQ(&readyQueue, currentProcess);
+    currentProcess = NULL;
+    scheduler();
+}
+
+/**
+ * @brief Handles a System Wide Interrupt.
+ */
+HIDDEN void SWITInterrupt(){    
+    LDIT(SWTIMER);
+    pcb_t *removedProcess = NULL;
+
+    while((removedProcess = removeBlocked(&swiSemaphore)) != NULL){
+        STCK(endInterrupt);
+        removedProcess->p_time += (endInterrupt - startInterrupt);
+        insertProcQ(&readyQueue, removedProcess);
+        softBlockCount--;
+    }
+    swiSemaphore = 0;
+
+    returnControl();
+
+}
+
+void interruptHandler(state_t* excState){
+    STCK(startInterrupt);
+    unsigned int cause = (excState->cause);
+    if(CAUSE_IP_GET(cause, INT_PLT)){
+        PLTInterrupt();
+    } else if(CAUSE_IP_GET(cause, INT_SWT)){
+        SWITInterrupt();
+    } else if(CAUSE_IP_GET(cause, INT_DISK)){
+        deviceHandler(INT_DISK);
+    } else if(CAUSE_IP_GET(cause, INT_TAPE)){
+        deviceHandler(INT_TAPE);
+    } else if(CAUSE_IP_GET(cause, INT_NETWORK)){
+        deviceHandler(INT_NETWORK);
+    } else if(CAUSE_IP_GET(cause, INT_PRINTER)){
+        deviceHandler(INT_PRINTER);
+    } else if(CAUSE_IP_GET(cause, INT_TERMINAL)){
+        terminalHandler();
+    } else {
+        /* raises interrupt not recognized */
+        return; 
     }
 }

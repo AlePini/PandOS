@@ -5,14 +5,11 @@
 #include <pandos_types.h>
 #include <asl.h>
 #include <pcb.h>
+#include <umps3/umps/cp0.h>
 
-extern int p_count;          //process count
-extern int sb_count;         //soft-block count
-extern pcb_PTR ready_q;      //ready queue
-extern pcb_PTR currentProcess;    //current process
-extern int dev_sem[SEM_NUM]; //device semaphores
-extern cpu_t startTod;  //servono per misurare l'intervallo di tempo
-extern cpu_t finTod;
+
+extern cpu_t startTimeSlice;  //servono per misurare l'intervallo di tempo
+extern cpu_t endTimeSlice;
 extern memaddr* getDevRegAddr(int int_line, int dev_n);
 
 
@@ -43,36 +40,21 @@ int getDeviceSemaphoreIndex(int line, int device, int read)
     return ((line - 3) * 8) + (line == 7 ? (read * 8) + device : device);
 }
 
-void createProcess(state_t *statep)
+void createProcess(state_t* state, support_t* supportStruct)
 {
-    /*Alloca un nuovo processo*/
-    pcb_PTR new_p = allocPcb();
-    /*Se non e' stato possibile alloare*/
-    if (new_p == NULL)
-    {
-        /*Ritorna errore*/
-        statep->reg_v0 = NOPROC;
-        /*Ricarica la CPU*/
-        LDST(statep);
+    //Creates the new process and assigns the state and the support struct.
+    pcb_t* newProcess = allocPcb();
+    int feedback = -1;
+    if(newProcess != NULL){
+        processCount++;
+        newProcess->p_s = *state;
+        newProcess->p_supportStruct = supportStruct;
+        insertChild(currentProcess, newProcess);
+        insertProcQ(&readyQueue, newProcess);
+        feedback = 0;
     }
-    /*Se e' stato possibile allocare*/
-    else
-    {
-        /*Inserisce il processo nella ready queue*/
-        insertProcQ(&ready_q, new_p);
-        /*Incrementa i processi totali*/
-        p_count++;
-        /*Inserisce il processo come figlio di current*/
-        insertChild(currentProcess, new_p);
-        /*Copia support struct*/
-        new_p->p_supportStruct = (support_t*) statep->reg_a2;
-        /*Copia state*/
-        copyState((state_t*) statep->reg_a1, &(new_p->p_s));
-        /*Ritorna successo*/
-        statep->reg_v0 = OK;
-        /*Ricarica CPU*/
-        LDST(statep);
-    }  
+    //Returns 0 or -1 based on what allocBCP returns (NULL or not).
+    EXCEPTION_STATE->reg_v0 = feedback;
 }
 
 /**
@@ -80,81 +62,65 @@ void createProcess(state_t *statep)
  * 
  * @param p 
  */
-void terminateRec(pcb_PTR p)
-{
-    while(!emptyChild(p))   //eliminiamo ricorsivamente tutta la progenie di current proc
-    {
-        terminateRec(removeChild(p));
-    }
-    //caso base ovvero no figli
-    if (p->p_semAdd != NULL)    //p e' bloccato in un semaforo
-    {
-        int *sem = p->p_semAdd;
-        outBlocked(p);
-        //controlliamo se il semaforo e' di un device
-        if (sem >= &(dev_sem[0]) && sem <= &(dev_sem[SEM_NUM - 1]))
-        {
-            sb_count--;
-        }  
-        else
-        {
-            (*sem)++; //incrementiamo il semaforo
-        }
-    }
-    else if (p == currentProcess)
-    {
-        outChild(currentProcess);    //rimuove curr proc dalla lista dei figli del padre
-    }
-    else
-    {
-        outProcQ(&ready_q, p);
-    }
-    freePcb(p);    //restituiamo il processo alla freepcb
-    p_count--;    //decrementiamo
+HIDDEN void terminateRecursive(pcb_t *p){
+
+    pcb_t* removed;
+
+	while ((removed = removeChild(p)) != NULL) {
+        outProcQ(&readyQueue, removed);
+		terminateRecursive(removed);
+	}
+
+    // A process is blocked on a device if the semaphore is
+    // swiSemaphore or an element of semDevices.
+    bool blockedDevice = ( p->p_semAdd >= (int*)semaphoreList
+                        && p->p_semAdd < ((int *)semaphoreList + (sizeof(SEMAPHORE) * DEVICE_NUMBER)) )
+                        || p->p_semAdd == (int*) &swiSemaphore;
+
+    // If the process was not blocked on a device semaphore increment semadd by 1.
+    pcb_t* removedProcess = outBlocked(p);
+
+    if(!blockedDevice && removedProcess != NULL)
+        (*(p->p_semAdd))++;
+
+    freePcb(p);
+    processCount--;
 }
 
-void terminateProcess()
-{
-    if (emptyChild(currentProcess))  //curr proc non ha figli
-    {
-        outChild(currentProcess);    //rimuove curr proc dalla lista dei figli del padre
-        freePcb(currentProcess);
-        p_count--;
-    }
-    else    //curr ha figli
-    {
-        terminateRec(currentProcess);
-    }
-    currentProcess = NULL;
-    scheduler();
+void terminateProcess(){
+    //Removes current process from being his father's son.
+    outChild(currentProcess);
+    //Terminates the current and all his progeny.
+	terminateRecursive(currentProcess);
+	currentProcess = NULL;
+	scheduler();
 }
 
 void passeren(state_t *statep)
 {
     int *semadd = (int*) statep->reg_a1;    //prendiamo l'indirizzo del semaforo
-    (*semadd)--;    //decrementiamo
-    if ((*semadd) < 0)    //bisogna bloccarlo sul semaforo
-    {
-        copyState(statep, &(currentProcess->p_s));
-        insertBlocked(semadd, currentProcess);   //blocchiamo il processo
-        scheduler();    //chiamiamo lo scheduler
+    (*semadd)--;
+    if(*semadd < 0){
+        //Saves the current state of things and then block it, so when it restarts, it restarts from here.
+        currentProcess->p_s = *EXCEPTION_STATE;
+        insertBlocked(semadd, currentProcess);
+        currentProcess = NULL;
+        scheduler();
     }
-    LDST(statep);   //curr proc non e' stato bloccato
 }
 
-void verhogen(state_t *statep)
+pcb_t* verhogen(state_t *statep)
 {
     int *semadd = (int*) statep->reg_a1;    //prendiamo l'indirizzo del semaforo
-    (*semadd)++;    //incrementiamo
-    if ((*semadd) <= 0)  //ci sono processi bloccati
-    {
-        pcb_PTR ready_p = removeBlocked(semadd);
-        if (ready_p != NULL)
-        {
-            insertProcQ(&ready_q, ready_p);    //inseriamo il primo processo bloccato nella ready queue
-        }
+    (*semadd)++;
+    pcb_t* tmp = NULL;
+    if(*semadd <= 0){
+        tmp = removeBlocked(semadd);
+        if (tmp != NULL)
+			insertProcQ(&readyQueue, tmp);
     }
-    LDST(statep);
+    // TODO controla return and LDST
+    //LDST(statep);
 }
 
 void waitForIO(state_t *statep)
@@ -162,54 +128,96 @@ void waitForIO(state_t *statep)
     int line = statep->reg_a1;  //preleviamo la line dal registro a1
     int device = statep->reg_a2; //preleviamo il device dal registro a2
     int read = statep->reg_a3;  //preleviamo se e' read da terminale da a3
+    
+    copyState(statep, &(currentProcess->p_s));   //copiamo lo stato
+    softBlockCount++; //aumentiamo i soft blocked
+
     if (line < DISKINT || line > TERMINT)   //fuori dal range delle linee
-    {
         terminateProcess(); //terminiamo il processo
-    }
-    else
-    {
-        int index = getDeviceSemaphoreIndex(line, device, read);  //calcolo indice semaforo
-        int *sem = &(dev_sem[index]);   //prendiamo l'indirizzo di tale semaforo
-        (*sem)--;   //decrementiamo il semaforo
-        insertBlocked(sem, currentProcess);  //blocchiamo il processo
-        sb_count++; //aumentiamo i soft blocked
-        copyState(statep, &(currentProcess->p_s));   //copiamo lo stato
-        scheduler();    //scheduler
-    }
+
+    int index = getDeviceSemaphoreIndex(line, device, read);  //calcolo indice semaforo
+    int *sem = &(semaphoreList[index]);   //prendiamo l'indirizzo di tale semaforo
+    (*sem)--;   //decrementiamo il semaforo
+    insertBlocked(sem, currentProcess);  //blocchiamo il processo
+    scheduler();    //scheduler
 }
 
 void getCpuTime(state_t *statep) //TODO da controllare se è necessario aggiornare qui p_time
 {
     cpu_t currTime;
     STCK(currTime); //tempo attuale
-    currentProcess->p_time += (currTime - startTod); //aggiorno il tempo
+    currentProcess->p_time += (currTime - startTimeSlice); //aggiorno il tempo
     statep->reg_v0 = currentProcess->p_time; //preparo il regitro di ritorno
-    STCK(startTod); //faccio ripartire il "cronometro"
-    LDST(statep);
+    STCK(startTimeSlice); //faccio ripartire il "cronometro"
 }
 
 void waitForClock(state_t *statep)
 {
-    int *sem = &(dev_sem[SEM_NUM - 1]);   //l'ultimo semaforo e' dell'interval timer
-    (*sem)--;
-    sb_count++;
-    insertBlocked(sem, currentProcess);
-    copyState(statep, &(currentProcess->p_s));
-    scheduler();
+    softBlockCount++;
+    passeren(&swiSemaphore);
 
 }
 
 void getSupportData(state_t *statep)
 {
-    support_t *sus;
-    if (currentProcess->p_supportStruct != NULL)
-    {
-        sus = currentProcess->p_supportStruct;
+    EXCEPTION_STATE->reg_v0 = currentProcess->p_supportStruct;
+}
+
+void sysHandler(){
+
+    //Reads the id of the syscall.
+    volatile unsigned sysdnum = EXCEPTION_STATE->reg_a0;
+
+    volatile unsigned arg1 = EXCEPTION_STATE->reg_a1;
+    volatile unsigned arg2 = EXCEPTION_STATE->reg_a2;
+    volatile unsigned arg3 = EXCEPTION_STATE->reg_a3;
+
+    //Checks if syscall is valid.
+    if(sysdnum >= 1 && sysdnum <= 8){
+
+        //If it's beetween 1 and 8 it must be on kernel mode or sn exception is raised.
+        if(CHECK_USERMODE(EXCEPTION_STATE->status)){
+            EXCEPTION_STATE->cause &= ~GETEXECCODE;
+            EXCEPTION_STATE->cause |= EXC_RI << CAUSESHIFT;
+            generalTrapHandler();
+        }
+        else{
+            EXCEPTION_STATE->pc_epc += WORDLEN;
+            switch(sysdnum){
+                case CREATEPROCESS:
+                    createProcess(arg1, arg2);
+                    break;
+                case TERMPROCESS:
+                    terminateProcess();
+                    break;
+                case PASSEREN:
+                    passeren(EXCEPTION_STATE);
+                    break;
+                case VERHOGEN:
+                    verhogen(EXCEPTION_STATE);
+                    break;
+                case IOWAIT:
+                    waitForIO(EXCEPTION_STATE);
+                    break;
+                case GETTIME:
+                    getCpuTime(EXCEPTION_STATE);
+                    break;
+                case CLOCKWAIT:
+                    waitForClock(EXCEPTION_STATE);
+                    break;
+                case GETSUPPORTPTR:
+                    getSupportData(EXCEPTION_STATE);
+                    break;
+                    /*syscall sconosciuta*/
+                default:
+                    terminateProcess();
+                    break;
+            }
+            if(currentProcess != NULL)
+                LDST(EXCEPTION_STATE);
+            else scheduler();
+        }
     }
-    else
-    {
-        sus = NULL;
-    }   
-    statep->reg_v0 = (memaddr) sus;
-    LDST(statep);
+    //If the syscall wasn't from the previous 8 raises a trap exception.
+    else generalTrapHandler();
 }

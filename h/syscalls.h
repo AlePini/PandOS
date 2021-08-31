@@ -16,7 +16,7 @@ int getDeviceSemaphoreIndex(int line, int device, int read);
 
 /*Questa system call crea un nuovo processo come
 figlio del chiamante.*/
-void createProcess(state_t *statep);
+void createProcess(state_t* state, support_t* supportStruct);
 
 /*Questa system call termina un processo insieme
 alla sua progenie*/
@@ -26,7 +26,7 @@ void terminateProcess();
 void passeren(state_t *statep);
 
 /*Esegue una V sul semaforo passato per argomento*/
-void verhogen(state_t *statep);
+pcb_t* verhogen(state_t *statep);
 
 /*Mette in pausa il processo chiamante fino al termine di
 un I/O sul dispositivo identificato da a1 e a2.*/
@@ -43,5 +43,7 @@ void waitForClock(state_t *statep);
 /*Restituisce un puntatore alla struttura di supporto del
 processo corrente*/
 void getSupportData(state_t *statep);
+
+void sysHandler();
 
 #endif

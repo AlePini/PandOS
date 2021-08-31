@@ -6,11 +6,12 @@
 #include <scheduler.h>
 
 /*Dichiarazione variabii globali*/
-int p_count;          //process count
-int sb_count;         //soft-block count
-pcb_PTR ready_q;      //ready queue
+unsigned int processCount;          //process count
+unsigned int softBlockCount;         //soft-block count
+pcb_PTR readyQueue;      //ready queue
 pcb_PTR currentProcess;    //current process
-int dev_sem[SEM_NUM]; //device semaphores
+int semaphoreList[SEM_NUM]; //device semaphores
+int swiSemaphore;
 
 /*Funzioni extern*/
 extern void exceptionHandler();
@@ -21,55 +22,44 @@ extern void copyState();
 int main()
 {
 
-    /*Popolamento passup vector*/
-    passupvector_t *pu_vec = (passupvector_t*) PASSUPVECTOR;
-    pu_vec->tlb_refill_handler = (memaddr) uTLB_RefillHandler;
-    pu_vec->tlb_refill_stackPtr = (memaddr) KERNELSTACK;
-    pu_vec->exception_handler = (memaddr) exceptionHandler;
-    pu_vec->exception_stackPtr = (memaddr) KERNELSTACK;
-    
-    /*inizializzazione strutture dati fase 1*/
+    //Initialize data structure level 2.
     initPcbs();
     initASL();
 
-    /*init variabili globali*/
-    p_count = 0;
-    sb_count = 0;
-    ready_q = mkEmptyProcQ();
+    //Populates the passup vector.
+    passupvector_t* passup = (passupvector_t*)PASSUPVECTOR;
+    passup->tlb_refill_handler = (memaddr) &uTLB_RefillHandler;
+    passup->tlb_refill_stackPtr = (memaddr) KERNELSTACK;
+    passup->exception_handler = (memaddr) exceptionHandler;
+    passup->exception_stackPtr = (memaddr) KERNELSTACK;
+
+    //Initializes global variables.
+    readyQueue = mkEmptyProcQ();
     currentProcess = NULL;
-    for(unsigned int i = 0; i < SEM_NUM; i++)
-    {
-        dev_sem[i] = 0;
+    processCount = 0;
+    softBlockCount = 0;
+    swiSemaphore = 0;
+    for (int i=0; i<DEVICE_NUMBER; i++){
+        semaphoreList[i] = 0;
     }
 
-    /*Load dell'Interval Timer*/
-    LDIT(100000);
+    //Setup del system-wide timer.
+    LDIT(SWTIMER);
 
-    /*Inizializzazione processo*/
-    pcb_PTR proc = allocPcb();
-    p_count++;
-    
-    /*inizializzazione stato del primo processo*/
-    state_t p1state;
-    STST(&p1state);
-    
-    /*inizializzazione stack pointer a ramtop*/
-    RAMTOP(p1state.reg_sp);
+    //Creation of first process.
+    pcb_t* firstProcess = allocPcb();
+    processCount++;
 
-    /*inizializzazione pc all'indirizzo della funzione test*/
-    p1state.pc_epc = (memaddr) test;
-    p1state.reg_t9 = (memaddr) test;
+    //Setup of status.
+    firstProcess->p_s.status = ALLOFF | TEBITON | IEPON | IMON;
+    //SP is set to RAMTOP.
+    RAMTOP(firstProcess->p_s.reg_sp);
+    //Program Counter set to test address.
+    firstProcess->p_s.pc_epc = (memaddr) test;
+    firstProcess->p_s.reg_t9 = (memaddr) test;
+    insertProcQ(&readyQueue, firstProcess);
 
-    /*Attiviamo interrupt, interrupt mask, timer e kernel mode*/
-    p1state.status = ALLOFF | IEPON | IMON | TEBITON;
-
-    /*Copia lo stato nel campo state del processo*/
-    copyState(&p1state, &(proc->p_s));
-
-    /*Inserisce il processo nella ready queue*/
-    insertProcQ(&ready_q, proc);
-
-    /*Chiama lo scheduler*/
+    //Call of the scheduler.
     scheduler();
 
     return 0;
