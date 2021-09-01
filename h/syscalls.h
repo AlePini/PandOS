@@ -22,10 +22,10 @@ void sysHandler();
 /**
  * @brief SYS1: creates a new process with the state and the support structure passed as parameters.
  * Returns an exit code who specifies if the operation was completed succesfully.
- * 
+ *
  * @param statep State of the new process.
  * @param supportp Support structure of the new process.
- * 
+ *
  */
 void createProcess(state_t * statep, support_t * supportp);
 
@@ -36,14 +36,14 @@ void terminateProcess();
 
 /**
  * @brief SYS3 (P): Does a P operation on the semaphore passed as parameter.
- * 
+ *
  * @param semAdd Pointer to the semaphore to perform the P on.
  */
 void passeren(int *semAdd);
 
 /**
  * @brief SYS4 (V): Does a V operation on the semaphore passed as parameter.
- * 
+ *
  * @param semAdd Pointer to the semaphore to perform the V on.
  * @return The pointer to the PCB that was unblocked from the V, otherwise returns NULL.
  */
@@ -52,7 +52,7 @@ pcb_t* verhogen(int *semAdd);
 /**
  * @brief SYS5: waits for an I/O operation. It blocks the current process on a (sub)device
  * semaphore specified by the parameteres.
- * 
+ *
  * @param intlNo Interrupt line.
  * @param dNum  Device number of that line.
  * @param waitForTermRead Specifies if the terminal reads or writes.
@@ -81,11 +81,11 @@ void getSupportStruct();
 
 /**
  * @brief Funzione che calcola l'indice del semaforo del device nell'array
- * 
- * @param line 
- * @param device 
- * @param read 
- * @return int 
+ *
+ * @param line
+ * @param device
+ * @param read
+ * @return int
  */
 int getDeviceSemaphoreIndex(int line, int device, int read);
 
