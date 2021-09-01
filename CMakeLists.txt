@@ -49,8 +49,11 @@ set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_LINKER> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <O
 
 set(PROJECT_INCLUDE_DIRS ${UMPS3_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/h)
 
-add_custom_target(clean-all COMMAND rm -rf ${PROJECT_SOURCE_DIR}/bin ${PROJECT_SOURCE_DIR}/lib ${PROJECT_SOURCE_DIR}/build/*)
-add_custom_target(clean-output COMMAND rm -rf ${PROJECT_SOURCE_DIR}/bin ${PROJECT_SOURCE_DIR}/lib)
+set(CLEAN_DIRS ${PROJECT_SOURCE_DIR}/bin ${PROJECT_SOURCE_DIR}/lib)
+
+add_custom_target(clean-all COMMAND rm -rf ${CLEAN_DIRS} ${PROJECT_SOURCE_DIR}/build/*)
+add_custom_target(clean-output COMMAND rm -rf ${CLEAN_DIRS})
+add_custom_target(clean-devices COMMAND cd ${PROJECT_SOURCE_DIR}/testers/devices/ && make clean)
 
 add_subdirectory(phase1)
 add_subdirectory(phase2)

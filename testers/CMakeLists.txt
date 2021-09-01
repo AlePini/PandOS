@@ -31,6 +31,8 @@ set(INC_PHASE3 ${INC_PHASE2} ${PROJECT_SOURCE_DIR}/phase3)
 target_include_directories(${PHASE3} PUBLIC ${INC_PHASE3})
 target_link_libraries(${PHASE3} ${LIB_PHASE3})
 
+# Compile Devices
+add_custom_target(devices ALL cd ${CMAKE_CURRENT_SOURCE_DIR}/devices && make)
 
 # Kernels
 add_custom_command(TARGET ${PHASE1} POST_BUILD COMMAND umps3-elf2umps -k ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PHASE1})
