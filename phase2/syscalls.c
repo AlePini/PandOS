@@ -1,12 +1,18 @@
 #include <syscalls.h>
 #include <umps3/umps/cp0.h>
-#include <umps3/umps/libumps.h>
 #include <asl.h>
 #include <pcb.h>
-#include <exceptions.h>
 #include <initial.h>
 #include <scheduler.h>
 
+
+extern cpu_t startTimeSlice;
+extern cpu_t endTimeSlice;
+
+
+int getDeviceSemaphoreIndex(int line, int device, int read){
+    return ((line - 3) * 8) + (line == 7 ? (read * 8) + device : device);
+}
 
 void createProcess(state_t* state, support_t* supportStruct){
     //Creates the new process and assigns the state and the support struct.
@@ -64,23 +70,22 @@ void terminateProcess(){
 	scheduler();
 }
 
-void passeren(int* semaddr){
-    (*semaddr)--;
-    if(*semaddr < 0){
-        currentProcess->p_time += getTimeSlice();
+void passeren(int* semAdd){
+    (*semAdd)--;
+    if(*semAdd < 0){
         //Saves the current state of things and then block it, so when it restarts, it restarts from here.
         currentProcess->p_s = *EXCEPTION_STATE;
-        insertBlocked(semaddr, currentProcess);
+        insertBlocked(semAdd, currentProcess);
         currentProcess = NULL;
         scheduler();
     }
 }
 
-pcb_t* verhogen(int* semaddr){
-    (*semaddr)++;
+pcb_t* verhogen(int* semAdd){
+    (*semAdd)++;
     pcb_t* tmp = NULL;
-    if(*semaddr <= 0){
-        tmp = removeBlocked(semaddr);
+    if(*semAdd <= 0){
+        tmp = removeBlocked(semAdd);
         if (tmp != NULL)
 			insertProcQ(&readyQueue, tmp);
     }
@@ -97,14 +102,19 @@ void waitIO(int intlNo, int dnum, int waitForTermRead){
 
     //Takes the line of interrupt (mapping them from 0 to 4) and multiply it by 8.
     //If it's a terminal line checks if it reads or transmits.
-    int semaphoreIndex = INSTANCES_NUMBER*(intlNo+waitForTermRead-3) + dnum;
-
-    passeren(&semaphoreList[semaphoreIndex]);
+    int semaphoreIndex = getDeviceSemaphoreIndex(intlNo,dnum, waitForTermRead);
+    int *sem = &(semaphoreList[semaphoreIndex]);
+    (*sem)--;
+    insertBlocked(sem, currentProcess);
+    scheduler();
 }
 
 void getCpuTime(){
-    unsigned time = currentProcess->p_time + getTimeSlice();
-    EXCEPTION_STATE->reg_v0 = time;
+    cpu_t time;
+    STCK(time);
+    currentProcess->p_time += (time - startTimeSlice);
+    EXCEPTION_STATE->reg_v0 = currentProcess->p_time;
+    STCK(startTimeSlice);
 }
 
 void waitForClock(){
@@ -121,24 +131,21 @@ void sysHandler(){
     //Reads the id of the syscall.
     volatile unsigned sysdnum = EXCEPTION_STATE->reg_a0;
 
-    //Recovery of the state of the exception.
-    state_t state = *EXCEPTION_STATE;
-
-    //Retrieve the informations of the syscall from the registers.
-    volatile unsigned arg1 = state.reg_a1;
-    volatile unsigned arg2 = state.reg_a2;
-    volatile unsigned arg3 = state.reg_a3;
+    volatile unsigned arg1 = EXCEPTION_STATE->reg_a1;
+    volatile unsigned arg2 = EXCEPTION_STATE->reg_a2;
+    volatile unsigned arg3 = EXCEPTION_STATE->reg_a3;
 
     //Checks if syscall is valid.
     if(sysdnum >= 1 && sysdnum <= 8){
 
         //If it's beetween 1 and 8 it must be on kernel mode or sn exception is raised.
-        if(CHECK_USERMODE(state.status)){
+        if(CHECK_USERMODE(EXCEPTION_STATE->status)){
             EXCEPTION_STATE->cause &= ~GETEXECCODE;
             EXCEPTION_STATE->cause |= EXC_RI << CAUSESHIFT;
             generalTrapHandler();
         }
         else{
+            //Increment the program counter by 4 to avoid loops.
             EXCEPTION_STATE->pc_epc += WORDLEN;
             switch(sysdnum){
                 case CREATEPROCESS:
@@ -165,6 +172,7 @@ void sysHandler(){
                 case GETSUPPORTPTR:
                     getSupportStruct();
                     break;
+                /*syscall sconosciuta*/
                 default:
                     terminateProcess();
                     break;

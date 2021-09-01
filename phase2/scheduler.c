@@ -7,7 +7,14 @@
 cpu_t startTimeSlice,endTimeSlice = 0; 
 
 void scheduler(){
+    //If there's an active process puts it in the queue.
+    if(currentProcess != NULL){
+        //insertProcQ(&readyQueue, currentProcess);
+        STCK(endTimeSlice);
+        currentProcess->p_time += (endTimeSlice - startTimeSlice);
+    }
     if(emptyProcQ(readyQueue)){
+        currentProcess = NULL;
         if(processCount == 0)   //If there's no more process shuts down.
             HALT();
         if(processCount>0 && softBlockCount>0){    //Waits if there's only waiting processes.
@@ -15,7 +22,7 @@ void scheduler(){
             unsigned oldStatus = getSTATUS();
             setTIMER(PLTBLOCK);
             //Enables the interrupts.
-            setSTATUS(oldStatus | IMON | IECON);
+            setSTATUS(ALLOFF | IMON | IECON);
             //Waits for an interrupt.
             WAIT();
             //Restores the previous status.
@@ -23,23 +30,14 @@ void scheduler(){
         }
         if(processCount>0 && softBlockCount==0) //If there's no blocked process but the queue is empty PANIC.
             PANIC();
+    } else {
+        //Replace the current process.
+        currentProcess = removeProcQ(&readyQueue);
+        //Reset the timer
+        setTIMER(PLTTIMER);
+        //Starts to count the time of this process.
+        STCK(startTimeSlice);
+        //Loads the new state.
+        LDST(&(currentProcess->p_s));
     }
-    //If there's an active process puts it in the queue.
-    if(currentProcess != NULL){
-        insertProcQ(&readyQueue, currentProcess);
-        currentProcess->p_time += getTimeSlice();
-    }
-    //Replace the current process.
-    currentProcess = removeProcQ(&readyQueue);
-    //Reset the timer
-    setTIMER(PLTTIMER);
-    //Starts to count the time of this process.
-    STCK(startTimeSlice);
-    //Loads the new state.
-    LDST(&(currentProcess->p_s));
-}
-
-cpu_t getTimeSlice(){
-    STCK(endTimeSlice);
-    return endTimeSlice - startTimeSlice;
 }

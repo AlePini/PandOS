@@ -15,7 +15,7 @@
  * @param index 0 (PGFAULTEXCEPT) or 1 (GENERALEXCEPT), indicating
  * the type of the exception to be handled
  */
-HIDDEN void passUpOrDie(unsigned index){
+HIDDEN void passUpOrDie(unsigned int index){
 
     support_t *support = currentProcess->p_supportStruct;
 
@@ -30,23 +30,6 @@ HIDDEN void passUpOrDie(unsigned index){
         terminateProcess();
 }
 
-/**
- * @brief this function returns what type of exception
- * is raised by checking the BIOSDATAPAGE.
- * 
- * @return the type of exception among the possible four.
- */
-HIDDEN int exceptionType(){
-    state_t *exceptionState = EXCEPTION_STATE;
-    unsigned int exType = (exceptionState->cause & GETEXECCODE) >> CAUSESHIFT;
-    if(exType == 0) return IOINTERRUPTS;
-    else if(exType == 8) return SYSEXCEPTION;
-    else if(exType>=1 && exType<=3) return TLBTRAP;
-    else if((exType>=4 && exType <=7) || (exType >= 9 && exType <= 12))
-        return GENERAL;
-    else return ERROR_TYPE;
-}
-
 void TLBExcHandler(){
 	passUpOrDie(PGFAULTEXCEPT);
 }
@@ -56,25 +39,23 @@ void generalTrapHandler(){
 }
 
 void exceptionHandler(){
-    //Increment the program counter by 4 to avoid loops.
-    EXCEPTION_STATE->pc_epc += WORDLEN;
-    int type = exceptionType();
+    int type = (EXCEPTION_STATE->cause & GETEXECCODE) >> CAUSESHIFT;
     switch (type){
         //Interrupts.
         case IOINTERRUPTS:
             interruptHandler(EXCEPTION_STATE);
             break;
-        //Syscalls.
-        case SYSEXCEPTION:
-            sysHandler();
-            break;
         //TLB exceptions.
-        case TLBTRAP:
+        case TLBMOD ... TLBINVLDS:
             TLBExcHandler();
             break;
         //General trap exceptions.
-         case GENERAL:
+         case 4 ... 7: case 9 ... 12:
             generalTrapHandler();
+            break;
+        //Syscalls.
+        case SYSEXCEPTION:
+            sysHandler();
             break;
         default:
             PANIC();

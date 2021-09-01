@@ -77,4 +77,16 @@ void waitForClock();
  */
 void getSupportStruct();
 
+/* EXTRA */
+
+/**
+ * @brief Funzione che calcola l'indice del semaforo del device nell'array
+ * 
+ * @param line 
+ * @param device 
+ * @param read 
+ * @return int 
+ */
+int getDeviceSemaphoreIndex(int line, int device, int read);
+
 #endif

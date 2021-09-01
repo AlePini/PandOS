@@ -47,11 +47,6 @@
  */
 #define EXCEPTION_STATE ((state_t *) BIOSDATAPAGE)
 
-//Types of exception
-#define ERROR_TYPE -1
-#define TLBTRAP 2
-#define GENERAL 4
-
 /**
  * @brief Large constant to block the PLT timer
  */
@@ -78,7 +73,7 @@
 #define DON 1<<10
 #define SYS_EX 0
 #define PROGRAM__EX 1
-#define SUPP_SEM_NUMBER 6
+#define SEMNUM 48
 
 /* Hardware & software constants */
 #define PAGESIZE 4096 /* page size in bytes	*/
