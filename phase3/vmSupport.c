@@ -70,16 +70,6 @@ int replacementAlgorithm() {
 }
 
 void updateTLB(pteEntry_t *newEntry){
-
-    // // Check if the new TLB entry is cached in the current TLB
-    // setENTRYHI(newEntry->pte_entryHI);
-    // TLBP();
-
-    // if ((getINDEX() & PRESENTFLAG) == 0) {
-    //     // Update the TLB
-    //     setENTRYLO(newEntry->pte_entryLO);
-    //     TLBWI();
-    // }
     TLBCLR();
 }
 
