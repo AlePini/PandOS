@@ -85,9 +85,8 @@ void programTrapExceptionHandler(support_t *support) {
 
 void terminate(support_t *support){
 
-    //TODO: quando andrà checkare se va bene anche support->sup_asid;
     //Mark as unused the entry
-    clearSwap(currentProcess.p_supportStruct->sup_asid);
+    clearSwap(support->sup_asid);
 
     //Get the device number
     int deviceNumber = GET_DEVICE_NUMBER(support);
@@ -108,8 +107,6 @@ void getTOD(support_t *support){
     STCK(support->sup_exceptState[GENERALEXCEPT].reg_v0);
 }
 
-//TODO: quando andrà provare a rimettere ADDRESSINRANGE su tutto
-
 void writePrinter(char* string, int len, support_t* support){
 
     int deviceNumber = GET_DEVICE_NUMBER(support);
@@ -119,8 +116,8 @@ void writePrinter(char* string, int len, support_t* support){
 
     // Check if the address and the length are valid
     bool stringSize = (len >= 0 && len <= MAXSTRLENG);
-    //if(ADDRESS_IN_RANGE(string, string+len) && stringSize) {
-    if((int)string >= KUSEG && stringSize) {
+    if(ADDRESS_IN_RANGE(string, string+len) && stringSize) {
+    //if((int)string >= KUSEG && stringSize) {
 
         SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[semNum], 0, 0);
 
@@ -159,7 +156,8 @@ void writeTerminal(char *string, int len, support_t* support){
 
     // Check if the address and the length are valid
     bool stringSize = len >= 0 && len <= MAXSTRLENG;
-    if((int)string >= KUSEG && stringSize) {
+    if(ADDRESS_IN_RANGE(string, string+len) && stringSize) {
+    //if((int)string >= KUSEG && stringSize) {
         //Get the mutex on the semaphore
         SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[semNum], 0, 0);
 

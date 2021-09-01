@@ -32,7 +32,6 @@ SEMAPHORE swapPoolSemaphore;
 
 extern pcb_t* currentProcess;
 extern int deviceSemaphores[SEMNUM];
-extern SEMAPHORE masterSemaphore;
 extern void generalExceptionHandler();
 extern int getDeviceSemaphoreIndex(int line, int device, int read);
 
@@ -71,17 +70,15 @@ int replacementAlgorithm() {
 
 void updateTLB(pteEntry_t *newEntry){
 
-    //TODO: scommenta e controlla se va
-    // // Check if the new TLB entry is cached in the current TLB
-    // setENTRYHI(newEntry->pte_entryHI);
-    // TLBP();
+    // Check if the new TLB entry is cached in the current TLB
+    setENTRYHI(newEntry->pte_entryHI);
+    TLBP();
 
-    // if ((getINDEX() & PRESENTFLAG) == 0) {
-    //     // Update the TLB
-    //     setENTRYLO(newEntry->pte_entryLO);
-    //     TLBWI();
-    // }
-    TLBCLR();
+    if ((getINDEX() & PRESENTFLAG) == 0) {
+        // Update the TLB
+        setENTRYLO(newEntry->pte_entryLO);
+        TLBWI();
+    }
 }
 
 void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int command, support_t *support) {
@@ -202,9 +199,8 @@ void uTLB_RefillHandler() {
     setENTRYLO(newEntry->pte_entryLO);
     TLBWR();
 
-    //TODO: quando andrà provare a scommentare l'if
-    // if (currentProcess == NULL)
-	// 	scheduler();
-	// else
+    if (currentProcess == NULL)
+		scheduler();
+	else
 	LDST(EXCEPTION_STATE);
 }
