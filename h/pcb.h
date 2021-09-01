@@ -19,14 +19,6 @@
  *****************************************/
 
 /**
- * @brief Resets all the values of a pcb pointer to NULL.
- *
- * @param p The pointer to the PCB that has to be resetted.
- * @return The pointer to the pcb.
- */
-HIDDEN pcb_t* resetPcb(pcb_t* p);
-
-/**
  * @brief Inserts the element pointed by p onto the pcbFree list.
  *
  * @param p Pointer to the pcb that has to be put in the pcbFree list.
@@ -99,14 +91,6 @@ pcb_t *outProcQ(pcb_t **tp, pcb_t *p);
 * Definitions of Process Tree functions
 *
 ****************************************/
-
-/**
- * @brief This funcion takes as input a pointer to a PCB who has
- * to be removed from his tree.
- * @param p The pcb pointer that has to be removed from his tree
- * @return the pointer to the PCB whose fields have been set to NULL
- */
-HIDDEN pcb_t* trim(pcb_t *p);
 
 /**
  * @brief Inspects if the PCB pointed by p has a child.

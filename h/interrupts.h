@@ -15,6 +15,11 @@
 #define CAUSE_IP_GET(cause,line) (cause & CAUSE_IP_MASK) & CAUSE_IP(line)
 
 /**
+ * @brief Load state if current process is not NULL, otherwise call scheduler.
+ */
+void returnControl();
+
+/**
  * @brief Handler for the interrupts. It gets called by the exception handler.
  */
 void interruptHandler();

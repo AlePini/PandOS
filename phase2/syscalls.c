@@ -1,7 +1,9 @@
 #include <syscalls.h>
 #include <umps3/umps/cp0.h>
+#include <umps3/umps/libumps.h>
 #include <asl.h>
 #include <pcb.h>
+#include <exceptions.h>
 #include <initial.h>
 #include <scheduler.h>
 
@@ -123,7 +125,7 @@ void waitForClock(){
 }
 
 void getSupportStruct(){
-    EXCEPTION_STATE->reg_v0 = currentProcess->p_supportStruct;
+    EXCEPTION_STATE->reg_v0 = (unsigned int) currentProcess->p_supportStruct;
 }
 
 void sysHandler(){

@@ -9,6 +9,13 @@
 HIDDEN pcb_t pcbFree_table[MAXPROC];
 HIDDEN pcb_t *pcbFree_h;
 
+
+/**
+ * @brief Resets all the values of a pcb pointer to NULL.
+ *
+ * @param p The pointer to the PCB that has to be resetted.
+ * @return The pointer to the pcb.
+ */
 HIDDEN pcb_t* resetPcb(pcb_t* p){
     // Clean PCB 
     p->p_next = NULL;
@@ -155,6 +162,12 @@ pcb_t *headProcQ(pcb_t *tp){
  *
  *******************************************/
 
+/**
+ * @brief This funcion takes as input a pointer to a PCB who has
+ * to be removed from his tree.
+ * @param p The pcb pointer that has to be removed from his tree
+ * @return the pointer to the PCB whose fields have been set to NULL
+ */
 HIDDEN pcb_t* trim(pcb_t *p){
     p->p_next_sib = NULL;
     p->p_prev_sib = NULL;

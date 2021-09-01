@@ -5,6 +5,7 @@
 #include <initProc.h>
 #include <sysSupport.h>
 #include <initial.h>
+#include <interrupts.h>
 #include <syscalls.h>
 
 #define HEADERPAGE 0
@@ -70,15 +71,16 @@ int replacementAlgorithm() {
 
 void updateTLB(pteEntry_t *newEntry){
 
-    // Check if the new TLB entry is cached in the current TLB
-    setENTRYHI(newEntry->pte_entryHI);
-    TLBP();
+    // // Check if the new TLB entry is cached in the current TLB
+    // setENTRYHI(newEntry->pte_entryHI);
+    // TLBP();
 
-    if ((getINDEX() & PRESENTFLAG) == 0) {
-        // Update the TLB
-        setENTRYLO(newEntry->pte_entryLO);
-        TLBWI();
-    }
+    // if ((getINDEX() & PRESENTFLAG) == 0) {
+    //     // Update the TLB
+    //     setENTRYLO(newEntry->pte_entryLO);
+    //     TLBWI();
+    // }
+    TLBCLR();
 }
 
 void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int command, support_t *support) {
@@ -199,8 +201,5 @@ void uTLB_RefillHandler() {
     setENTRYLO(newEntry->pte_entryLO);
     TLBWR();
 
-    if (currentProcess == NULL)
-		scheduler();
-	else
-	LDST(EXCEPTION_STATE);
+    returnControl();
 }

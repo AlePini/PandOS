@@ -14,6 +14,15 @@
 HIDDEN cpu_t startInterrupt, endInterrupt;
 HIDDEN volatile int status;
 
+
+void returnControl()
+{
+    if (currentProcess == NULL)
+        scheduler();
+    else
+        LDST(EXCEPTION_STATE);
+}
+
 /**
  * @brief Return the device number of the interrupt line.
  */
@@ -28,14 +37,6 @@ HIDDEN int getDeviceNr(unsigned bitmap)
             bitmap = bitmap >> 1;
     }
     return -1;
-}
-
-HIDDEN void returnControl()
-{
-    if (currentProcess == NULL)
-        scheduler();
-    else
-        LDST(EXCEPTION_STATE);
 }
 
 HIDDEN void exitDeviceInterrupt(int i)

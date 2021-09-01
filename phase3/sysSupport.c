@@ -1,9 +1,10 @@
 #include <sysSupport.h>
+#include <umps3/umps/arch.h>
+#include <umps3/umps/libumps.h>
+#include <pandos_const.h>
 #include <pandos_types.h>
 #include <memory.h>
-#include <syscall.h>
-#include <pandos_const.h>
-#include <umps3/umps/arch.h>
+#include <syscalls.h>
 
 #define printerSem 3
 #define writeTerminalSem 5
@@ -19,7 +20,7 @@
 #define UPROCSTACKSTART 0xBFFFF000
 #define EOL '\n'
 
-#define ADDRESS_IN_RANGE(S, E) (S >= ( (char *) KUSEG) && (E <= (char *) TEXT_AND_DATA_TOP) || S >= (char *) UPROCSTACKSTART) && (E <= (char *) USERSTACKTOP)
+#define ADDRESS_IN_RANGE(S, E) ( ( (S >= (char *) KUSEG) && (E <= (char *) TEXT_AND_DATA_TOP) ) || ( (S >= (char *) UPROCSTACKSTART) && (E <= (char *) USERSTACKTOP) ) )
 
 int deviceSemaphores[SEMNUM];
 extern int masterSemaphore;
@@ -88,9 +89,6 @@ void terminate(support_t *support){
     //Mark as unused the entry
     clearSwap(support->sup_asid);
 
-    //Get the device number
-    int deviceNumber = GET_DEVICE_NUMBER(support);
-
     //If the process hold the mutex on a semaphore release it
     for (int i = 0; i < SEMNUM; i++) {
         if (deviceSemaphores[i] == 0)
@@ -117,7 +115,6 @@ void writePrinter(char* string, int len, support_t* support){
     // Check if the address and the length are valid
     bool stringSize = (len >= 0 && len <= MAXSTRLENG);
     if(ADDRESS_IN_RANGE(string, string+len) && stringSize) {
-    //if((int)string >= KUSEG && stringSize) {
 
         SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[semNum], 0, 0);
 
@@ -157,7 +154,6 @@ void writeTerminal(char *string, int len, support_t* support){
     // Check if the address and the length are valid
     bool stringSize = len >= 0 && len <= MAXSTRLENG;
     if(ADDRESS_IN_RANGE(string, string+len) && stringSize) {
-    //if((int)string >= KUSEG && stringSize) {
         //Get the mutex on the semaphore
         SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[semNum], 0, 0);
 

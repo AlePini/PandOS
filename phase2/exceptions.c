@@ -6,6 +6,16 @@
 #include <scheduler.h>
 #include <syscalls.h>
 
+
+/**
+ * @brief this function handles both TLB Exceptions and all others types of trap
+ * What type of exception is handled depends on the input passed and
+ * the function behaviour is related to the current process support
+ * structure value, that can exist or be NULL.
+ *
+ * @param index 0 (PGFAULTEXCEPT) or 1 (GENERALEXCEPT), indicating
+ * the type of the exception to be handled
+ */
 HIDDEN void passUpOrDie(unsigned int index){
 
     support_t *support = currentProcess->p_supportStruct;

@@ -19,14 +19,6 @@
  *************************************************/
 
 /**
- * @brief   This function takes as input a semAdd and returns the last semaphore in semd_h whose
- * identifier is lower than the one passed as argument.
- * @param semAdd    Semaphore identifier
- * @return the last semaphore whose semaphore is lower than semAdd.
- */
-HIDDEN semd_t* findPrevSem(int* semAdd);
-
-/**
  * @brief Insert the pcb pointed to by p at the tail of the process queue associated
 with the semaphore whose physical address is semAdd and
 set the semaphore address of p to semAdd.
