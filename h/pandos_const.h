@@ -52,6 +52,10 @@
  */
 #define PLTBLOCK 100000000
 
+//Phase 3 constants
+#define ENABLEINTERRUPTS  setSTATUS(getSTATUS() | IECON);
+#define DISABLEINTERRUPTS setSTATUS(getSTATUS() & (~IECON));
+
 
 //Interrupts
 #define INT_PLT      1

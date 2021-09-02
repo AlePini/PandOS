@@ -6,16 +6,9 @@
 #include <memory.h>
 #include <syscalls.h>
 
-#define printerSem 3
-#define writeTerminalSem 5
-#define readTerminalSem 4
-#define GETTERMSTATUS 0xFF
 #define GET_DEVICE_NUMBER(S) S->sup_asid - 1
-#define TERMSHIFT 8
 #define PRINTCHR 2
 #define RECEIVECHAR 2
-#define DEVICE_READY 5
-#define KUSEG_START 0x80000000
 #define TEXT_AND_DATA_TOP 0x8001E000
 #define UPROCSTACKSTART 0xBFFFF000
 #define EOL '\n'
@@ -44,7 +37,7 @@ void generalExceptionHandler(){
     //Otherwise kill it
     else programTrapExceptionHandler(support);
 
-    
+
 }
 
 void syscallExceptionHandler(int sysNumber, support_t *support){
@@ -121,14 +114,12 @@ void writePrinter(char* string, int len, support_t* support){
         int status;
 
         for (int i = 0; i < len; i++) {
-                //Disabling interrupts
-                setSTATUS(getSTATUS() & (~IECON));
+                DISABLEINTERRUPTS;
 
                 devReg->dtp.data0 = ((unsigned int) *(string + i));
                 devReg->dtp.command = PRINTCHR;
                 status = SYSCALL(IOWAIT, PRNTINT, deviceNumber, FALSE);
-                //Re-enabling interrupts
-                setSTATUS(getSTATUS() | IECON);
+                ENABLEINTERRUPTS
                 if((status & TERM_STATUS_MASK) == OKCHARTRANS){
                     charsTransmitted++;
                 }else{
@@ -161,8 +152,7 @@ void writeTerminal(char *string, int len, support_t* support){
 
         for (int i = 0; i < len; i++) {
 
-                //Disabling interrupts
-                setSTATUS(getSTATUS() & (~IECON));
+                DISABLEINTERRUPTS;
 
                 //Transm_command is divided in 2 parts:
                 //we have to set both  the  command we are using and the exact character we are transmitting
@@ -170,8 +160,7 @@ void writeTerminal(char *string, int len, support_t* support){
                 //Get the status code
                 status = SYSCALL(IOWAIT, TERMINT, deviceNumber, FALSE);
 
-                //Re-enabling interrupts
-                setSTATUS(getSTATUS() | IECON);
+                ENABLEINTERRUPTS
                 if((status & TERM_STATUS_MASK) == OKCHARTRANS){
                     charsTransmitted++;
                 }else {
@@ -200,14 +189,12 @@ void readTerminal(char *string, support_t *support){
     /*se l'indirizzo e' fuori dalla memoria virtuale si uccide*/
     while ((int)string >= KUSEG && received != EOL){
 
-            //Disable interrupts
-            setSTATUS(getSTATUS() & (~IECON));
+            DISABLEINTERRUPTS;
 
             devReg->term.recv_command = RECEIVECHAR;
             int status = SYSCALL(IOWAIT, TERMINT, deviceNumber, TRUE);
 
-            //Renable interruputs
-            setSTATUS(getSTATUS() | IECON);
+            ENABLEINTERRUPTS
 
             // If status code is not correct break out the while.
             if((status & TERM_STATUS_MASK) == OKCHARTRANS){

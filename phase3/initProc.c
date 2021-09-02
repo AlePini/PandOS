@@ -24,14 +24,15 @@ void initializeSemaphores(){
 
 void initializeProcesses(){
 
-    for(int id=1; id<= UPROCMAX; id++){
+    //Preparing a common status to all processes
+    state_t pState;
+    pState.pc_epc = UPROCSTARTADDR;
+    pState.reg_t9 = UPROCSTARTADDR;
+    pState.reg_sp = USERSTACKTOP;
+    pState.status = IEPON | IMON | TEBITON | USERPON;
+    pState.entry_hi = (id << ASIDSHIFT);
 
-        state_t pState;
-        pState.pc_epc = UPROCSTARTADDR;
-        pState.reg_t9 = UPROCSTARTADDR;
-        pState.reg_sp = USERSTACKTOP;
-        pState.status = IEPON | IMON | TEBITON | USERPON;
-        pState.entry_hi = (id << ASIDSHIFT);
+    for(int id=1; id<= UPROCMAX; id++){
 
         //Stack pointer calculation
         memaddr ramtop;

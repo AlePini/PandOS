@@ -8,16 +8,8 @@
 #include <interrupts.h>
 #include <syscalls.h>
 
-#define HEADERPAGE 0
-#define HEADERTEXTSIZE 0x0014
-#define HEADERDATASIZE 0x0014
-
 #define POOLSTART (RAMSTART + (32 * PAGESIZE))
 #define PAGESHIFT 12
-#define FLASH 1
-#define PRINT 3
-#define TREAD 4
-#define TWRITE 5
 
 #define PFNSHIFT 12
 #define PFNMASK 0xFFFFF000
@@ -27,7 +19,6 @@
 #define GETPFN(T) ((T - POOLSTART) >> PFNSHIFT)
 #define SETPFN(TO, N) TO = (TO & ~PFNMASK) | ((N << PFNSHIFT) + POOLSTART)
 
-//Forse della roba va volatile
 swap_t swapTable[POOLSIZE];
 SEMAPHORE swapPoolSemaphore;
 
@@ -58,7 +49,7 @@ int replacementAlgorithm() {
     static int index = 0;
     int i = 0;
 
-    //Finchè li trovo pieni e non ho gia fatto un giro completo di tutti i frame
+    //I keep searchjing a free page, if I can't i select ther next in the list
     while((swapTable[(index + i) % POOLSIZE].sw_asid != -1) && (i < POOLSIZE))
         i++;
 
@@ -82,23 +73,21 @@ void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int c
     devreg_t* flashDevice = (devreg_t*) DEV_REG_ADDR(FLASHINT, deviceNumber);
     flashDevice->dtp.data0 = address;
 
-    // Disabling interrupt doesn't interfere with SYS5, since SYSCALLS aren't interrupts
-    setSTATUS(getSTATUS() & (~IECON));
+    DISABLEINTERRUPTS;
 
     flashDevice->dtp.command = command;
 
     int deviceStatus = SYSCALL(IOWAIT, FLASHINT, deviceNumber, FALSE);
 
-    setSTATUS(getSTATUS() | IECON);
+    ENABLEINTERRUPTS
 
     // Release the mutex
     SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[semNum], 0, 0);
 
     if (deviceStatus != 1) {
-        // Release the mutex on the swap pool semaphore
         SYSCALL(VERHOGEN, (memaddr) &swapPoolSemaphore, 0, 0);
 
-        //Raise a trap and kill it if something doesn't work
+        //If something didn't work create a trap and kill the process
         programTrapExceptionHandler(support);
     }
 }
@@ -116,38 +105,33 @@ void writeFlash(int deviceNumber, unsigned int blockIndex, unsigned int pageInde
 void pager(){
 
     support_t *support = (support_t *) SYSCALL(GETSUPPORTPTR, 0, 0, 0);
-    //Controllo la cause della tlb exception, se è una TLB-Modification genero una trap
+    //Chekc the cause of the exception, if it is a TLB-Modification I kill it
     if((support->sup_exceptState[PGFAULTEXCEPT].cause & GETEXECCODE) >> CAUSESHIFT == 1){
         generalExceptionHandler(support);
     }
 
     SYSCALL(PASSEREN, (memaddr) &swapPoolSemaphore, 0, 0);
 
-    //Get missing page number
+    //Get missing page number infos
     unsigned int pageNum = GETVPN(support->sup_exceptState[PGFAULTEXCEPT].entry_hi);;
     unsigned int id = support->sup_asid;
 
-    //Seleziono un frame con il replacement algorithm
     int i = replacementAlgorithm();
 
     //If it is occupied get its informations
     if(swapTable[i].sw_asid != -1){
-        //Numero pagina dell'occupante
         int occupiedPageNum = swapTable[i].sw_pageNo;
-        //ASID processo occupante
         int occupiedId = swapTable[i].sw_asid;
 
-        //Disables the interrupts.
-        setSTATUS(getSTATUS() & (~IECON));
+        DISABLEINTERRUPTS;
 
-        // Marco la entry come non valida
+        //Mark the entry as not valid
         pteEntry_t *occupiedEntry = swapTable[i].sw_pte;
         occupiedEntry->pte_entryLO &= ~VALIDON;
-        // Aggiorno il TLB se serve
         updateTLB(occupiedEntry);
 
         //Restores the previous status.
-        setSTATUS(getSTATUS() | IECON);
+        ENABLEINTERRUPTS
 
         // Update process x's backing store
         if(occupiedEntry->pte_entryLO & DIRTYON){
@@ -158,7 +142,7 @@ void pager(){
         // Read the contents from the flash device
         readFlash(id-1, pageNum, i, support);
 
-        setSTATUS(getSTATUS() & (~IECON));
+        DISABLEINTERRUPTS;
 
         swapTable[i].sw_asid = id;
         swapTable[i].sw_pageNo = pageNum;
@@ -172,7 +156,7 @@ void pager(){
         updateTLB(&(support->sup_privatePgTbl[i]));
 
         //Restores the previous status.
-        setSTATUS(getSTATUS() | IECON);
+        ENABLEINTERRUPTS
 
         SYSCALL(VERHOGEN, (memaddr) &swapPoolSemaphore, 0, 0);
 
