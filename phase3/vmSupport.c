@@ -49,7 +49,7 @@ int replacementAlgorithm() {
     static int index = 0;
     int i = 0;
 
-    //I keep searchjing a free page, if I can't i select ther next in the list
+    //I keep searching a free page, if there's none it selects the next in the list
     while((swapTable[(index + i) % POOLSIZE].sw_asid != -1) && (i < POOLSIZE))
         i++;
 

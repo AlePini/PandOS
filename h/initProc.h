@@ -8,6 +8,10 @@ void initSwapStructs();
 void initializeSemaphores();
 void initializeProcesses();
 void handleMasterSemaphore();
+
+/**
+ * @brief First function that will be called by the phase 2.
+ */
 void test();
 
 #endif
