@@ -52,11 +52,6 @@
  */
 #define PLTBLOCK 100000000
 
-//Phase 3 constants
-#define ENABLEINTERRUPTS  setSTATUS(getSTATUS() | IECON);
-#define DISABLEINTERRUPTS setSTATUS(getSTATUS() & (~IECON));
-
-
 //Interrupts
 #define INT_PLT      1
 #define INT_SWT      2
@@ -71,13 +66,17 @@
 #define TERM_STATUS_MASK 0xFF
 
 //Phase 3 defined constants
-#define SWAPPOOLSTART 0x2000.0000 + (32 * PAGESIZE)
-#define GON 1<<8
-#define VOFF 011111111;
-#define DON 1<<10
-#define SYS_EX 0
-#define PROGRAM__EX 1
 #define SEMNUM 48
+
+/**
+ * @brief Change the status enabling the interrupts
+ */
+#define ENABLEINTERRUPTS  setSTATUS(getSTATUS() | IECON);
+
+/**
+ * @brief Change the status disabling the interrupts
+ */
+#define DISABLEINTERRUPTS setSTATUS(getSTATUS() & (~IECON));
 
 /* Hardware & software constants */
 #define PAGESIZE 4096 /* page size in bytes	*/
@@ -243,6 +242,5 @@
 #define UPROCMAX 8
 #define POOLSIZE (UPROCMAX * 2)
 /* End of Mikeyg constants */
-
 
 #endif
