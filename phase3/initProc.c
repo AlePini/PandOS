@@ -30,10 +30,9 @@ void initializeProcesses(){
     pState.reg_t9 = UPROCSTARTADDR;
     pState.reg_sp = USERSTACKTOP;
     pState.status = IEPON | IMON | TEBITON | USERPON;
-    pState.entry_hi = (id << ASIDSHIFT);
 
     for(int id=1; id<= UPROCMAX; id++){
-
+        pState.entry_hi = (id << ASIDSHIFT);
         //Stack pointer calculation
         memaddr ramtop;
         RAMTOP(ramtop);
