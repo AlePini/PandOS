@@ -50,7 +50,7 @@
 /**
  * @brief Large constant to block the PLT timer
  */
-#define PLTBLOCK 100000000
+#define PLTBLOCK 0xFFFFFFFFUL * (* ((cpu_t *) TIMESCALEADDR))
 
 //Interrupts
 #define INT_PLT      1
