@@ -68,6 +68,10 @@
 //Phase 3 defined constants
 #define SEMNUM 48
 
+// Terminal costants
+#define PRINTCHR 2
+#define RECEIVECHAR 2
+
 /**
  * @brief Change the status enabling the interrupts
  */
@@ -81,7 +85,14 @@
 /* Hardware & software constants */
 #define PAGESIZE 4096 /* page size in bytes	*/
 #define WORDLEN  4    /* word size in bytes	*/
+#define EOL '\n'
+#define NOTUSED -1
 
+// ! MISSING
+/**
+ * @brief
+ */
+#define GETVPN(X) ((UPROCSTACKSTART <= X && X <= USERSTACKTOP) ?  (MAXPAGES-1) : ((X - VPNSTART) >> VPNSHIFT))
 
 /* timer, timescale, TOD-LO and other bus regs */
 #define RAMBASEADDR   0x10000000

@@ -1,36 +1,21 @@
+#include <vmSupport.h>
 #include <umps3/umps/arch.h>
 #include <umps3/umps/libumps.h>
 #include <pandos_const.h>
-#include <vmSupport.h>
-#include <initProc.h>
-#include <sysSupport.h>
 #include <initial.h>
 #include <interrupts.h>
 #include <syscalls.h>
-
-#define POOLSTART (RAMSTART + (32 * PAGESIZE))
-#define PAGESHIFT 12
-
-#define PFNSHIFT 12
-#define PFNMASK 0xFFFFF000
-
-#define NOTUSED -1
-#define GETVPN(X) ((UPROCSTACKSTART <= X && X <= USERSTACKTOP) ?  (MAXPAGES-1) : ((X - VPNSTART) >> VPNSHIFT))
-#define GETPFN(T) ((T - POOLSTART) >> PFNSHIFT)
-#define SETPFN(TO, N) TO = (TO & ~PFNMASK) | ((N << PFNSHIFT) + POOLSTART)
+#include <initProc.h>
+#include <sysSupport.h>
 
 swap_t swapTable[POOLSIZE];
 SEMAPHORE swapPoolSemaphore;
 
-extern pcb_t* currentProcess;
-extern int deviceSemaphores[SEMNUM];
-extern void generalExceptionHandler();
-extern int getDeviceSemaphoreIndex(int line, int device, int read);
 
 void initSwapStructs(){
     swapPoolSemaphore = 1;
     //Swap pool semaphore & Swap Table initialization
-    for(int i=0; i<POOLSIZE; i++){
+    for(int i = 0; i < POOLSIZE; i++){
         swapTable[i].sw_asid = NOTUSED;
     }
 
@@ -66,7 +51,7 @@ void updateTLB(pteEntry_t *newEntry){
 
 void executeFlashAction(int deviceNumber, unsigned int pageIndex, unsigned int command, support_t *support) {
 
-    memaddr address = (pageIndex * PAGESIZE) + POOLSTART;
+    memaddr address = (pageIndex * PAGESIZE) + FLASHPOOLSTART;
     int semNum = getDeviceSemaphoreIndex(FLASHINT, deviceNumber, 0);
     // Obtain the mutex on the device
     SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[semNum], 0, 0);
@@ -134,33 +119,32 @@ void pager(){
         ENABLEINTERRUPTS
 
         // Update process x's backing store
-        if(occupiedEntry->pte_entryLO & DIRTYON){
+        if(occupiedEntry->pte_entryLO & DIRTYON)
             writeFlash(occupiedId-1, occupiedPageNum, i, support);
-        }
     }
 
-        // Read the contents from the flash device
-        readFlash(id-1, pageNum, i, support);
+    // Read the contents from the flash device
+    readFlash(id-1, pageNum, i, support);
 
-        DISABLEINTERRUPTS;
+    DISABLEINTERRUPTS;
 
-        swapTable[i].sw_asid = id;
-        swapTable[i].sw_pageNo = pageNum;
-        swapTable[i].sw_pte = &(support->sup_privatePgTbl[pageNum]);
+    swapTable[i].sw_asid = id;
+    swapTable[i].sw_pageNo = pageNum;
+    swapTable[i].sw_pte = &(support->sup_privatePgTbl[pageNum]);
 
-        // Update the process' page table
-        unsigned int pageAddress = POOLSTART + (i * PAGESIZE);
-        support->sup_privatePgTbl[pageNum].pte_entryLO = pageAddress | VALIDON | DIRTYON;
+    // Update the process' page table
+    unsigned int pageAddress = FLASHPOOLSTART + (i * PAGESIZE);
+    support->sup_privatePgTbl[pageNum].pte_entryLO = pageAddress | VALIDON | DIRTYON;
 
-        // Update the TLB
-        updateTLB(&(support->sup_privatePgTbl[i]));
+    // Update the TLB
+    updateTLB(&(support->sup_privatePgTbl[i]));
 
-        //Restores the previous status.
-        ENABLEINTERRUPTS
+    //Restores the previous status.
+    ENABLEINTERRUPTS
 
-        SYSCALL(VERHOGEN, (memaddr) &swapPoolSemaphore, 0, 0);
+    SYSCALL(VERHOGEN, (memaddr) &swapPoolSemaphore, 0, 0);
 
-        LDST((state_t *) &(support->sup_exceptState[PGFAULTEXCEPT]));
+    LDST((state_t *) &(support->sup_exceptState[PGFAULTEXCEPT]));
 }
 
 

@@ -5,20 +5,10 @@
 #include <pandos_types.h>
 #include <memory.h>
 #include <syscalls.h>
-
-#define GET_DEVICE_NUMBER(S) S->sup_asid - 1
-#define PRINTCHR 2
-#define RECEIVECHAR 2
-#define TEXT_AND_DATA_TOP 0x8001E000
-#define UPROCSTACKSTART 0xBFFFF000
-#define EOL '\n'
-
-#define ADDRESS_IN_RANGE(S, E) ( ( (S >= (char *) KUSEG) && (E <= (char *) TEXT_AND_DATA_TOP) ) || ( (S >= (char *) UPROCSTACKSTART) && (E <= (char *) USERSTACKTOP) ) )
+#include <initProc.h>
+#include <vmSupport.h>
 
 int deviceSemaphores[SEMNUM];
-extern int masterSemaphore;
-extern void clearSwap();
-extern pcb_t currentProcess;
 
 
 void generalExceptionHandler(){
@@ -114,15 +104,17 @@ void writePrinter(char* string, int len, support_t* support){
         int status;
 
         for (int i = 0; i < len; i++) {
-                DISABLEINTERRUPTS;
 
-                devReg->dtp.data0 = ((unsigned int) *(string + i));
-                devReg->dtp.command = PRINTCHR;
-                status = SYSCALL(IOWAIT, PRNTINT, deviceNumber, FALSE);
-                ENABLEINTERRUPTS
-                if((status & TERM_STATUS_MASK) == OKCHARTRANS){
-                    charsTransmitted++;
-                }else{
+            DISABLEINTERRUPTS;
+
+            devReg->dtp.data0 = ((unsigned int) *(string + i));
+            devReg->dtp.command = PRINTCHR;
+            status = SYSCALL(IOWAIT, PRNTINT, deviceNumber, FALSE);
+            
+            ENABLEINTERRUPTS
+            if((status & TERM_STATUS_MASK) == OKCHARTRANS){
+                charsTransmitted++;
+            }else{
                 // Error: return the negative value of the status
                 charsTransmitted = -(status & TERM_STATUS_MASK);
                 break;
@@ -130,9 +122,8 @@ void writePrinter(char* string, int len, support_t* support){
         }
         SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[semNum], 0, 0);
         support->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
-        }
-
-    else terminate(support);
+    
+    } else terminate(support);
 }
 
 void writeTerminal(char *string, int len, support_t* support){
@@ -144,26 +135,26 @@ void writeTerminal(char *string, int len, support_t* support){
 
     // Check if the address and the length are valid
     bool stringSize = len >= 0 && len <= MAXSTRLENG;
-    if(ADDRESS_IN_RANGE(string, string+len) && stringSize) {
+    if (ADDRESS_IN_RANGE(string, string+len) && stringSize){
         //Get the mutex on the semaphore
         SYSCALL(PASSEREN, (memaddr) &deviceSemaphores[semNum], 0, 0);
 
         int status;
 
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < len; i++){
 
-                DISABLEINTERRUPTS;
+            DISABLEINTERRUPTS;
 
-                //Transm_command is divided in 2 parts:
-                //we have to set both  the  command we are using and the exact character we are transmitting
-                devReg->term.transm_command = (((unsigned int) *(string+i)) << BYTELENGTH | TRANSMITCHAR);    //Character + Command
-                //Get the status code
-                status = SYSCALL(IOWAIT, TERMINT, deviceNumber, FALSE);
+            //Transm_command is divided in 2 parts:
+            //we have to set both  the  command we are using and the exact character we are transmitting
+            devReg->term.transm_command = (((unsigned int) *(string+i)) << BYTELENGTH | TRANSMITCHAR);    //Character + Command
+            //Get the status code
+            status = SYSCALL(IOWAIT, TERMINT, deviceNumber, FALSE);
 
-                ENABLEINTERRUPTS
-                if((status & TERM_STATUS_MASK) == OKCHARTRANS){
-                    charsTransmitted++;
-                }else {
+            ENABLEINTERRUPTS
+            if ((status & TERM_STATUS_MASK) == OKCHARTRANS){
+                charsTransmitted++;
+            } else {
                 // Error: return the negative value of the status
                 charsTransmitted = -(status & TERM_STATUS_MASK);
                 break;
@@ -172,8 +163,8 @@ void writeTerminal(char *string, int len, support_t* support){
         SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[semNum], 0, 0);
         //Return the value and release the mutex on the semaphore
         support->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
-    }
-    else terminate(support);
+    
+    } else terminate(support);
 }
 
 void readTerminal(char *string, support_t *support){
@@ -189,26 +180,24 @@ void readTerminal(char *string, support_t *support){
     /*se l'indirizzo e' fuori dalla memoria virtuale si uccide*/
     while ((int)string >= KUSEG && received != EOL){
 
-            DISABLEINTERRUPTS;
+        DISABLEINTERRUPTS;
 
-            devReg->term.recv_command = RECEIVECHAR;
-            int status = SYSCALL(IOWAIT, TERMINT, deviceNumber, TRUE);
+        devReg->term.recv_command = RECEIVECHAR;
+        int status = SYSCALL(IOWAIT, TERMINT, deviceNumber, TRUE);
 
-            ENABLEINTERRUPTS
+        ENABLEINTERRUPTS
 
-            // If status code is not correct break out the while.
-            if((status & TERM_STATUS_MASK) == OKCHARTRANS){
-                received = (status >> BYTELENGTH);
-                if(received != EOL) {
-                    *string = received;
-                    string++;
-                    charsTransmitted++;
-                }
-            }else {
-                charsTransmitted = -(status & TERM_STATUS_MASK);
-                break;
-            }
+        // If status code is not correct break out the while.
+        if((status & TERM_STATUS_MASK) == OKCHARTRANS){
+            received = (status >> BYTELENGTH);
+            *string = received;
+            string++;
+            charsTransmitted++;
+        }else {
+            charsTransmitted = -(status & TERM_STATUS_MASK);
+            break;
         }
+    }
 
     SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[semNum], 0, 0);
 

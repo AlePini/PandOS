@@ -1,16 +1,13 @@
-/****************************************************************************
- *
- * DELTE THIS COMMENT WHEN YOU'RE DONE
- *
- * This module implements : 
- * [ ] TLB Exception handler
- * [x] local Swap Pool Semaphore mutual exclusion sem
- * [x] local Swap Pool Table - implemented in pandos_types (swap_t struct)
- * 
- ****************************************************************************/
-
 #ifndef VMSUPPORT_H
 #define VMSUPPORT_H
+
+/**
+ * @file    vmSupport
+ * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
+ * @brief   Implements TLB exception handler and functions for read/write flash devices.
+ * @version 0.3
+ * @date    2021-09-01
+ */
 
 #include <pandos_types.h>
 

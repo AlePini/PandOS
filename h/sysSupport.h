@@ -1,19 +1,21 @@
-/****************************************************************************
- *
- * DELTE THIS COMMENT WHEN YOU'RE DONE
- *
- * This module implements : 
- * [ ] General exceptions handler
- * [ ] SYSCALL exceptions handler
- * [ ] Program Trap exceptions handler
- *
- ****************************************************************************/
-
 #ifndef SYSSUPPORT_H
 #define SYSSUPPORT_H
 
+/**
+ * @file    SysSupport
+ * @author  Juri Fabbri, Alessandro Filippini, Filippo Bertozzi, Leonardo Giacomini
+ * @brief   Implements general, syscall and program trap handlers.
+ * @version 0.3
+ * @date    2021-09-01
+ */
+
 #include <pandos_types.h>
 
+#define TEXT_AND_DATA_TOP 0x8001E000
+#define ADDRESS_IN_RANGE(S, E) ( ( (S >= (char *) KUSEG) && (E <= (char *) TEXT_AND_DATA_TOP) ) || ( (S >= (char *) UPROCSTACKSTART) && (E <= (char *) USERSTACKTOP) ) )
+#define GET_DEVICE_NUMBER(S) S->sup_asid - 1
+
+extern int deviceSemaphores[SEMNUM];
 
 /**
  * @brief Handles the third level exceptions.

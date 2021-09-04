@@ -1,15 +1,11 @@
+#include <initProc.h>
 #include <umps3/umps/libumps.h>
 #include <pandos_const.h>
 #include <pandos_types.h>
-#include <initProc.h>
 #include <sysSupport.h>
 #include <vmSupport.h>
 
 SEMAPHORE masterSemaphore;
-extern int deviceSemaphores[SEMNUM];
-extern void pager();
-extern void generalExceptionHandler();
-
 HIDDEN support_t supportStructs[UPROCMAX+1];
 
 void initializeSemaphores(){
@@ -31,7 +27,7 @@ void initializeProcesses(){
     pState.reg_sp = USERSTACKTOP;
     pState.status = IEPON | IMON | TEBITON | USERPON;
 
-    for(int id=1; id<= UPROCMAX; id++){
+    for(int id = 1; id <= UPROCMAX; id++){
         pState.entry_hi = (id << ASIDSHIFT);
         //Stack pointer calculation
         memaddr ramtop;
@@ -64,9 +60,8 @@ void initializeProcesses(){
 }
 
 void handleMasterSemaphore(){
-    for (int i = 0; i < UPROCMAX; i++){
+    for (int i = 0; i < UPROCMAX; i++)
         SYSCALL(PASSEREN, (memaddr) &masterSemaphore, 0, 0);
-    }
 }
 
 void test(){
