@@ -8,7 +8,14 @@
 #include <initProc.h>
 #include <sysSupport.h>
 
+/**
+ * @brief Array of swap pages used for the VM.
+ */
 swap_t swapTable[POOLSIZE];
+
+/**
+ * @brief Semaphore to control the mutex on the swap pool.
+ */
 SEMAPHORE swapPoolSemaphore;
 
 

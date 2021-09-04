@@ -14,10 +14,6 @@
 
 extern int masterSemaphore;
 
-void initializeSemaphores();
-void initializeProcesses();
-void handleMasterSemaphore();
-
 /**
  * @brief First function that will be called by the phase 2.
  */

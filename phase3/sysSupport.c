@@ -8,7 +8,10 @@
 #include <initProc.h>
 #include <vmSupport.h>
 
-int deviceSemaphores[SEMNUM];
+/**
+ * @brief Array of semaphores, 8 for each device.
+ */
+SEMAPHORE deviceSemaphores[SEMNUM];
 
 
 void generalExceptionHandler(){
@@ -110,7 +113,7 @@ void writePrinter(char* string, int len, support_t* support){
             devReg->dtp.data0 = ((unsigned int) *(string + i));
             devReg->dtp.command = PRINTCHR;
             status = SYSCALL(IOWAIT, PRNTINT, deviceNumber, FALSE);
-            
+
             ENABLEINTERRUPTS
             if((status & TERM_STATUS_MASK) == OKCHARTRANS){
                 charsTransmitted++;
@@ -122,7 +125,7 @@ void writePrinter(char* string, int len, support_t* support){
         }
         SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[semNum], 0, 0);
         support->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
-    
+
     } else terminate(support);
 }
 
@@ -163,7 +166,7 @@ void writeTerminal(char *string, int len, support_t* support){
         SYSCALL(VERHOGEN, (memaddr) &deviceSemaphores[semNum], 0, 0);
         //Return the value and release the mutex on the semaphore
         support->sup_exceptState[GENERALEXCEPT].reg_v0 = charsTransmitted;
-    
+
     } else terminate(support);
 }
 

@@ -5,7 +5,14 @@
 #include <sysSupport.h>
 #include <vmSupport.h>
 
+/**
+ * @brief Semaphore to count the number of processes currently active.
+ */
 SEMAPHORE masterSemaphore;
+
+/**
+ * @brief Static array to store the support structs used to initialize processes.
+ */
 HIDDEN support_t supportStructs[UPROCMAX+1];
 
 void initializeSemaphores(){
