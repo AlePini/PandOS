@@ -33,12 +33,8 @@ If you want to clean just kernels and libraries
 $ make clean-output
 ```
 ### Launch
-* Open umps3 and create a new Machine.
-* Replace "Core File" with bin/kernel-*n*.core.umps
-    and "Symbol Table" bin/kernel-*n*.stab.umps
-    ( where *n* refers to the pahse number )
-
-* Finally, click on "Power ON" and "Continue" to launch.
+* Open umps3 and load one of the configs in `umps-configs/`
+* Click on "Power ON" and "Continue" to launch.
 
 ## Authors
 See [Authors](AUTHORS).
