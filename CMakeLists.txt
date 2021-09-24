@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION "3.13.0")
 
-project(PandOS VERSION 0.2)
+project(PandOS VERSION 0.3)
 
 set(CMAKE_C_VERSION 11)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
